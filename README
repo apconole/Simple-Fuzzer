@@ -1,0 +1,210 @@
+simple fuzz
+by: aaron conole <apconole@yahoo.com>
+
+synopsis
+  simple fuzz is exactly what it sounds like - a simple fuzzer. Don't mistake 
+simple with a lack of sophistication. this fuzzer has two network modes of 
+operation, an output mode for developing command line fuzzing scripts, as well
+as taking fuzzing strings from literals and building strings from sequences.
+  simple fuzz is built to fill a need - the need for a quickly configurable
+black box testing utility that doesn't require intimate knowledge of the inner
+workings of C or require specialized software rigs. the aim is to just provide
+a simple interface, clear inputs/outputs, and reusability.
+
+intro - the problem
+  why'd i write this? i was going to use spike for black box testing at work, 
+but the problem with that is - how do i get the people in SQA to be able to 
+really hammer away at my stuff? they're not software engineers and in many cases
+are barely competent programmers. giving them a bulky C program, based on SPIKE
+that might require heavy modification seemed like i would be setting myself up
+for maintenance nightmares, and insufficient code coverage.
+  but - SPIKE is very powerful, very flexible, and VERY well known. this is true
+but has one caveat: all the power and flexibility and large penis of SPIKE comes
+at the cost of a steep learning curve. it requires time to learn, and if/when a
+bug might surface, would require time delving into internals which I don't want
+to be 'the guy' for at work.
+
+intro 2 - the solution
+  write my own, more simple fuzzing software. I'm not gonna pretend I know a 
+whole lot about which other fuzzers exist. I saw a webpage that rattled them off
+like everyone had written them. maybe they have, and I'm late to the party. what
+I took away from most of the reading was this: all those fuzzers are very 
+specialized. seriously. there are fuzzers which contain their own IP stacks for
+testing and mapping OS behavior. i certainly don't need that.
+
+intro 3 - so what do i have
+  a pretty simple fuzzer. it is reminiscent of easy-fuzz from 2004 written by 
+priest of the priestmasters. his layout for building a fuzzy test was pretty 
+nice. a "script" file, with a preamble - setting some basic state and variables,
+followed by the "meat and potatoes" tests. since i really liked this approach,
+i sto^H^H^Hborrowed it for my own. naturally, since i wrote my code from scratch
+i was able to do things i wanted without being tied to his design decisions.
+
+chapter 1 - using rotting fruit to make a fuzzy engine
+
+  so - how to use. the utility takes only a few commandline options, which i'll
+list here for posterity:
+
+output modes:
+  -O
+    this option sets the engine to run in output mode
+  -T
+    this option sets the engine to run in TCP mode
+  -U
+    this option sets the engine to run in UDP mode
+
+logging:
+  -L filename
+    this option specifies a file to write instead of the standard output
+
+config file:
+  -f filename
+    this option specifies the fuzzing "script" - covered later.
+
+network host:
+  -S host
+    this option sets the remote host to which we will connect
+  -p port
+    this sets the port for the host to which we will connect.
+
+help:
+  -V
+    shows the version information
+  -h
+    shows the help
+
+
+chapter 2 - scraping together caterpillars
+  so, now that you know how to execute the fuzzer, we need to setup a script. 
+the first thing when writing the script is to understand all the 'reserved'
+parts. so here are the keywords, and what they do. note: only FUZZ is case
+sensitive.
+
+___________________________________________________________________________
+| keyword         |   meaning
++-----------------+--------------------------------------------------------
+|  #              | when used at the start of a line, denotes a comment
++-----------------+--------------------------------------------------------
+|  //             | when used at the start of a line, denotes a comment
++-----------------+--------------------------------------------------------
+|  ;              | when used at the start of a line, denotes a comment
++-----------------+--------------------------------------------------------
+| literal         | used to assign a string that should be inserted to a 
+++++++++++++++++++| fuzzing test case "literally". ex: literal=abcd
++++++++++++++++++++--------------------------------------------------------
+| sequence        | used to assign a string that should be sequence filled
++++++++++++++++++++ into a fuzzing test case. ex: sequence=A
++++++++++++++++++++--------------------------------------------------------
+| reqwait         | sets the time to wait between requests in milliseconds
++-----------------+--------------------------------------------------------
+| maxseqlen       | sets the maximum size that a sequence can fill
++-----------------+--------------------------------------------------------
+| include         | includes a secondary config file, which must be 
++++++++++++++++++++ terminated with an endcfg line. use absolute paths.
++++++++++++++++++++--------------------------------------------------------
+| endcfg          | terminates the configuration block. all blocks following
++++++++++++++++++++ will be interpreted as parts of fuzzing requests. therefore
++++++++++++++++++++ no comments are allowed to go in the testing blocks. it is
++++++++++++++++++++ probably a good idea to fill up comments at the beginning
++++++++++++++++++++ which describe all of the tests that are to be executed.
++++++++++++++++++++--------------------------------------------------------
+| --              | used to denote the "end" of a block of text representing
++++++++++++++++++++ a test.
++++++++++++++++++++--------------------------------------------------------
+| FUZZ            | used in test blocks to insert a fuzzy string. only the
++++++++++++++++++++ FIRST occurance of FUZZ will be replaced. however, the test
++++++++++++++++++++ will be executed for each possible fuzzing string that could
++++++++++++++++++++ be inserted. this means for every literal and sequence, you
++++++++++++++++++++ will get a copy of the test with FUZZ replaced.
++++++++++++++++++++--------------------------------------------------------
+
+caveat: all config files MUST end with a newline.
+
+chapter 3 - my little fuzzer, first time out
+  so, lets take the above knowledge and build a simple little fuzzing test.
+
+==========================================================================
+# begin my first fuzzing test.
+
+# some literals to fuzz around with
+literal=abcdefg
+literal=hijklmn
+literal=opqrstu
+literal=vwxyz01
+literal=2345678
+literal=9.,/-()
+
+# some sequences - these get expanded
+sequence=%n
+sequence=%%n
+sequence=a
+sequence=A
+sequence=abacabb
+sequence=12345678987654321
+
+#how big to expand sequences
+naxseqlen=1024
+
+#this is going to be a simple fuzz, so just put the word FUZZ as a test
+#after endcfg, the follow that with -- and a newline
+endcfg
+FUZZ
+--
+========================================================================
+
+save the above snippet to '/tmp/myfirst.cfg'
+
+then run:
+
+sfuzz -O -f /tmp/myfirst.cfg
+
+and check your output.
+
+now modify some more. the line where you have 'FUZZ' change to
+
+[FUZZ} this crap
+
+save and rerun. see the difference? play around with it. add second test by
+putting the following after the --
+
+this is not a fuzz. sad face.
+--
+
+remember, newline is important at the end of the file.
+
+chapter 4 - fuzzy wuzzy gets around
+
+   so, now to use on network host. lets say we have a webserver running on 
+foo.com and it has some etc enumeration vulnerability. we can use fuzzer to
+find this out. in the above, add the following to the config portion of the 
+file:
+
+# etc enumeration
+literal=./../../../etc/
+
+# wait 200ms between requests
+reqwait=200
+
+this will cause the system to pause when doing network outputs for 200ms between
+each request.
+
+now, we add a test case to the bottom:
+
+GET /FUZZ HTTP/1.1
+Hostname: foo.com
+
+--
+
+it is important that in this test case, we make sure those lines become 
+terminated with CRLF (i didn't do that in this example). since the webserver
+won't read it right without them. although, maybe that's a good fuzz test. 
+anyway, to run, simply change the cmd line now to:
+
+sfuzz -T -f /tmp/myfirst.cfg -S foo.com -p 80
+
+and fire it off. use a network monitor to watch the traffic. there is a 
+rudimentary 'test for response' in there which dumps the response to the screen,
+but it's not terribly reliable.
+
+
+thats all for now
