@@ -1,0 +1,62 @@
+#a basic RTSP parser
+#
+
+# based on rfc2326
+
+# make sure to define the following variables for best results
+#   rtsp-url
+
+reqwait=200
+
+#REALLY big sequences
+maxseqlen=50050
+
+#include the basic fuzz sequences and literals
+include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
+
+#test 1 - describe fuzz
+#test 2 - more describe fuzzing
+endcfg
+DESCRIBE rtsp://FUZZ RTSP/1.0
+CSeq: 0
+Accept: application/sdp, application/rtsl, application/mheg
+
+--
+DESCRIBE FUZZ://rtsp-url RTSP/1.0
+CSeq: 0
+Accept: application/sdp, application/rtsl, application/mheg
+
+--
+DESCRIBE rtsp://rtsp-url FUZZ/1.0
+CSeq: 0
+Accept: application/sdp, application/rtsl, application/mheg
+
+--
+DESCRIBE rtsp://rtsp-url RTSP/FUZZ
+CSeq: 0
+Accept: application/sdp, application/rtsl, application/mheg
+
+--
+DESCRIBE rtsp://rtsp-url RTSP/1.0
+CSeq: FUZZ
+Accept: application/sdp, application/rtsl, application/mheg
+
+--
+DESCRIBE rtsp://rtsp-url RTSP/1.0
+CSeq: 0
+Accept: FUZZ
+
+--
+DESCRIBE rtsp://rtsp-url RTSP/1.0
+FUZZ: 0
+Accept: application/sdp, application/rtsl, application/mheg
+
+--
+DESCRIBE rtsp://rtsp-url RTSP/1.0
+CSeq: 0
+FUZZ: application/sdp, application/rtsl, application/mheg
+
+--
+FUZZ rtsp://rtsp-url RTSP/1.0
+
+--

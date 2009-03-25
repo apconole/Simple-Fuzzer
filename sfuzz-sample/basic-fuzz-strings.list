@@ -1,0 +1,76 @@
+## these are the most basic fuzzing strings, to be included with almost 
+## everything
+
+# the following sequences will be expanded to flood a maxseqlen buffer
+sequence=A
+# 0x99
+sequence=�
+# 0xCB
+sequence=�
+# 0xCD
+sequence=�
+#basic format string vulns
+sequence=%n
+sequence=%#123456x
+sequence=%s
+sequence=%%s
+sequence=%20s
+sequence=%%20s
+sequence=%20x
+sequence=%%20x
+sequence=%n%n%n%n%n
+sequence=%p%p%p%p%p
+sequence=%x%x%x%x%x
+sequence=%d%d%d%d%d
+sequence=%s%s%s%s%s
+sequence=%s%p%x%d
+sequence=%.1024d
+sequence=%.1025d
+sequence=%.2048d
+sequence=%.2049d
+sequence=%.4096d
+sequence=%.4097d
+sequence=%99999999999s
+sequence=%08x
+sequence=%%20d
+sequence=%%20n
+sequence=%%20x
+sequence=%%20s
+sequence=%#0123456x%08x%x%s%p%d%n%o%u%c%h%l%q%j%z%Z%t%i%e%g%f%a%C%S%08x%%
+
+# the following literals will be kept "as-is" for fuzzing.
+# 0x99
+literal=�
+# 0xCB
+literal=�
+# 0xCD
+literal=�
+#basic format string vulns
+literal=%n
+literal=%#123456x
+literal=%s
+literal=%%s
+literal=%20s
+literal=%%20s
+literal=%20x
+literal=%%20x
+literal=%n%n%n%n%n
+literal=%p%p%p%p%p
+literal=%x%x%x%x%x
+literal=%d%d%d%d%d
+literal=%s%s%s%s%s
+literal=%s%p%x%d
+literal=%.1024d
+literal=%.1025d
+literal=%.2048d
+literal=%.2049d
+literal=%.4096d
+literal=%.4097d
+literal=%99999999999s
+literal=%08x
+literal=%%20d
+literal=%%20n
+literal=%%20x
+literal=%%20s
+literal=%#0123456x%08x%x%s%p%d%n%o%u%c%h%l%q%j%z%Z%t%i%e%g%f%a%C%S%08x%%
+endcfg

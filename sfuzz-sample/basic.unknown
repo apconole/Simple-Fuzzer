@@ -1,0 +1,6 @@
+sequence=A
+seqstep=1
+maxseqlen=50050
+endcfg
+FUZZ
+--

