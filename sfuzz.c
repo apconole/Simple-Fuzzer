@@ -12,17 +12,9 @@
 #else
 #include <sys/time.h>
 #include <string.h>
-
-#include <sys/socket.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #endif
 
-extern int readLine(option_block *opts, char *line, int len);
+extern int readLine(option_block *opts, char *line, int len, int ign_cr);
 extern void read_config(option_block *opts);
 int execute_fuzz(option_block *opts);
 
@@ -41,40 +33,6 @@ void dump_options(option_block *opts)
 }
 
 time_t birth;
-
-int atoip(const char *pIpStr)
-{
-    struct hostent *ent;
-    struct sockaddr_in sa;
-    int t = inet_addr(pIpStr);
-    
-    if(inet_addr(pIpStr) == -1)
-    {
-        ent = gethostbyname(pIpStr);
-        if(ent != NULL)
-        {
-            if(ent->h_addrtype != AF_INET)
-            {
-                fprintf(stderr, "[%s] error: address/host '%s' not of AF_INET.\n",
-                        get_time_as_log(), pIpStr);
-                exit(-1);
-            }
-            else
-            {
-                memcpy ((caddr_t) & sa.sin_addr, ent->h_addr, ent->h_length);
-                t = sa.sin_addr.s_addr;
-            }
-        }
-        else
-        {
-            fprintf(stderr, "[%s] error: address/host '%s' unknown.\n",
-                    get_time_as_log(), pIpStr);
-            exit(-1);
-        }
-    }
-
-    return t;
-}
 
 char *get_time_as_log()
 {
@@ -108,6 +66,7 @@ void print_help()
     printf("\n");
     printf("\t-h\tThis message.\n");
     printf("\t-V\tVersion information.\n");
+    printf("\t-D\tDefine a symbol and value (X=y).\n");
     printf("\t-T|-U|-O\tTCP|UDP|Output mode\n");
     printf("\t-L\tLog file\n");
     printf("\t-f\tConfig File\n");
@@ -151,9 +110,13 @@ void sanity(option_block *opts)
         exit(-1);
     }
 }
+extern void add_symbol(char *sym_name, int sym_len, char *sym_val, 
+                       int sym_val_len, option_block *opts);
 
 void process_opt_str(char *line, char *lastarg, option_block *opts)
 {
+    char *delim;
+    int   sze;
     while(*line != 0)
     {
         switch(*line++)
@@ -194,6 +157,25 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
             break;
         case 'V':
             print_version(); exit(0);
+            break;
+        case 'q':
+            opts->quiet = 1;
+            break;
+        case 'D':
+            delim = strstr(lastarg, "=");
+            if(delim == NULL)
+            {
+                fprintf(stderr, "error: delimiter not found for symbol.\n");
+                exit(-1);
+            }
+            sze = strlen(delim+1);
+            if(sze == 0)
+            {
+                fprintf(stderr, "error: symbol's value is null.\n");
+                exit(-1);
+            }
+
+            add_symbol(lastarg, (delim - lastarg), delim+1, sze, opts);
             break;
         default:
             printf("unknown option: %c\n", *line); exit(0);
@@ -239,7 +221,7 @@ int main(int argc, char *argv[])
     option_block options;
     int i;
 
-    bzero(&options, sizeof(options));
+    memset(&options, 0, sizeof(options));
 
     gettimeofday(&tv, NULL);
     birth = tv.tv_sec;
@@ -273,31 +255,34 @@ int main(int argc, char *argv[])
         
     }
 
-    fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
-    if(options.tcp_flag)
+    if(!options.quiet)
     {
-        fprintf(log, " tcp,");
-    } else if(options.udp_flag)
-    {
-        fprintf(log, " udp,");
+        fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
+        if(options.tcp_flag)
+        {
+            fprintf(log, " tcp,");
+        } else if(options.udp_flag)
+        {
+            fprintf(log, " udp,");
+        }
+        else
+        {
+            fprintf(log, " io,");
+        }
+        
+        fprintf(log, " config from: [%s], out: [%s:%d]\n",
+                options.pFilename, options.host_spec, options.port);
     }
-    else
-    {
-        fprintf(log, " io,");
-    }
-
-    fprintf(log, " config from: [%s], out: [%s:%d]\n",
-            options.pFilename, options.host_spec, options.port);
-    
     options.state     = FUZZ;
     execute_fuzz(&options);
 
-    fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
-
+    if(!options.quiet)
+        fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
+    
     free( options.pFilename    );
     free( options.pLogFilename );
     free( options.host_spec    );
-
+    
     for(i = 0; i < options.num_litr; ++i)
     {
         free(options.litr[i]);
@@ -312,12 +297,25 @@ int fuzznum = 0;
 
 void fuzz(option_block *opts, char *req, int len)
 {
+    int i = 0;
     FILE *log = stdout;
+    sym_t *pSym;
+
     if(opts->fp_log)
         log = opts->fp_log;
     
-    fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
-            ++fuzznum);
+    if(!opts->quiet)
+        fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
+                ++fuzznum);
+    
+    if(opts->sym_count)
+    {
+        for(i = 0; i < opts->sym_count; ++i)
+        {
+            pSym = &(opts->syms_array[i]);
+            len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+        }
+    }
     
     if(opts->out_flag)
     {
@@ -347,6 +345,7 @@ int execute_fuzz(option_block *opts)
     int reqsize = 0;
     int preqsize= 0;
     int i       = 0;
+    int k       = 0;
 
     if(opts->state != FUZZ)
     {
@@ -365,13 +364,13 @@ int execute_fuzz(option_block *opts)
         line[0] = 0;
         while(strcmp(line, "--") && strcmp(line, "c-"))
         {
-            tsze = readLine(opts, line, 8192);
+            tsze = readLine(opts, line, 8192, 1);
             if(!strcmp(line, "--") || !strcmp(line, "c-") || tsze == 0)
             {
                 break;
             }
-
-            if((tsze + reqsize) > opts->mseql)
+            
+            if(opts->mseql && ((tsze + reqsize) > opts->mseql))
             {
                 /*ohnoes overflow*/
                 fprintf(stderr, "[%s] error: overflow.\n", get_time_as_log());
@@ -393,6 +392,11 @@ int execute_fuzz(option_block *opts)
         /* TODO: implement this feature in an intuitive and useful manner */
         opts->send_initial_nonfuzz_again = 0;
 
+        if(opts->seqstep <= 0)
+        {
+            opts->seqstep = opts->mseql;
+        }
+        
         /*loaded a request.*/
         p = strstr(req, "FUZZ");
         
@@ -434,27 +438,32 @@ int execute_fuzz(option_block *opts)
             for(tsze = 0; tsze < opts->num_seq; ++tsze)
             {
                 /*at this point, we do sequences. Sequencing will be done*/
-                /*by filling to maxseqlen*/
+                /*by filling to maxseqlen, in increments of seqstep*/
                 memcpy(req2, req, (p-req));
                 /*we've filled up req2 with everything BEFORE FUZZ*/
                 j = req2;
                 
-                req2 += (p-req);
-                
-                for(i=0;i < opts->mseql; ++i)
+                for(k = opts->seqstep; k <= opts->mseql; k+= opts->seqstep)
                 {
-                    *req2++ = *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
+                    req2 = j;
+                    req2 += (p-req);
+                
+                    for(i=0;i < k; ++i)
+                    {
+                        *req2++ =
+                            *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
+                    }
+                    
+                    memcpy(req2, (char *)(p+4), strlen(p+4));
+                
+                    *(req2+(strlen(p+4))) = 0;
+                
+                    req2 = j;
+                
+                    if(opts->send_initial_nonfuzz_again)
+                        fuzz(opts, preq, preqsize);
+                    fuzz(opts, req2, strlen(req2));
                 }
-
-                memcpy(req2, (char *)(p+4), strlen(p+4));
-                
-                *(req2+(strlen(p+4))) = 0;
-                
-                req2 = j;
-                
-                if(opts->send_initial_nonfuzz_again)
-                    fuzz(opts, preq, preqsize);
-                fuzz(opts, req2, strlen(req2));
             }
         }
     }

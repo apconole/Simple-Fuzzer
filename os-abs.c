@@ -5,6 +5,7 @@
 
 #ifdef __WIN32__
 #include "winsock.h"
+typedef char * caddr_t;
 #else
 #include <stdlib.h>
 #include <time.h>
@@ -25,6 +26,49 @@
 extern char *get_time_as_log();
 #include <sys/types.h>
 #include <unistd.h>
+
+int atoip(const char *pIpStr)
+{
+    struct hostent *ent;
+    struct sockaddr_in sa;
+#ifdef __WIN32__
+    WSADATA wsda;
+
+    WSAStartup(0x101, &wsda);
+#endif
+    int t = inet_addr(pIpStr);
+    
+    if(inet_addr(pIpStr) == -1)
+    {
+        ent = gethostbyname(pIpStr);
+        if(ent != NULL)
+        {
+            if(ent->h_addrtype != AF_INET)
+            {
+                fprintf(stderr, "[%s] error: address/host '%s' not of AF_INET.\n",
+                        get_time_as_log(), pIpStr);
+                exit(-1);
+            }
+            else
+            {
+                memcpy ((caddr_t) & sa.sin_addr, ent->h_addr, ent->h_length);
+                t = sa.sin_addr.s_addr;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "[%s] error: address/host '%s' unknown.\n",
+                    get_time_as_log(), pIpStr);
+            exit(-1);
+        }
+    }
+
+#ifdef __WIN32__
+    WSACleanup();
+#endif
+
+    return t;
+}
 
 char *process_error()
 {
@@ -139,8 +183,9 @@ void os_send_tcp(option_block *opts, char *str, int len)
         fprintf(log,"[%s] error: tcp send() failed.\n", get_time_as_log());
         return;
     }
-    fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
-            get_time_as_log());
+    if(!opts->quiet)
+        fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
+                get_time_as_log());
 
     FD_ZERO(&fds);
     FD_SET(sockfd, &fds);
@@ -222,4 +267,49 @@ void os_send_udp(option_block *opts, char *str, int len)
     close(sockfd);
 #endif
     mssleep(opts->reqw_inms);
+}
+
+int isws(char c)
+{
+    /*comment out the following for only replacing stuff with no whitespace*/
+    return 1;
+    return ((c == ' ') || (c == '\n') || (c == '\r') || (c == '\t') ||
+            (c == '\b'));
+}
+
+int strrepl(char *buf, size_t buflen, char *old, char *new)
+{
+    char *f;
+    char *str = buf;
+    int   repls = 0;
+
+    int   origl = strlen(buf);
+    int   oldl  = strlen(old);
+    int   newl  = strlen(new);
+
+    if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
+        return -1;
+
+    while((f = strstr(str, old)) != NULL)
+    {
+        if(!isws(*(f+oldl)))
+        {
+            str = f + oldl;
+            continue;
+        }
+        ++repls;
+
+        origl -= oldl;
+
+        if(origl < 0)
+            origl = 0;
+
+        origl += newl;
+
+        memmove(f+newl, f+oldl, strlen(f+oldl)+1);
+        memcpy(f, new, newl);
+
+        str = f + oldl;
+    }
+    return origl;
 }

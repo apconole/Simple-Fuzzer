@@ -4,8 +4,10 @@ PATCHLEVEL	= 1
 
 VERSION		= $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCHLEVEL)
 
-CC	=/usr/bin/gcc
-CPP	=/usr/bin/g++
+CCPATH=
+
+CC	=$(CCPATH)gcc
+CPP	=$(CCPATH)g++
 INSTALL	=/usr/bin/install
 MKDIR	=/bin/mkdir
 CP      =/bin/cp
@@ -20,7 +22,7 @@ PROGS=sfuzz
 all: $(PROGS)
 
 sfuzz: $(SF_OBJS)
-	$(CC) -o $@ $(SF_OBJS)
+	$(CC) -o $@ $(SF_OBJS) $(LIBS)
 
 %.o: %.c
 	$(CC) -c -o $@ $(CFLAGS) $<

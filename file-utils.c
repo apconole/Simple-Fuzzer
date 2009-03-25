@@ -6,12 +6,35 @@
 #include "options-block.h"
 
 void read_config(option_block *opts);
-
 void file_error(char *msg, option_block *opts)
 {
     fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",
             get_time_as_log(), opts->pFilename, opts->lno, msg);
     exit(-1);
+}
+
+
+void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
+                option_block *opts)
+{
+    sym_t *pSym;
+    
+    opts->sym_count += 1;
+    
+    opts->syms_array = realloc(opts->syms_array, 
+                               sizeof(sym_t) * opts->sym_count);
+    
+    if(opts->syms_array == NULL)
+    {
+        file_error("out of memory adding symbol.", opts);
+    }
+
+    pSym = &(opts->syms_array[opts->sym_count - 1]);
+
+    memset(pSym->sym_name, 0, 8192);
+    memset(pSym->sym_val, 0, 8192);
+    memcpy(pSym->sym_name, sym_name, sym_len);
+    memcpy(pSym->sym_val,  sym_val,  sym_val_len);
 }
 
 void add_literal(option_block *opts, char *literal, int len)
@@ -30,6 +53,7 @@ void add_literal(option_block *opts, char *literal, int len)
         file_error("literal too long - out of memory.", opts);
     }
     
+    opts->litr[opts->num_litr][0] = 0;
     strncpy(opts->litr[opts->num_litr], literal, len);
     opts->litr_lens[opts->num_litr] = len;
 
@@ -51,14 +75,15 @@ void add_sequence(option_block *opts, char *sequence, int len)
     {
         file_error("sequence too long - out of memory.", opts);
     }
-    
+    opts->seq[opts->num_seq][0] = 0;
+
     strncpy(opts->seq[opts->num_seq], sequence, len);
     opts->seq_lens[opts->num_seq] = len;
 
     ++(opts->num_seq);
 }
 
-int readLine(option_block *opts, char *line, int len)
+int readLine(option_block *opts, char *line, int len, int ign_cr)
 {
     int size = 0;
     char c = 0;
@@ -73,14 +98,14 @@ int readLine(option_block *opts, char *line, int len)
     {
         size += fread(&c, 1, 1, opts->fp);
         *(line+(size - 1)) = c;
-        if((c == '\n') || (c == '\r'))
+        if((c == '\n') || ((c == '\r') && (!ign_cr)))
             break;
     }
     line[size-1] = 0;
     return size;
 }
 
-int processFileLine(option_block *opts, char *line)
+int processFileLine(option_block *opts, char *line, int line_len)
 {
     FILE *t;
     char *f;
@@ -183,6 +208,18 @@ int processFileLine(option_block *opts, char *line)
         return 0;
     }
 
+    if(!strncasecmp("seqstep", line, 7))
+    {
+        delim = strstr(line, "=");
+        if(delim == NULL)
+            file_error("seq step not assigned!", opts);
+        sze = strlen(delim+1);
+        if(sze == 0)
+            file_error("seq step is null!", opts);
+        opts->seqstep = atoi(delim+1);
+        return 0;
+    }
+
     if(!strncasecmp("endcfg", line, 6))
         return 1;
 
@@ -224,6 +261,22 @@ int processFileLine(option_block *opts, char *line)
         return 0;
     }
 
+    if(line[0] == '$')
+    {
+        delim = strstr(line+1, "=");
+        if(delim == NULL)
+        {
+            file_error("symbol not assigned!", opts);
+        }
+        sze = strlen(delim+1);
+        if(sze == 0)
+        {
+            file_error("symbol is null!", opts);
+        }
+        add_symbol(line+1, (delim - (line+1)), delim+1, sze, opts);
+        return 0;
+    }
+
     file_error("invalid config file.", opts);
     return 1;
 }
@@ -231,6 +284,7 @@ int processFileLine(option_block *opts, char *line)
 void read_config(option_block *opts)
 {
     char  done = 0;
+    int   len  = 0;
     FILE *f;
     
     char line[8192]; // should never have more than an 8k line.
@@ -245,14 +299,14 @@ void read_config(option_block *opts)
 
     opts->state = CONFIG_PARSE_BEGIN;
     opts->fp    = f;
-    opts->lno   = 0;
+    opts->lno   = 1;
     do
     {
 
-        if(readLine(opts, line, 8192) == 0)
+        if((len = readLine(opts, line, 8192, 0)) == 0)
             done = 1;
         else
-            done = processFileLine(opts, line);
+            done = processFileLine(opts, line, len);
         ++(opts->lno);
     }while(!done);
 

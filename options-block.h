@@ -3,6 +3,12 @@
 
 typedef struct
 {
+    char sym_name[8192];
+    char sym_val[8192];
+} sym_t;
+
+typedef struct
+{
     FILE *fp;
     char *pFilename;
 
@@ -50,6 +56,14 @@ typedef struct
     int  sockfd;
 
     char send_initial_nonfuzz_again;
+
+    int  seqstep;
+
+    /*symbols*/
+    sym_t *syms_array;
+    int  sym_count;
+
+    char quiet;
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024
