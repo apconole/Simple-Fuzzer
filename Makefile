@@ -4,11 +4,11 @@ PATCHLEVEL	= 1
 
 VERSION		= $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCHLEVEL)
 
-CCPATH=
+CCPATH=/usr/bin/
 
 CC	=$(CCPATH)gcc
-CPP	=$(CCPATH)g++
-INSTALL	=/usr/bin/install
+CPP	=$(CCAPTH)g++
+INSTALL	=$(CCPATH)install
 MKDIR	=/bin/mkdir
 CP      =/bin/cp
 
@@ -17,12 +17,16 @@ CPPFLAGS=-g -Wall -fPIC -I.
 
 LIBS=
 SF_OBJS=file-utils.o sfuzz.o os-abs.o
+SNOOP_OBJS=snoop.o os-abs.o
 PROGS=sfuzz
 
 all: $(PROGS)
 
 sfuzz: $(SF_OBJS)
 	$(CC) -o $@ $(SF_OBJS) $(LIBS)
+
+snoop: $(SNOOP_OBJS)
+	$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)
 
 %.o: %.c
 	$(CC) -c -o $@ $(CFLAGS) $<
@@ -38,4 +42,4 @@ uninstall:
 	$(RM) -f  /usr/local/bin/sfuzz
 
 clean:
-	rm -f core *~ *.o $(PROGS)
+	rm -f core *~ *.o $(PROGS) snoop

@@ -27,16 +27,35 @@ extern char *get_time_as_log();
 #include <sys/types.h>
 #include <unistd.h>
 
+char *get_time_as_log()
+{
+    static char buffer[40];
+    struct timeval tv;
+    time_t curtime;
+
+    gettimeofday(&tv, NULL);
+    curtime = tv.tv_sec;
+
+/* enable once I figure out how to get relative time working.
+    curtime = curtime - birth;
+*/
+
+    strftime(buffer, 40, "%H:%M:%S", localtime(&curtime));
+    
+    return buffer;
+}
+
 int atoip(const char *pIpStr)
 {
     struct hostent *ent;
     struct sockaddr_in sa;
+    int t;
 #ifdef __WIN32__
     WSADATA wsda;
-
-    WSAStartup(0x101, &wsda);
+    WSAStartup(0x0101, &wsda);
 #endif
-    int t = inet_addr(pIpStr);
+
+    t = inet_addr(pIpStr);
     
     if(inet_addr(pIpStr) == -1)
     {
@@ -62,11 +81,10 @@ int atoip(const char *pIpStr)
             exit(-1);
         }
     }
-
 #ifdef __WIN32__
     WSACleanup();
 #endif
-
+    
     return t;
 }
 
@@ -133,6 +151,7 @@ void os_send_tcp(option_block *opts, char *str, int len)
     int sockfd;
     struct sockaddr_in server;
     int ret;
+    unsigned long int to = MAX(100, opts->time_out);
     
 #ifdef __WIN32__
     WSAStartup(0x0101, &wsda);
@@ -183,14 +202,14 @@ void os_send_tcp(option_block *opts, char *str, int len)
         fprintf(log,"[%s] error: tcp send() failed.\n", get_time_as_log());
         return;
     }
-    if(!opts->quiet)
-        fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
-                get_time_as_log());
+    fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
+            get_time_as_log());
 
     FD_ZERO(&fds);
     FD_SET(sockfd, &fds);
-    tv.tv_sec  = 0;
-    tv.tv_usec = 100000; /*give up to 100ms for a check.*/
+
+    tv.tv_sec  = to / 1000;
+    tv.tv_usec = (to % 1000) * 1000; /*time out*/
 
     ret = select(sockfd+1, &fds, NULL, NULL, &tv);
     if(ret > 0)

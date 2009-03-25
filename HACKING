@@ -1,0 +1,50 @@
+modifying / patching sfuzz
+
+code flow:
+
+main(argc,argv)
+  initialize option block
+  
+  process_opts(argc, argv, option block)
+       starting at the end of argv[] for each value
+         if it starts with a - pass it to process_opt_str
+              process_opt_str sets option_block variables based on the different
+              characters it reads from the option string
+         otherwise, update glabal variable lastarg
+
+  read_config
+       read a line (CR or LF define the end of a line here)
+       if the line is endcfg, return
+       if the line is include, save the current file info state
+              recurse to read_config
+              restore old state
+       otherwise, continue reading options and updating the option block
+
+  execute fuzz
+       read a line (ignoring CR)
+       if the line is not -- or c- then add it to the buffer
+       
+       after getting a -- or c-, check to see if there's a FUZZ keword
+             if not call fuzz()
+       for each literal, replace FUZZ and call fuzz()
+       for each sequence, replace FUZZ with a step'd amount of sequence, and call
+                fuzz()
+
+       fuzz() - calls the appropriate output function
+
+end
+
+sfuzz.c
+  contains main, process_opts, process_opt_str, sanity, print_version, print_help,
+           dump_options,
+
+file-utils.c
+  contains readLine, read_config, add_symbol, add_sequence, add_literal, 
+           file_error, processFileLine
+
+os-abs.c
+  contains get_time_as_log, atoip, process_error, mssleep, os_send_tcp, 
+           os_send_udp, isws, strrepl
+
+snoop.c
+  contains a crappy sniffer for linux

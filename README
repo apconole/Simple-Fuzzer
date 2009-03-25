@@ -15,7 +15,7 @@ features
   simple script language for creating test cases
   support for repeating strings as well as fixed strings ('sequences' vs. 
          'literals')
-  variables within test cases (ex: strings to be replaced with different)
+  variables within test cases (ex: strings to be replaced with different strings)
   tcp and udp payload transport (icmp support tbd)
 
 intro - the problem
@@ -80,6 +80,9 @@ variables:
     sets a fuzzing test case variable to be replaced with value. every 
     occurance of the variable will be replaced.
 
+    note: if you set a variable 'foo' equal to 'bar' then %foo would be equal to 
+    strlen('bar'). See basic.nuke.crlf for the canonical example.
+
 help:
   -V
     shows the version information
@@ -140,7 +143,9 @@ ___________________________________________________________________________
 +++++++++++++++++++--------------------------------------------------------
 | $X=y            | used to create a symbol, with name X and value y. this will
 +++++++++++++++++++ replace each occurance of X in the fuzzing payload with y.
-+++++++++++++++++++ ex: FUZZ X would become FUZZ y.
++++++++++++++++++++ additionally, all instances of %X would become strlen(y)
++++++++++++++++++++ ex: FUZZ X would become FUZZ y, and FUZZ %X would become
++++++++++++++++++++     FUZZ 1 (since y is 1 character).
 +++++++++++++++++++--------------------------------------------------------
 
 caveat: all config files MUST end with a newline.
@@ -232,31 +237,5 @@ and fire it off. use a network monitor to watch the traffic. there is a
 rudimentary 'test for response' in there which dumps the response to the 
 screen, but it's not terribly reliable.
 
-
-
-chapter 4 - some assembly required
-  to build on a linux / unix machine, simply execute:
-
-$ make
-
-  and as root, to install (if you're interested in doing that)
-
-$ make install
-
-  to remove, simply execute:
-
-$ make uninstall
-
-  the install process puts sfuzz in /usr/local/bin and all of the sample 
-scripts into /usr/local/share/sfuzz-db/ (note: the include lines in many 
-scripts point to that directory, so if you want to change it, you'll probably 
-need to sed on the directories)
-
-  for windows:
-  a ported version of sfuzz can be built on windows using mingw32 (get it at 
-http://www.mingw.org)
-  make sure to install everything, and put the mingw\bin directory in your 
-path. then simply type make LIBS=-lws2_32. you'll need a good text editor to 
-be able to change most of the script includes to point to the correct files.
 
 thats all for now

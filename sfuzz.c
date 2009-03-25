@@ -34,24 +34,6 @@ void dump_options(option_block *opts)
 
 time_t birth;
 
-char *get_time_as_log()
-{
-    static char buffer[40];
-    struct timeval tv;
-    time_t curtime;
-
-    gettimeofday(&tv, NULL);
-    curtime = tv.tv_sec;
-
-/* enable once I figure out how to get relative time working.
-    curtime = curtime - birth;
-*/
-
-    strftime(buffer, 40, "%H:%M:%S", localtime(&curtime));
-    
-    return buffer;
-}
-
 void print_version()
 {
     printf("version: %s\n", VERSION);
@@ -72,6 +54,7 @@ void print_help()
     printf("\t-f\tConfig File\n");
     printf("\t-S\tRemote host\n");
     printf("\t-p\tPort\n");
+    printf("\t-t\tWait time for reading the socket\n");
 }
 
 void sanity(option_block *opts)
@@ -111,7 +94,7 @@ void sanity(option_block *opts)
     }
 }
 extern void add_symbol(char *sym_name, int sym_len, char *sym_val, 
-                       int sym_val_len, option_block *opts);
+                       int sym_val_len, option_block *opts, int i);
 
 void process_opt_str(char *line, char *lastarg, option_block *opts)
 {
@@ -124,6 +107,9 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
         case 'S':
             opts->host     = atoip(lastarg);
             strncpy(opts->host_spec, lastarg, MAX_HOSTSPEC_SIZE);
+            break;
+	case 't':
+            opts->time_out = atoi(lastarg);
             break;
         case 'p':
             opts->port    = atoi(lastarg);
@@ -158,9 +144,6 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
         case 'V':
             print_version(); exit(0);
             break;
-        case 'q':
-            opts->quiet = 1;
-            break;
         case 'D':
             delim = strstr(lastarg, "=");
             if(delim == NULL)
@@ -175,7 +158,7 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
                 exit(-1);
             }
 
-            add_symbol(lastarg, (delim - lastarg), delim+1, sze, opts);
+            add_symbol(lastarg, (delim - lastarg), delim+1, sze, opts, 0);
             break;
         default:
             printf("unknown option: %c\n", *line); exit(0);
@@ -255,34 +238,31 @@ int main(int argc, char *argv[])
         
     }
 
-    if(!options.quiet)
+    fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
+    if(options.tcp_flag)
     {
-        fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
-        if(options.tcp_flag)
-        {
-            fprintf(log, " tcp,");
-        } else if(options.udp_flag)
-        {
-            fprintf(log, " udp,");
-        }
-        else
-        {
-            fprintf(log, " io,");
-        }
-        
-        fprintf(log, " config from: [%s], out: [%s:%d]\n",
-                options.pFilename, options.host_spec, options.port);
+        fprintf(log, " tcp,");
+    } else if(options.udp_flag)
+    {
+        fprintf(log, " udp,");
     }
+    else
+    {
+        fprintf(log, " io,");
+    }
+
+    fprintf(log, " config from: [%s], out: [%s:%d]\n",
+            options.pFilename, options.host_spec, options.port);
+    
     options.state     = FUZZ;
     execute_fuzz(&options);
 
-    if(!options.quiet)
-        fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
-    
+    fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
+
     free( options.pFilename    );
     free( options.pLogFilename );
     free( options.host_spec    );
-    
+
     for(i = 0; i < options.num_litr; ++i)
     {
         free(options.litr[i]);
@@ -304,10 +284,9 @@ void fuzz(option_block *opts, char *req, int len)
     if(opts->fp_log)
         log = opts->fp_log;
     
-    if(!opts->quiet)
-        fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
-                ++fuzznum);
-    
+    fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
+            ++fuzznum);
+
     if(opts->sym_count)
     {
         for(i = 0; i < opts->sym_count; ++i)

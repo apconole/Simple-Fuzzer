@@ -15,19 +15,36 @@ void file_error(char *msg, option_block *opts)
 
 
 void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
-                option_block *opts)
+                option_block *opts, int i)
 {
     sym_t *pSym;
-    
-    opts->sym_count += 1;
-    
+    char buf[8192]= {0};
+    char buf2[8192] = {0};
+
     opts->syms_array = realloc(opts->syms_array, 
-                               sizeof(sym_t) * opts->sym_count);
+                               sizeof(sym_t) * (opts->sym_count + 1));
     
     if(opts->syms_array == NULL)
     {
         file_error("out of memory adding symbol.", opts);
     }
+
+    if(i == 0)
+    {
+	buf[0] = '%';
+	memcpy(buf+1, sym_name, sym_len);
+	
+	snprintf(buf2, 8192, "%u", (unsigned int)strlen(sym_val));
+	add_symbol(buf, strlen(buf), buf2, strlen(buf2), opts, 1);
+	opts->syms_array = realloc(opts->syms_array, 
+				   sizeof(sym_t) * (opts->sym_count + 1));
+    
+	if(opts->syms_array == NULL)
+	{
+	    file_error("out of memory adding symbol.", opts);
+	}
+    }
+    opts->sym_count += 1;
 
     pSym = &(opts->syms_array[opts->sym_count - 1]);
 
@@ -53,7 +70,6 @@ void add_literal(option_block *opts, char *literal, int len)
         file_error("literal too long - out of memory.", opts);
     }
     
-    opts->litr[opts->num_litr][0] = 0;
     strncpy(opts->litr[opts->num_litr], literal, len);
     opts->litr_lens[opts->num_litr] = len;
 
@@ -75,8 +91,7 @@ void add_sequence(option_block *opts, char *sequence, int len)
     {
         file_error("sequence too long - out of memory.", opts);
     }
-    opts->seq[opts->num_seq][0] = 0;
-
+    
     strncpy(opts->seq[opts->num_seq], sequence, len);
     opts->seq_lens[opts->num_seq] = len;
 
@@ -273,7 +288,7 @@ int processFileLine(option_block *opts, char *line, int line_len)
         {
             file_error("symbol is null!", opts);
         }
-        add_symbol(line+1, (delim - (line+1)), delim+1, sze, opts);
+        add_symbol(line+1, (delim - (line+1)), delim+1, sze, opts, 0);
         return 0;
     }
 

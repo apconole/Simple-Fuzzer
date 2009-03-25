@@ -63,7 +63,9 @@ typedef struct
     sym_t *syms_array;
     int  sym_count;
 
-    char quiet;
+
+  int time_out;
+  
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024
@@ -77,6 +79,12 @@ typedef struct
 #define CONFIG_PARSE_END      8
 #define FUZZ                 16
 
+#ifndef MIN(x,y)
 #define MIN(x,y) ((x < y) ? x : y)
+#endif
+
+#ifndef MAX(x,y)
+#define MAX(x,y) ((x > y) ? x : y)
+#endif
 
 #endif
