@@ -44,6 +44,12 @@ typedef struct
 
     /*port num - int for atoi*/
     int port;
+
+    /*keep open*/
+    char close_conn;
+    int  sockfd;
+
+    char send_initial_nonfuzz_again;
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024

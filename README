@@ -111,6 +111,10 @@ ___________________________________________________________________________
 | --              | used to denote the "end" of a block of text representing
 +++++++++++++++++++ a test.
 +++++++++++++++++++--------------------------------------------------------
+| c-              | used to denote the "end" of a block of text representing
++++++++++++++++++++ a test. indicates that the system should keep the existing
++++++++++++++++++++ connection alive.
++++++++++++++++++++--------------------------------------------------------
 | FUZZ            | used in test blocks to insert a fuzzy string. only the
 +++++++++++++++++++ FIRST occurance of FUZZ will be replaced. however, the test
 +++++++++++++++++++ will be executed for each possible fuzzing string that could
@@ -143,7 +147,7 @@ sequence=abacabb
 sequence=12345678987654321
 
 #how big to expand sequences
-naxseqlen=1024
+maxseqlen=1024
 
 #this is going to be a simple fuzz, so just put the word FUZZ as a test
 #after endcfg, the follow that with -- and a newline

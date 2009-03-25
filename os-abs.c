@@ -18,11 +18,55 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+
+#include <errno.h>
 #endif
 
 extern char *get_time_as_log();
 #include <sys/types.h>
 #include <unistd.h>
+
+char *process_error()
+{
+#ifndef __WIN32__
+    switch(errno)
+    {
+/*
+    case EACCESS:
+        return "EACCESS";
+*/
+    case EPERM:
+        return "EPERM";
+    case EADDRINUSE:
+        return "EADDRINUSE";
+    case EAFNOSUPPORT:
+        return "EAFNOSUPPORT";
+    case EAGAIN:
+        return "EAGAIN";
+    case EALREADY:
+        return "EALREADY";
+    case EBADF:
+        return "EBADF";
+    case ECONNREFUSED:
+        return "ECONNREFUSED";
+    case EINPROGRESS:
+        return "EINPROGRESS";
+    case EINTR:
+        return "EINTR";
+    case EISCONN:
+        return "EISCONN";
+    case ENETUNREACH:
+        return "ENETUNREACH";
+    case ENOTSOCK:
+        return "ENOTSOCK";
+    case ETIMEDOUT:
+        return "ETIMEDOUT";
+    default:
+        perror("connect()");
+    }
+#endif
+    return "unknown";
+}
 
 int mssleep(unsigned long int sleepTimeInMS)
 {
@@ -52,27 +96,39 @@ void os_send_tcp(option_block *opts, char *str, int len)
     if(opts->fp_log)
         log = opts->fp_log;
     
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd < 0)
+    if(opts->sockfd != -1)
     {
-        fprintf(stderr,"[%s] error: unable to acquire socket.\n",
-                get_time_as_log());
-        fprintf(log,"[%s] error: unable to acquire socket.\n",
-                get_time_as_log());
-        return;
+        sockfd = opts->sockfd;
     }
-
-    server.sin_family = AF_INET;
-    server.sin_port   = htons(opts->port);
-    server.sin_addr.s_addr = opts->host; /*should be in network order*/
-    
-    if(connect(sockfd, (struct sockaddr *)&server, sizeof(struct sockaddr)) < 0)
+    else
     {
-        fprintf(stderr,"[%s] error: unable to connect to remote system.\n",
-                get_time_as_log());
-        fprintf(log,"[%s] error: unable to connect to remote system.\n",
-                get_time_as_log());
-        return;
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        opts->sockfd = sockfd;
+        
+        if(sockfd < 0)
+        {
+            fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+                    get_time_as_log());
+            fprintf(log,"[%s] error: unable to acquire socket.\n",
+                    get_time_as_log());
+            return;
+        }
+        
+        server.sin_family = AF_INET;
+        server.sin_port   = htons(opts->port);
+        server.sin_addr.s_addr = opts->host; /*should be in network order*/
+        
+        if(connect(sockfd, 
+                   (struct sockaddr *)&server, sizeof(struct sockaddr)) < 0)
+        {
+            fprintf(stderr,
+                    "[%s] error: unable to connect to remote system [%s].\n",
+                    get_time_as_log(), process_error());
+            fprintf(log,
+                    "[%s] error: unable to connect to remote system [%s].\n",
+                    get_time_as_log(), process_error());
+            return;
+        }
     }
 
     ret = send(sockfd, str, len, 0);
@@ -104,12 +160,17 @@ void os_send_tcp(option_block *opts, char *str, int len)
         }
     }
 
+    if(opts->close_conn)
+    {
 #ifdef __WIN32__
-    WSACleanup();
-    closesocket(sockfd);
+        WSACleanup();
+        closesocket(sockfd);
 #else
-    close(sockfd);
+        close(sockfd);
 #endif
+        opts->sockfd = -1;
+    }
+    
     mssleep(opts->reqw_inms);
 }
 

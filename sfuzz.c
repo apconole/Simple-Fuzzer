@@ -101,10 +101,13 @@ void print_version()
 
 void print_help()
 {
-    printf("\t\tSimple Fuzzer\nBy:\tAaron Conole\n");
+    printf("\t\tSimple Fuzzer\nBy:\t Aaron Conole\n");
     print_version();
-    printf("\turl: http://aconole.brad-x.com/programs/suite.html\n");
-    printf("\tEMAIL: apconole@yahoo.com\n");
+    printf("url:\t http://aconole.brad-x.com/programs/sfuzz.html\n");
+    printf("EMAIL:\t apconole@yahoo.com\n");
+    printf("\n");
+    printf("\t-h\tThis message.\n");
+    printf("\t-V\tVersion information.\n");
     printf("\t-T|-U|-O\tTCP|UDP|Output mode\n");
     printf("\t-L\tLog file\n");
     printf("\t-f\tConfig File\n");
@@ -335,12 +338,14 @@ void fuzz(option_block *opts, char *req, int len)
 int execute_fuzz(option_block *opts)
 {
     char *line = malloc(8192);
-    char *req  = malloc(8192);
-    char *req2 = malloc(8192);
+    char *req  = malloc(opts->mseql + 8192);
+    char *req2 = malloc(opts->mseql + 8192);
+    char *preq = malloc(opts->mseql + 8192);
     char *p, *j;
 
     int tsze    = 0;
     int reqsize = 0;
+    int preqsize= 0;
     int i       = 0;
 
     if(opts->state != FUZZ)
@@ -350,20 +355,23 @@ int execute_fuzz(option_block *opts)
         exit(-1);
     }
 
+    /*setup the socket fd*/
+    opts->sockfd = -1;
+
     while(!feof(opts->fp))
     {
         tsze    = 0;
         reqsize = 0;
         line[0] = 0;
-        while(strcmp(line, "--"))
+        while(strcmp(line, "--") && strcmp(line, "c-"))
         {
             tsze = readLine(opts, line, 8192);
-            if(!strcmp(line, "--") || tsze == 0)
+            if(!strcmp(line, "--") || !strcmp(line, "c-") || tsze == 0)
             {
                 break;
             }
 
-            if((tsze + reqsize) > 8192)
+            if((tsze + reqsize) > opts->mseql)
             {
                 /*ohnoes overflow*/
                 fprintf(stderr, "[%s] error: overflow.\n", get_time_as_log());
@@ -377,13 +385,22 @@ int execute_fuzz(option_block *opts)
         }
         if(feof(opts->fp)) break;
         
-        
+        if(!strcasecmp(line, "c-"))
+            opts->close_conn = 0;
+        else
+            opts->close_conn = 1;
+
+        /* TODO: implement this feature in an intuitive and useful manner */
+        opts->send_initial_nonfuzz_again = 0;
+
         /*loaded a request.*/
         p = strstr(req, "FUZZ");
         
         if(!p)
         {
             fuzz(opts, req, reqsize);
+            memcpy(preq, req, reqsize);
+            preqsize = reqsize;
         }
         else /* we have to FUZZ for reals*/
         {
@@ -399,7 +416,6 @@ int execute_fuzz(option_block *opts)
                 
                 while(reqsize--)
                 {
-                    
                     *(j+i) = *(opts->litr[tsze]+i);
                     i++;
                 }
@@ -408,9 +424,12 @@ int execute_fuzz(option_block *opts)
                 /*because of this, we cannot properly handle binary atm.*/
                 strncat(req2, (char *)(p+4), strlen((char *)(p+4)));
                 
+                if(opts->send_initial_nonfuzz_again)
+                    fuzz(opts, preq, preqsize);
+                
                 fuzz(opts, req2, strlen(req2));
             }
-
+            
             /*do the sequences*/
             for(tsze = 0; tsze < opts->num_seq; ++tsze)
             {
@@ -422,7 +441,7 @@ int execute_fuzz(option_block *opts)
                 
                 req2 += (p-req);
                 
-                for(i=0;i < (opts->mseql - 2); ++i)
+                for(i=0;i < opts->mseql; ++i)
                 {
                     *req2++ = *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
                 }
@@ -433,6 +452,8 @@ int execute_fuzz(option_block *opts)
                 
                 req2 = j;
                 
+                if(opts->send_initial_nonfuzz_again)
+                    fuzz(opts, preq, preqsize);
                 fuzz(opts, req2, strlen(req2));
             }
         }
