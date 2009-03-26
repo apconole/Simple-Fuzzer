@@ -3,6 +3,14 @@
  */
 
 #include <stdio.h>
+
+#ifdef __WIN32__
+#include "windows.h"
+#define INCREMENT_CAP   0
+#define SOCK_FAM_TYPE   AF_INET
+#define SOCK_PROTO_TYPE IPPROTO_IP
+
+#else
 #include <sys/socket.h>
 #include <resolv.h>
 #include <arpa/inet.h>
@@ -17,17 +25,18 @@
 int debug = 0;
 int addr=0;
 
-#define __LINUX__
-
 #ifdef __LINUX__
 #include <netinet/if_ether.h>
-#define ETH_SIZE 6
-#define INCREMENT_CAP 14
+#define INCREMENT_CAP   14
+#define SOCK_FAM_TYPE   PF_PACKET
+#define SOCK_PROTO_TYPE htons(ETH_P_IP)
+#endif
 #endif
 
 #include "os-abs.h"
 
 #define IP_SIZE  4
+#define ETH_SIZE 6
 
 typedef enum { eETH_ADDR, eIP_ADDR } EAddress;
 
@@ -74,8 +83,9 @@ void PrintAddr(char* msg, unsigned char *addr, EAddress is_ip){
         char *fmt;
         char delim;
     } addr_fmt[] = {{ETH_SIZE, "%x", ':'}, {IP_SIZE, "%d", '.'}};
-    
-    printf("%s", msg);
+
+    if(msg != NULL)
+        printf("%s", msg);
     for ( i = 0; i < addr_fmt[is_ip].len; i++ ){
         printf(addr_fmt[is_ip].fmt, addr[i]);
         if ( i < addr_fmt[is_ip].len-1 )
@@ -152,19 +162,33 @@ int main(int argc, char *argv[])
     
     struct sockaddr_in sa;
     uint sl;
+
+#ifdef __WIN32__
+    int ON = 1;
+    WSAData wsaData;
+
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
     
     if(argc > 1)
     {
-        printf("Filtering on addr[%s]\n", argv[1]);
         addr = atoip(argv[1]);
+        printf("Filtering on addr[%s] [", argv[1]);
+        PrintAddr(NULL, (unsigned char *)&addr, eIP_ADDR);
+        printf("].\n");
     }
     
     /*doesn't work with OS X*/
-#ifdef __LINUX__
-    sd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP));
-#endif
+    sd = socket(SOCK_FAM_TYPE, SOCK_RAW, SOCK_PROTO_TYPE);
     if ( sd < 0 )
         PANIC("Snooper socket");
+
+#ifdef __WIN32__
+    if(WSAIoctl(sd, SIO_RCVALL, &ON, sizeof(ON), NULL, NULL, 
+                &bytes_read, NULL, NULL) == SOCKET_ERROR)
+        PANIC("Snooper error");
+#endif
+
     do {
         sl = sizeof(struct sockaddr_in);
         bytes_read = recvfrom(sd, data, sizeof(data), 0, &sa, &sl);
@@ -175,5 +199,6 @@ int main(int argc, char *argv[])
         }
         
     } while ( bytes_read > 0 );
+
     return 0;
 }
