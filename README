@@ -15,7 +15,8 @@ features
   simple script language for creating test cases
   support for repeating strings as well as fixed strings ('sequences' vs. 
          'literals')
-  variables within test cases (ex: strings to be replaced with different strings)
+  variables within test cases (ex: strings to be replaced with different 
+                                   strings)
   tcp and udp payload transport (icmp support tbd)
 
 intro - the problem
@@ -49,7 +50,6 @@ from scratch i was able to do things i wanted without being tied to his design
 decisions.
 
 chapter 1 - using rotting fruit to make a fuzzy engine
-
   so - how to use. the utility takes only a few commandline options, which i'll
 list here for posterity:
 
@@ -74,6 +74,10 @@ network host:
     this option sets the remote host to which we will connect
   -p port
     this sets the port for the host to which we will connect.
+  -t timeout
+    this sets an amount of time (minimum of 100) in MILLIseconds to wait
+    for a response. your best bet would be to run a sniffer (crappy one 
+    included) and watch the responses that way.
 
 variables:
   -D variable=value
@@ -82,6 +86,17 @@ variables:
 
     note: if you set a variable 'foo' equal to 'bar' then %foo would be equal to 
     strlen('bar'). See basic.nuke.crlf for the canonical example.
+
+misc:
+  -q
+    sets "quiet" mode - output will only contain fuzzed payload (if -O is 
+    specified) and the potential response.
+  -v
+    sets "verbose" mode - output will contain extra information
+  -l
+    transmit literals only.
+  -s
+    transmit sequences only.
 
 help:
   -V
@@ -176,7 +191,7 @@ sequence=12345678987654321
 maxseqlen=1024
 
 #this is going to be a simple fuzz, so just put the word FUZZ as a test
-#after endcfg, the follow that with -- and a newline
+#after endcfg, then follow that with -- and a newline
 endcfg
 FUZZ
 --
@@ -203,7 +218,6 @@ this is not a fuzz. sad face.
 remember, newline is important at the end of the file.
 
 chapter 4 - fuzzy wuzzy gets around
-
    so, now to use on network host. lets say we have a webserver running on 
 foo.com and it has some etc enumeration vulnerability. we can use fuzzer to
 find this out. in the above, add the following to the config portion of the 
@@ -228,7 +242,7 @@ Hostname: foo.com
 
 it is important that in this test case, we make sure those lines become 
 terminated with CRLF (i didn't do that in this example). since the webserver
-won't read it right without them. although, maybe that's a good fuzz test. 
+won't read it right without them(although, maybe that's a good fuzz test). 
 anyway, to run, simply change the cmd line now to:
 
 sfuzz -T -f /tmp/myfirst.cfg -S foo.com -p 80

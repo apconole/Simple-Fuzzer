@@ -21,6 +21,12 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     char buf[8192]= {0};
     char buf2[8192] = {0};
 
+    if((sym_len >= 8192) ||
+       (sym_val_len >= 8192))
+    {
+        file_error("too large symbol!", opts);
+    }
+
     opts->syms_array = realloc(opts->syms_array, 
                                sizeof(sym_t) * (opts->sym_count + 1));
     
@@ -66,13 +72,14 @@ void add_literal(option_block *opts, char *literal, int len)
         file_error("too many literal strings - out of memory.", opts);
     }
     
-    opts->litr[opts->num_litr] = malloc(len);
+    opts->litr[opts->num_litr] = malloc(len+1);
     if(opts->litr[opts->num_litr] == NULL)
     {
         file_error("literal too long - out of memory.", opts);
     }
     
     strncpy(opts->litr[opts->num_litr], literal, len);
+    *((opts->litr[opts->num_litr])+len) = 0;    
     opts->litr_lens[opts->num_litr] = len;
 
     ++(opts->num_litr);
@@ -88,13 +95,14 @@ void add_sequence(option_block *opts, char *sequence, int len)
         file_error("too many sequence strings - out of memory.", opts);
     }
     
-    opts->seq[opts->num_seq] = malloc(len);
+    opts->seq[opts->num_seq] = malloc(len+1);
     if(opts->seq[opts->num_seq] == NULL)
     {
         file_error("sequence too long - out of memory.", opts);
     }
     
     strncpy(opts->seq[opts->num_seq], sequence, len);
+    *((opts->seq[opts->num_seq])+len) = 0;
     opts->seq_lens[opts->num_seq] = len;
 
     ++(opts->num_seq);

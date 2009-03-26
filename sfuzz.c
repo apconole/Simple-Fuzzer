@@ -65,6 +65,8 @@ void print_help()
     printf("\t-S\t Remote host\n");
     printf("\t-p\t Port\n");
     printf("\t-t\t Wait time for reading the socket\n");
+    printf("\t-l\t Only perform literal fuzzing\n");
+    printf("\t-s\t Only perform sequence fuzzing\n");
     printf("\t-v\t Verbose output\n");
     printf("\t-q\t Silent output mode (generally for CLI fuzzing)\n");
 }
@@ -116,6 +118,12 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
     {
         switch(*line++)
         {
+        case 's':
+            opts->no_literal_fuzz = 1;
+            break;
+        case 'l':
+            opts->no_sequence_fuzz = 1;
+            break;
         case 'q':
             opts->verbosity = QUIET;
             break;
@@ -418,60 +426,58 @@ int execute_fuzz(option_block *opts)
         else /* we have to FUZZ for reals*/
         {
             /*do the literals*/
-            for(tsze = 0; tsze < opts->num_litr; ++tsze)
+            if(opts->no_literal_fuzz == 0)
             {
-                i = 0;
-                
-                /*first, do the literals, which are filled in as-is*/
-                memcpy(req2, req, (p - req));
-                reqsize = opts->litr_lens[tsze];
-                j = req2+(p-req);
-                
-                while(reqsize--)
+                for(tsze = 0; tsze < opts->num_litr; ++tsze)
                 {
-                    *(j+i) = *(opts->litr[tsze]+i);
-                    i++;
-                }
-                *(j+i) = 0;
-
-                /*because of this, we cannot properly handle binary atm.*/
-                strncat(req2, (char *)(p+4), strlen((char *)(p+4)));
-                
-                if(opts->send_initial_nonfuzz_again)
-                    fuzz(opts, preq, preqsize);
-                
-                fuzz(opts, req2, strlen(req2));
-            }
-            
-            /*do the sequences*/
-            for(tsze = 0; tsze < opts->num_seq; ++tsze)
-            {
-                /*at this point, we do sequences. Sequencing will be done*/
-                /*by filling to maxseqlen, in increments of seqstep*/
-                memcpy(req2, req, (p-req));
-                /*we've filled up req2 with everything BEFORE FUZZ*/
-                j = req2;
-                
-                for(k = opts->seqstep; k <= opts->mseql; k+= opts->seqstep)
-                {
-                    req2 = j;
-                    req2 += (p-req);
-                
-                    for(i=0;i < k; ++i)
-                    {
-                        *req2++ =
-                            *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
-                    }
+                    i = 0;
                     
-                    memcpy(req2, (char *)(p+4), strlen(p+4));
-                
-                    *(req2+(strlen(p+4))) = 0;
-                
-                    req2 = j;
-                
+                    /*first, do the literals, which are filled in as-is*/
+                    strcpy(req2, req);
+                    
+                    /*because of this, we cannot properly handle binary atm.*/
+                /*a more robust solution would be to have a memrepl function*/
+                    strrepl(req2, reqsize, "FUZZ", opts->litr[tsze]);
+                    
                     if(opts->send_initial_nonfuzz_again)
                         fuzz(opts, preq, preqsize);
+                    
                     fuzz(opts, req2, strlen(req2));
+                }
+            }
+            
+            if(opts->no_sequence_fuzz == 0)
+            {
+                /*do the sequences*/
+                for(tsze = 0; tsze < opts->num_seq; ++tsze)
+                {
+                    /*at this point, we do sequences. Sequencing will be done*/
+                    /*by filling to maxseqlen, in increments of seqstep*/
+                    memcpy(req2, req, (p-req));
+                    /*we've filled up req2 with everything BEFORE FUZZ*/
+                    j = req2;
+                    
+                    for(k = opts->seqstep; k <= opts->mseql; k+= opts->seqstep)
+                    {
+                        req2 = j;
+                        req2 += (p-req);
+                        
+                        for(i=0;i < k; ++i)
+                        {
+                            *req2++ =
+                                *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
+                        }
+                        
+                        memcpy(req2, (char *)(p+4), strlen(p+4));
+                        
+                        *(req2+(strlen(p+4))) = 0;
+                        
+                        req2 = j;
+                        
+                        if(opts->send_initial_nonfuzz_again)
+                            fuzz(opts, preq, preqsize);
+                        fuzz(opts, req2, strlen(req2));
+                    }
                 }
             }
         }

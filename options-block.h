@@ -73,6 +73,10 @@ typedef struct
     /*verbosity flag*/
     int verbosity;
 
+    /*fuzzing types*/
+    char no_literal_fuzz;
+    char no_sequence_fuzz;
+
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024
