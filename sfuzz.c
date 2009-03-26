@@ -119,9 +119,11 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
         switch(*line++)
         {
         case 's':
+            opts->no_sequence_fuzz = 0;
             opts->no_literal_fuzz = 1;
             break;
         case 'l':
+            opts->no_literal_fuzz = 0;
             opts->no_sequence_fuzz = 1;
             break;
         case 'q':
