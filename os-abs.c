@@ -172,6 +172,7 @@ void os_send_tcp(option_block *opts, char *str, int len)
         {
             fprintf(stderr,"[%s] error: unable to acquire socket.\n",
                     get_time_as_log());
+            
             fprintf(log,"[%s] error: unable to acquire socket.\n",
                     get_time_as_log());
             return;
@@ -202,9 +203,10 @@ void os_send_tcp(option_block *opts, char *str, int len)
         fprintf(log,"[%s] error: tcp send() failed.\n", get_time_as_log());
         return;
     }
-    fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
-            get_time_as_log());
-
+    if(opts->verbosity != QUIET)
+        fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
+                get_time_as_log());
+    
     FD_ZERO(&fds);
     FD_SET(sockfd, &fds);
 
@@ -214,7 +216,7 @@ void os_send_tcp(option_block *opts, char *str, int len)
     ret = select(sockfd+1, &fds, NULL, NULL, &tv);
     if(ret > 0)
     {
-        if(FD_ISSET(sockfd, &fds))
+        if(FD_ISSET(sockfd, &fds) && (opts->verbosity != QUIET))
         {
             char buf[8192] = {0};
             read(sockfd, &buf, 8192);
@@ -225,6 +227,9 @@ void os_send_tcp(option_block *opts, char *str, int len)
     }
 
     if(opts->close_conn)
+        opts->sockfd = -1;
+    
+    if((opts->close_conn) && (!opts->forget_conn))
     {
 #ifdef __WIN32__
         WSACleanup();
@@ -232,7 +237,6 @@ void os_send_tcp(option_block *opts, char *str, int len)
 #else
         close(sockfd);
 #endif
-        opts->sockfd = -1;
     }
     
     mssleep(opts->reqw_inms);
@@ -331,4 +335,23 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
         str = f + oldl;
     }
     return origl;
+}
+
+void dump(void* b, int len){
+  unsigned char *buf = b;
+  int i, cnt=0;
+  char str[17];
+  memset(str, 0, 17);
+  for ( i = 0; i < len; i++ ){
+    if ( cnt % 16 == 0 ){
+      printf("  %s\n%04X: ", str, cnt);
+      memset(str, 0, 17);
+    }
+    if ( buf[cnt] < ' '  ||  buf[cnt] >= 127 )
+      str[cnt%16] = '.';
+    else
+      str[cnt%16] = buf[cnt];
+    printf("%02X ", buf[cnt++]);
+  }
+  printf("  %*s\n\n", 16+(16-len%16)*2, str);
 }

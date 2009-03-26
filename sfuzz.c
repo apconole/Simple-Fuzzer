@@ -21,14 +21,22 @@ int execute_fuzz(option_block *opts);
 void dump_options(option_block *opts)
 {
     int i;
+
     if(opts != NULL)
     {
-        printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n",
-               get_time_as_log(), opts->pFilename, opts->state, opts->lno, opts->num_litr, opts->reqw_inms, opts->mseql);
+        printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\tsequences: [%d]\n\tsymbols: [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n",
+               get_time_as_log(), opts->pFilename, opts->state, opts->lno, opts->num_litr, opts->num_seq, opts->sym_count / 2, opts->reqw_inms, opts->mseql);
+
         for(i = 0; i < opts->num_litr; i++)
             printf("\tliteral[%d] = [%s]\n", i+1, opts->litr[i]);
         for(i = 0; i < opts->num_seq; i++)
             printf("\tsequence[%d] = [%s]\n", i+1, opts->seq[i]);
+        for(i = 0; i < opts->sym_count; ++i)
+        {
+            if(!(opts->syms_array[i].is_len))
+                printf("\tsym [%s]->[%s]\n", opts->syms_array[i].sym_name,
+                       opts->syms_array[i].sym_val);
+        }
     }
 }
 
@@ -46,15 +54,19 @@ void print_help()
     printf("url:\t http://aconole.brad-x.com/programs/sfuzz.html\n");
     printf("EMAIL:\t apconole@yahoo.com\n");
     printf("\n");
-    printf("\t-h\tThis message.\n");
-    printf("\t-V\tVersion information.\n");
-    printf("\t-D\tDefine a symbol and value (X=y).\n");
-    printf("\t-T|-U|-O\tTCP|UDP|Output mode\n");
-    printf("\t-L\tLog file\n");
-    printf("\t-f\tConfig File\n");
-    printf("\t-S\tRemote host\n");
-    printf("\t-p\tPort\n");
-    printf("\t-t\tWait time for reading the socket\n");
+    printf("\t-h\t This message.\n");
+    printf("\t-V\t Version information.\n");
+    printf("\n");
+    printf("\t-T|-U|-O TCP|UDP|Output mode\n");
+    printf("\t-R\t Refrain from closing connections (ie: forget them)\n");
+    printf("\t-D\t Define a symbol and value (X=y).\n");
+    printf("\t-L\t Log file\n");
+    printf("\t-f\t Config File\n");
+    printf("\t-S\t Remote host\n");
+    printf("\t-p\t Port\n");
+    printf("\t-t\t Wait time for reading the socket\n");
+    printf("\t-v\t Verbose output\n");
+    printf("\t-q\t Silent output mode (generally for CLI fuzzing)\n");
 }
 
 void sanity(option_block *opts)
@@ -104,6 +116,12 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
     {
         switch(*line++)
         {
+        case 'q':
+            opts->verbosity = QUIET;
+            break;
+        case 'R':
+            opts->forget_conn = 1;
+            break;
         case 'S':
             opts->host     = atoip(lastarg);
             strncpy(opts->host_spec, lastarg, MAX_HOSTSPEC_SIZE);
@@ -127,12 +145,7 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
             strncpy(opts->pLogFilename, lastarg, MAX_FILENAME_SIZE-1);
             opts->pLogFilename[MAX_FILENAME_SIZE-1] = 0;            
         case 'v': /*when I put in better logging.*/
-            opts->verb++;
-            if(opts->verb <= 0)
-            {
-                printf("nice fuzz attempt.\n");
-                exit(-1);
-            }
+            opts->verbosity = VERBOSE;
             break;
         case 'f':
             strncpy(opts->pFilename, lastarg, MAX_FILENAME_SIZE-1);
@@ -172,7 +185,7 @@ void process_opts(int argc, char *argv[], option_block *opts)
 
     if(opts->state != CMD_LINE_OPTS)
     {
-        fprintf(stderr, "[%s] fatal: attempt to invoke process_opts in improper state. ARE YOU HACKING?!\n",
+        fprintf(stderr, "[%s] fatal: attempt to invoke process_opts in improper state. ARE YOU HACKING ME?!\n",
                 get_time_as_log());
         exit(-1);
     }
@@ -228,7 +241,6 @@ int main(int argc, char *argv[])
         if(log != NULL)
         {
             options.fp_log = log;
-            dump_options(&options);
         }else
         {
             fprintf(stderr, "[%s] error: using stdout - unable to open log.\n",
@@ -238,27 +250,34 @@ int main(int argc, char *argv[])
         
     }
 
-    fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
-    if(options.tcp_flag)
+    if(options.verbosity == VERBOSE)
+        dump_options(&options);
+    
+    if(options.verbosity != QUIET)
     {
-        fprintf(log, " tcp,");
-    } else if(options.udp_flag)
-    {
-        fprintf(log, " udp,");
+        fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
+        if(options.tcp_flag)
+        {
+            fprintf(log, " tcp,");
+        } else if(options.udp_flag)
+        {
+            fprintf(log, " udp,");
+        }
+        else
+        {
+            fprintf(log, " io,");
+        }
+        
+        fprintf(log, " config from: [%s], out: [%s:%d]\n",
+                options.pFilename, options.host_spec, options.port);
     }
-    else
-    {
-        fprintf(log, " io,");
-    }
-
-    fprintf(log, " config from: [%s], out: [%s:%d]\n",
-            options.pFilename, options.host_spec, options.port);
     
     options.state     = FUZZ;
     execute_fuzz(&options);
 
-    fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
-
+    if(options.verbosity != QUIET)
+        fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
+    
     free( options.pFilename    );
     free( options.pLogFilename );
     free( options.host_spec    );
@@ -269,6 +288,16 @@ int main(int argc, char *argv[])
     }
     free(options.litr);
     free(options.litr_lens);
+
+    for(i = 0; i < options.num_seq; ++i)
+    {
+        free(options.seq[i]);
+    }
+    free(options.seq);
+    free(options.seq_lens);
+
+    /*this might be the better way of doing things =)*/
+    free(options.syms_array);
     
     return 0;
 }
@@ -283,10 +312,11 @@ void fuzz(option_block *opts, char *req, int len)
 
     if(opts->fp_log)
         log = opts->fp_log;
-    
-    fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
-            ++fuzznum);
 
+    if(opts->verbosity != QUIET)
+        fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
+                ++fuzznum);
+    
     if(opts->sym_count)
     {
         for(i = 0; i < opts->sym_count; ++i)

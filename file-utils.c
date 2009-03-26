@@ -52,6 +52,8 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     memset(pSym->sym_val, 0, 8192);
     memcpy(pSym->sym_name, sym_name, sym_len);
     memcpy(pSym->sym_val,  sym_val,  sym_val_len);
+    if(i == 1)
+        pSym->is_len = 1;
 }
 
 void add_literal(option_block *opts, char *literal, int len)
