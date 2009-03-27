@@ -20,11 +20,16 @@ SF_OBJS=file-utils.o sfuzz.o os-abs.o
 SNOOP_OBJS=snoop.o os-abs.o
 PROGS=sfuzz
 
+ifeq ($(TARGET_PLAT),)
+TARGET_PLAT=linux
+endif
+
 ifeq ($(TARGET_PLAT),linux)
 CFLAGS += -D__LINUX__
 endif
 
 ifeq ($(TARGET_PLAT),win)
+CCPATH=
 LIBS += -lws2_32
 CFLAGS += -D__WIN32__
 endif
