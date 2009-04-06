@@ -1,2 +1,4 @@
 - STRESS test this bad larry
 - Remove ascii string dependancies (?)
+- Add some stuff to the scripting language for inline binary number insertion
+  and manipulation.

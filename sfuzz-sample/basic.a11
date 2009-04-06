@@ -1,0 +1,84 @@
+# This is a fuzzer for A11 wireless protocol.
+# This is typically sent over udp port 699
+# Also, you could probably change some things up and get it working with MIP
+# with very few changes.
+
+# note: this file depends on the behavior that text substitutions are resolved
+#       before binary substitutions. Because of this we can build a nice header
+#       and description
+
+
+# some things to change
+# these are IPv4 Addresses of pdsn / pcf endpoints.
+!A11_CARE_OF_AGENT_=0x7f000001
+!A11_HOME_AGENT_=0xffffffff
+!A11_SSE_KEY_=00000001
+
+# AT ID - usually null, so the following might want to be fuzzed!
+!A11_HOME_ADDRESS_=0x00 0x00 0x00 0x00
+!A11_SSE_LENGTH_=0x1f
+
+# A11 ID - this is the part where we need to get a better script language
+!A11_ID_HIGH_=0x12345678
+!A11_ID_LOW_= 0x87654321
+
+# Might be good candidates for fuzzing by manual changes
+# todo: make a scriptable way to fuzz some binary numbers
+!A11_NVSE_PANID_CANID_LENGTH_= 0x14
+!A11_LIFE_TIME_= 0x0ff3
+# Message types - Registration request, response, update, and update ack
+!A11_MSG_TYPE_REG_REQ_=0x01
+!A11_MSG_TYPE_REG_REP_=0x03
+!A11_MSG_TYPE_REG_UPD_=0x14
+!A11_MSG_TYPE_REG_ACK_=0x15
+
+# element types
+!A11_MHAE_ELEMENT_TYPE_=0x20
+!A11_RUAE_ELEMENT_TYPE_=0x28
+!A11_NVSE_ELEMENT_TYPE_=0x86
+!A11_CVSE_ELEMENT_TYPE_=0x26
+!A11_SSE_ELEMENT_TYPE_= 0x27
+
+!A11_GRE_ENCAP_=0x08
+!A11_REV_TUN_FLAG_=02
+!A11_REV_TUN_AND_GRE_=0x0a
+
+!A11_SSE_PROTOCOL_BYTE_STREAM_=0x8881
+!A11_SSE_SES_REF_ID_= 0x01
+!A11_VSE_3GPP2_ID=0x0000159F
+
+# NOTE: all of the numbers below are HEX
+!A11_REG_ACCEPTED_=                      00
+!A11_REG_DENIED_UNSPECIFIED_=            80
+!A11_REG_DENIED_ADMIN_PROHIBIT_=         81
+!A11_REG_DENIED_INSUFF_RESOURCES_=       82
+!A11_REG_DENIED_MOBILENODE_FAILED_AUTH_= 83
+!A11_REG_DENIED_ID_MISMATCH_=            84
+!A11_REG_DENIED_POORLY_FORMED_=          85
+!A11_REG_DENIED_UNKNOWN_PDSN_=           86
+!A11_REG_DENIED_REVRSE_TUNNEL_UNAVAIL_=  87
+!A11_REG_DENIED_REV_TUNNEL_T_NOT_SET_=   88
+!A11_REG_DENIED_UNSUPP_VEND_ID_DATA_=    8d
+
+!A11_MN_ID_NO_IC_TYPE_=    0x0000
+!A11_MN_ID_BROADCAST_TYPE_=0x0002
+!A11_MN_ID_ESN_TYPE_=      0x0005
+!A11_MN_ID_IMSI_TYPE_=     0x0006
+
+# wait 5s between messages
+reqwait=5000
+
+# these are the messages! we're slick =)
+$A11_REG_REPLY_DENY_MSG_HDR_=A11_MSG_TYPE_REG_REP_A11_REG_DENIED_UNSPECIFIED_A11_LIFE_TIME_A11_HOME_ADDRESS_A11_HOME_AGENT_A11_ID_HIGH_A11_ID_LOW_
+$A11_REG_REQ_MSG_HDR_=A11_MSG_TYPE_REG_REQ_A11_REV_TUN_AND_GRE_A11_LIFE_TIME_A11_LIFE_TIME_A11_HOME_ADDRESS_A11_HOME_AGENT_A11_ID_HIGH_A11_ID_LOW_
+
+# in the following we have the A11_SSE_KEY_ field appearing twice. This is a
+# shortcut I've taken. A better fuzz would probably define stuff to go in the
+# reserved fields.
+$A11_SESSION_SPECIFIC_EXTENSION_=A11_SSE_ELEMENT_TYPE_A11_SSE_LENGTH_A11_SSE_PROTOCOL_BYTE_STREAM_A11_SSE_KEY_A11_SSE_KEY_A11_MN_ID_NO_IC_TYPE_
+
+#build a reg reply message in fuzz 1
+literal=A11_REG_REPLY_DENY_MSG_HDR_A11_SESSION_SPECIFIC_EXTENSION_
+endcfg
+FUZZ
+--

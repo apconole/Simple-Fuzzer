@@ -372,12 +372,12 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
     char *f;
     char *str = buf;
 
-    int   origl = strlen(buf);
+    int   origl = buflen;
     int   oldl  = strlen(old);
 
     if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
         return -1;
-
+retry:
     f = strstr(str, old);
     if(f != NULL)
     {
@@ -396,6 +396,19 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
         memmove(f+newl, f+oldl, strlen(f+oldl)+1);
         memcpy(f, new, newl);
         str = f + oldl + 1;
+    } else
+    {
+        if(strlen(str) < origl)
+        {
+            if(strlen(str) == 0)
+                str += 1;
+            str += strlen(str);
+
+            if(str - buf > origl)
+                return origl;
+
+            goto retry;
+        }
     }
     return origl;
 }
