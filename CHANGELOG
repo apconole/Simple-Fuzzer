@@ -1,3 +1,10 @@
+v 0.4 rc1
+  Streamlined some of the code
+  Fixed bugs (duh!) mostly with allocations and formatting
+    - also got a linux snooper working. The windows port is coming.
+  !! Added support for binary string substitution !! BIG NEW FEATURE!
+  Included binary fuzzers!  
+
 v 0.3
   Added support for variables within test cases
   Added support for sequence stepping

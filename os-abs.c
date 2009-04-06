@@ -367,6 +367,39 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
     return origl;
 }
 
+int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
+{
+    char *f;
+    char *str = buf;
+
+    int   origl = strlen(buf);
+    int   oldl  = strlen(old);
+
+    if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
+        return -1;
+
+    f = strstr(str, old);
+    if(f != NULL)
+    {
+        if(!isws(*(f+oldl)))
+        {
+            return origl;
+        }
+
+        origl -= oldl;
+
+        if(origl < 0)
+            origl = 0;
+
+        origl += newl;
+
+        memmove(f+newl, f+oldl, strlen(f+oldl)+1);
+        memcpy(f, new, newl);
+        str = f + oldl + 1;
+    }
+    return origl;
+}
+
 void dump(void* b, int len){
   unsigned char *buf = b;
   int i, cnt=0;

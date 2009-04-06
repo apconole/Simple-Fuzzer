@@ -365,10 +365,21 @@ void fuzz(option_block *opts, char *req, int len)
             len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
         }
     }
-    
+
+    if(opts->b_sym_count)
+    {
+        for(i = 0; i < opts->b_sym_count; ++i)
+        {
+            pSym = &(opts->b_syms_array[i]);
+            len = smemrepl(req, len, pSym->sym_name, pSym->sym_val, 
+                           pSym->is_len);
+        }
+    }
+
     if(opts->out_flag)
     {
-        fprintf(log, "%s\n", req);
+        fwrite(req, len, 1, log);
+        fwrite("\n", 1, 1, log);
     }
     
     if(opts->tcp_flag)

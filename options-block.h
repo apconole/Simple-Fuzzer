@@ -35,7 +35,7 @@ typedef struct
 {
     char sym_name[8192];
     char sym_val[8192];
-    char is_len;
+    int  is_len;
 } sym_t;
 
 typedef struct
@@ -93,6 +93,9 @@ typedef struct
     /*symbols*/
     sym_t *syms_array;
     int  sym_count;
+
+    sym_t *b_syms_array;
+    int  b_sym_count;
 
     /*time out in ms*/
     int time_out;

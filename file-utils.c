@@ -34,6 +34,7 @@
 
 #include "sfuzz.h"
 #include "options-block.h"
+#include "os-abs.h"
 
 void read_config(option_block *opts);
 void file_error(char *msg, option_block *opts)
@@ -43,6 +44,87 @@ void file_error(char *msg, option_block *opts)
     exit(-1);
 }
 
+unsigned char convertAsciiHexCharToBin(char asciiHexChar)
+{
+    unsigned char binByte = 0xFF;
+    if((asciiHexChar >= '0') && (asciiHexChar <= '9'))
+    {
+        binByte = asciiHexChar - '0';
+    }
+    else if((asciiHexChar >= 'a') && (asciiHexChar <= 'f'))
+    {
+        binByte = asciiHexChar - 'a' + 0x0A;
+    }
+    else if((asciiHexChar >= 'A') && (asciiHexChar <= 'f'))
+    {
+        binByte = asciiHexChar - 'A' + 0x0A;
+    }
+    return binByte;
+}
+
+unsigned int ascii_to_bin(char *str_bin)
+{
+    /*converts an ascii string to binary*/
+    char *out = malloc(8192);
+    char *str = malloc(8192);
+    int size_no_ws = 0;
+    int outBufIdx = 0;
+    int binBufIdx = 0;
+
+    int rewind = strlen(str_bin);
+
+    unsigned char firstNibble;
+    unsigned char secondNibble;
+
+    while(*str_bin != 0)if(*str_bin++ != ' ')
+                        {
+                            if(*str_bin == 'x'){*str_bin = ' ';continue;}
+                            str[size_no_ws] = *(str_bin-1);
+                            size_no_ws++;
+                        }
+
+    str_bin -= rewind;
+
+    if((size_no_ws % 2) != 0)
+    {
+        firstNibble = 0;
+        secondNibble = convertAsciiHexCharToBin(str[0]);
+        if(secondNibble == 0xFF)
+        {
+            free(out);
+            free(str);
+            return -1;
+        }
+        out[outBufIdx] = ((firstNibble<<4)&0xF0) | (secondNibble &0xF);
+        outBufIdx++;
+        binBufIdx = 1;
+    }
+    
+    for(; binBufIdx < size_no_ws; binBufIdx += 2)
+    {
+        firstNibble = convertAsciiHexCharToBin(str[binBufIdx]);
+        secondNibble = convertAsciiHexCharToBin(str[binBufIdx+1]);
+        
+        if((firstNibble == 0xFF) || (secondNibble == 0xFF))
+        {
+            free(out);
+            free(str);
+            return -1;
+        }
+        out[outBufIdx] = ((firstNibble<<4)&0xF0)|(secondNibble&0xF);
+        outBufIdx++;
+    }
+
+/*debugging
+  dump(out, outBufIdx);
+*/
+    memcpy(str_bin, out, outBufIdx);
+    free(out);
+    free(str);
+
+    return outBufIdx;
+
+}
 
 void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                 option_block *opts, int i)
@@ -90,6 +172,38 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     memcpy(pSym->sym_val,  sym_val,  sym_val_len);
     if(i == 1)
         pSym->is_len = 1;
+}
+
+void add_b_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
+                  option_block *opts)
+{
+    sym_t *pSym;
+    char buf[8192]= {0};
+    char buf2[8192] = {0};
+
+    if((sym_len >= 8192) ||
+       (sym_val_len >= 8192))
+    {
+        file_error("too large symbol!", opts);
+    }
+
+    opts->b_syms_array = realloc(opts->b_syms_array, 
+                               sizeof(sym_t) * (opts->b_sym_count + 1));
+    
+    if(opts->b_syms_array == NULL)
+    {
+        file_error("out of memory adding symbol.", opts);
+    }
+
+    opts->b_sym_count += 1;
+    
+    pSym = &(opts->b_syms_array[opts->b_sym_count - 1]);
+    
+    memset(pSym->sym_name, 0, 8192);
+    memset(pSym->sym_val, 0, 8192);
+    memcpy(pSym->sym_name, sym_name, sym_len);
+    memcpy(pSym->sym_val,  sym_val,  sym_val_len);
+    pSym->is_len = sym_val_len;
 }
 
 void add_literal(option_block *opts, char *literal, int len)
@@ -329,6 +443,26 @@ int processFileLine(option_block *opts, char *line, int line_len)
             file_error("symbol is null!", opts);
         }
         add_symbol(line+1, (delim - (line+1)), delim+1, sze, opts, 0);
+        return 0;
+    } else if (line[0] == '!')
+    {
+        /*binary stuff*/
+        delim = strstr(line+1, "=");
+        if(delim == NULL)
+        {
+            file_error("binary symbol not assigned!", opts);
+        }
+        sze = strlen(delim+1);
+        if(sze == 0)
+        {
+            file_error("binary symbol is null!", opts);
+        }
+        sze = ascii_to_bin(delim+1);
+        if(sze < 0)
+        {
+            file_error("binary text is invalid!", opts);
+        }
+        add_b_symbol(line+1, (delim - (line+1)), delim+1, sze, opts);
         return 0;
     }
 

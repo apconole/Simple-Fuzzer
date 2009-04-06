@@ -162,6 +162,12 @@ ___________________________________________________________________________
 +++++++++++++++++++ ex: FUZZ X would become FUZZ y, and FUZZ %X would become
 +++++++++++++++++++     FUZZ 1 (since y is 1 character).
 +++++++++++++++++++--------------------------------------------------------
+| !X=deadbeef     | Used to create a binary subsitution symbol. The first
++++++++++++++++++++ occurance of X within the fuzz payload will become the
++++++++++++++++++++ binary bytes defined by deadbeef. Valid formats for 
++++++++++++++++++++ specifying binary data:
++++++++++++++++++++ !X=de ad 0xbe Efca \xfe BADCab
++++++++++++++++++++--------------------------------------------------------
 
 caveat: all config files MUST end with a newline.
 
