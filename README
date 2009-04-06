@@ -258,4 +258,9 @@ rudimentary 'test for response' in there which dumps the response to the
 screen, but it's not terribly reliable.
 
 
+!!!!!!!!            SUPER LARGE DISCLAIMER          !!!!!!!!!!!!
+don't use this to exploit someone's network, or be a douche. this is for 
+security research use and internal testing. using this to crash someones system
+without permission or "pwn sum n00bz" is pretty lame.
+
 thats all for now
