@@ -1,3 +1,10 @@
+v 0.4
+  Fixed the windows snoop version - sniffing responses under windows - hooray!
+  Added hex output option, and trim newline output option
+  Got initial binary fuzzing working
+  Fixed a bug with pattern matching which occured with nesting
+  Added an emacs major mode for editing config files (load-file sfuzz-mode.el)
+  
 v 0.4 rc1
   Streamlined some of the code
   Fixed bugs (duh!) mostly with allocations and formatting
