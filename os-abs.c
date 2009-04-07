@@ -322,6 +322,26 @@ void os_send_udp(option_block *opts, char *str, int len)
     mssleep(opts->reqw_inms);
 }
 
+void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
+{
+    const char *start;
+    const char *l_occurance = (const char *)hs+hsl-ndl;
+    
+    if(ndl == 0)
+        return (void *)hs;
+    
+    if(hsl < ndl)
+        return NULL;
+ 
+    for(start = (const char *)hs; start <= l_occurance; ++start)
+        if(start[0] == ((const char *)start)[0] &&
+           !memcmp((const void *)&start[1],
+                   (const void *)((const char *)nd+1),
+                   ndl-1))
+            return (void *)start;
+    return NULL;
+}
+
 int isws(char c)
 {
     /*comment out the following for only replacing stuff with no whitespace*/
@@ -371,63 +391,53 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
 {
     char *f;
     char *str = buf;
+    int   repls = 0;
 
     int   origl = buflen;
     int   oldl  = strlen(old);
 
     if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
         return -1;
-retry:
-    f = strstr(str, old);
-    if(f != NULL)
+
+    while((f = __internal_memmem(str, (buf + buflen) - str, old, oldl)) 
+          != NULL)
     {
-        if(!isws(*(f+oldl)))
-        {
-            return origl;
-        }
+        ++repls;
 
-        origl -= oldl;
-
-        if(origl < 0)
+        if(origl - oldl < 0)
             origl = 0;
 
-        origl += newl;
-
-        memmove(f+newl, f+oldl, strlen(f+oldl)+1);
+        memmove(f+newl, f+oldl, origl - (f - buf));
         memcpy(f, new, newl);
-        str = f + oldl + 1;
-    } else
-    {
-        if(strlen(str) < origl)
-        {
-            if(strlen(str) == 0)
-                str += 1;
-            str += strlen(str);
 
-            if(str - buf > origl)
-                return origl;
+        str = f + oldl;
 
-            goto retry;
-        }
+        origl -= oldl;
+        origl += newl;
     }
     return origl;
 }
 
-void dump(void* b, int len){
-  unsigned char *buf = b;
-  int i, cnt=0;
-  char str[17];
-  memset(str, 0, 17);
-  for ( i = 0; i < len; i++ ){
-    if ( cnt % 16 == 0 ){
-      printf("  %s\n%04X: ", str, cnt);
-      memset(str, 0, 17);
+void dump(void* b, int len, FILE *dump){
+    unsigned char *buf = b;
+    int i, cnt=0;
+    char str[17];
+    FILE *out = stdout;
+    memset(str, 0, 17);
+
+    if(dump != NULL)
+        out = dump;
+
+    for ( i = 0; i < len; i++ ){
+        if ( cnt % 16 == 0 ){
+            fprintf(out, "  %s\n%04X: ", str, cnt);
+            memset(str, 0, 17);
+        }
+        if ( buf[cnt] < ' '  ||  buf[cnt] >= 127 )
+            str[cnt%16] = '.';
+        else
+            str[cnt%16] = buf[cnt];
+        fprintf(out, "%02X ", buf[cnt++]);
     }
-    if ( buf[cnt] < ' '  ||  buf[cnt] >= 127 )
-      str[cnt%16] = '.';
-    else
-      str[cnt%16] = buf[cnt];
-    printf("%02X ", buf[cnt++]);
-  }
-  printf("  %*s\n\n", 16+(16-len%16)*2, str);
+    fprintf(out, "  %*s\n\n", 16+(16-len%16)*2, str);
 }

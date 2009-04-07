@@ -87,18 +87,23 @@ void print_help()
     printf("\t-h\t This message.\n");
     printf("\t-V\t Version information.\n");
     printf("\n");
-    printf("\t-T|-U|-O TCP|UDP|Output mode\n");
-    printf("\t-R\t Refrain from closing connections (ie: forget them)\n");
-    printf("\t-D\t Define a symbol and value (X=y).\n");
-    printf("\t-L\t Log file\n");
-    printf("\t-f\t Config File\n");
-    printf("\t-S\t Remote host\n");
-    printf("\t-p\t Port\n");
-    printf("\t-t\t Wait time for reading the socket\n");
-    printf("\t-l\t Only perform literal fuzzing\n");
-    printf("\t-s\t Only perform sequence fuzzing\n");
+    printf("networking / output:\n");
     printf("\t-v\t Verbose output\n");
     printf("\t-q\t Silent output mode (generally for CLI fuzzing)\n");
+    printf("\t-X\t prints the output in hex\n");
+    printf("\n");
+    printf("\t-t\t Wait time for reading the socket\n");
+    printf("\t-S\t Remote host\n");
+    printf("\t-p\t Port\n");
+    printf("\t-T|-U|-O TCP|UDP|Output mode\n");
+    printf("\t-R\t Refrain from closing connections (ie: \"leak\" them)\n");
+    printf("\n");
+    printf("\t-f\t Config File\n");
+    printf("\t-L\t Log file\n");
+    printf("\t-r\t Trim the tailing newline\n");
+    printf("\t-D\t Define a symbol and value (X=y).\n");
+    printf("\t-l\t Only perform literal fuzzing\n");
+    printf("\t-s\t Only perform sequence fuzzing\n");
 }
 
 void sanity(option_block *opts)
@@ -158,6 +163,12 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
             break;
         case 'q':
             opts->verbosity = QUIET;
+            break;
+        case 'X':
+            opts->hexl_dump = 1;
+            break;
+        case 'r':
+            opts->trim_nl = 1;
             break;
         case 'R':
             opts->forget_conn = 1;
@@ -359,9 +370,23 @@ void fuzz(option_block *opts, char *req, int len)
     
     if(opts->sym_count)
     {
-        for(i = 0; i < opts->sym_count; ++i)
+        /*xxx : enhancement - loop backwards allowing people to define
+                a string (aaa for example) and use that string within
+                other defines appearing later.
+                THIS creates a problem - our length field substitution
+                depends on having lengths before non-lengths. The answer
+                of course, is to just have 2 loops, apply the lenghts first*/
+        for(i = opts->sym_count - 1; i >= 0; --i)
         {
             pSym = &(opts->syms_array[i]);
+            if(pSym->is_len)
+                len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+        }
+
+        for(i = opts->sym_count - 1; i >= 0; --i)
+        {
+            pSym = &(opts->syms_array[i]);
+            if(!pSym->is_len)
             len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
         }
     }
@@ -378,8 +403,15 @@ void fuzz(option_block *opts, char *req, int len)
 
     if(opts->out_flag)
     {
-        fwrite(req, len, 1, log);
-        fwrite("\n", 1, 1, log);
+        if(opts->hexl_dump)
+        {
+            dump(req, len, log);
+        }
+        else
+        {
+            fwrite(req, len, 1, log);
+            fwrite("\n", 1, 1, log);
+        }
     }
     
     if(opts->tcp_flag)
@@ -451,6 +483,9 @@ int execute_fuzz(option_block *opts)
 
         /* TODO: implement this feature in an intuitive and useful manner */
         opts->send_initial_nonfuzz_again = 0;
+
+        if(opts->trim_nl)
+            req[reqsize-1] = 0;
 
         if(opts->seqstep <= 0)
         {

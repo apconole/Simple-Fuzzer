@@ -5,7 +5,11 @@
 
 # note: this file depends on the behavior that text substitutions are resolved
 #       before binary substitutions. Because of this we can build a nice header
-#       and description
+#       and description - this is not likely to change, but be mindful of it
+
+# sniff the wire with wireshark and have a11 protocol enabled (thank ravi v.
+# at airvana for the rework of it). Should decode the a11 reg reply denied
+# with unspecified reason. This is missing an authentication extension.
 
 
 # some things to change
@@ -16,7 +20,7 @@
 
 # AT ID - usually null, so the following might want to be fuzzed!
 !A11_HOME_ADDRESS_=0x00 0x00 0x00 0x00
-!A11_SSE_LENGTH_=0x1f
+!A11_SSE_LENGTH_=0x08
 
 # A11 ID - this is the part where we need to get a better script language
 !A11_ID_HIGH_=0x12345678
@@ -75,7 +79,7 @@ $A11_REG_REQ_MSG_HDR_=A11_MSG_TYPE_REG_REQ_A11_REV_TUN_AND_GRE_A11_LIFE_TIME_A11
 # in the following we have the A11_SSE_KEY_ field appearing twice. This is a
 # shortcut I've taken. A better fuzz would probably define stuff to go in the
 # reserved fields.
-$A11_SESSION_SPECIFIC_EXTENSION_=A11_SSE_ELEMENT_TYPE_A11_SSE_LENGTH_A11_SSE_PROTOCOL_BYTE_STREAM_A11_SSE_KEY_A11_SSE_KEY_A11_MN_ID_NO_IC_TYPE_
+$A11_SESSION_SPECIFIC_EXTENSION_=A11_SSE_ELEMENT_TYPE_A11_SSE_LENGTH_A11_SSE_PROTOCOL_BYTE_STREAM_A11_SSE_KEY_A11_MN_ID_NO_IC_TYPE_
 
 #build a reg reply message in fuzz 1
 literal=A11_REG_REPLY_DENY_MSG_HDR_A11_SESSION_SPECIFIC_EXTENSION_

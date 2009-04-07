@@ -172,7 +172,7 @@ void DumpPacket(char *buffer, int len){
 
     do{
         printf("-------------------------------------------------\n");
-        dump(buffer, len);
+        dump(buffer, len, NULL);
 //        PrintAddr("Destination EtherID=", ip->hw_header.dst_eth, eETH_ADDR);
 //        PrintAddr(", Source EtherID=", ip->hw_header.src_eth, eETH_ADDR);
         printf("\nIPv%d: header-len=%d, type=%d, packet-size=%d, ID=%d\n",

@@ -110,6 +110,12 @@ typedef struct
     char no_literal_fuzz;
     char no_sequence_fuzz;
 
+    /*trim newline at the end*/
+    char trim_nl;
+
+    /*dump output as hex*/
+    char hexl_dump;
+
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024

@@ -18,6 +18,7 @@ features
   variables within test cases (ex: strings to be replaced with different 
                                    strings)
   tcp and udp payload transport (icmp support tbd)
+  binary substitution support (see basic.a11 for more information)
 
 intro - the problem
   why'd i write this? i was going to use spike for black box testing at work, 
@@ -64,6 +65,9 @@ output modes:
 logging:
   -L filename
     this option specifies a file to write instead of the standard output
+  -X
+    this option specifies that the fuzz outputs to the log / screen should be
+    printed as a hexadecimal dump.
 
 config file:
   -f filename
@@ -97,6 +101,8 @@ misc:
     transmit literals only.
   -s
     transmit sequences only.
+  -r
+    do not send a trailing newline (generally used for binary fuzzing)
 
 help:
   -V
