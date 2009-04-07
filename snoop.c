@@ -264,14 +264,21 @@ int main(int argc, char *argv[])
         PANIC("Snooper socket");
 
 #ifdef __WIN32__
+    printf("Seems you're using windows. Due to a wacky way in which WINSOCK\n");
+    printf("works, you need to enter the IP address of your local interface\n");
+    printf("on which you'd like to sniff.\n");
+    printf(": ");
+    fflush(stdout);
+    fgets(data, 1024, stdin);
+
     memset(&sa, 0, sizeof(sa));
-    sa.sin_addr.s_addr = inet_addr("192.168.0.3");
+    sa.sin_addr.s_addr = atoip(data);
     sa.sin_family = AF_INET;
     sa.sin_port = 0;
     
-//    if(bind(sd, (struct sockaddr*)&sa, sizeof(sa)) == SOCKET_ERROR)
-//        PANIC("bind");
-
+    if(bind(sd, (struct sockaddr*)&sa, sizeof(sa)) == SOCKET_ERROR)
+        PANIC("bind");
+    
     if(ioctlsocket(sd, SIO_RCVALL, &ON) == SOCKET_ERROR)
         PANIC("SIO_RCVALL");
 #endif
