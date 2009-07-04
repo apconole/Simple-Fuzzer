@@ -9,21 +9,20 @@
 #define PLUGIN_PROVIDES_FUZZ_MODIFICATION 0x00000008
 #define PLUGIN_PROVIDES_POST_FUZZ         0x00000010
 
-typedef int  (*p_capex)() plugin_capex;
+typedef int  (*plugin_capex)();
 
-typedef void (*p_transport)(option_block *opts, void *d, int len) 
-    plugin_transport;
+typedef void (*plugin_transport)(option_block *opts, void *d, int len);
 
-typedef int (*p_payloader)(option_block *opts, void *i, int il, void *o, int ol)
-    plugin_payload_transform;
+typedef int (*plugin_payload_transform)(option_block *opts, void *i, int il, 
+                                        void *o, int ol);
 
-typedef int (*p_fuzz_mod)(option_block *opts, void *inf, int infl, void *of,
-                          int ofl) payload_fuzz_transform;
+typedef int (*plugin_fuzz_transform)(option_block *opts, void *inf, int infl, 
+                                     void *of, int ofl);
 
-typedef void (*p_post_fuzz)(option_block *opts) post_fuzz_mod;
+typedef void (*post_fuzz_mod)(option_block *opts);
 
-typedef char *(*p_plugin_name)()    plugin_name;
-typedef char *(*p_plugin_version)() plugin_version;
+typedef char *(*plugin_name)();
+typedef char *(*plugin_version)();
 
 typedef struct _pprovisor
 {

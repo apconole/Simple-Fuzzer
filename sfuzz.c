@@ -36,6 +36,7 @@
 #include "os-abs.h"
 #include "version.h"
 #include "options-block.h"
+#include "sfuzz-plugin.h"
 
 #ifdef __WIN32__
 #include "windows.h"
@@ -43,6 +44,8 @@
 #include <sys/time.h>
 #include <string.h>
 #endif
+
+plugin_provisor *g_plugin;
 
 extern int readLine(option_block *opts, char *line, int len, int ign_cr);
 extern void read_config(option_block *opts);
@@ -54,8 +57,9 @@ void dump_options(option_block *opts)
 
     if(opts != NULL)
     {
-        printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\tsequences: [%d]\n\tsymbols: [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n",
-               get_time_as_log(), opts->pFilename, opts->state, opts->lno, opts->num_litr, opts->num_seq, opts->sym_count / 2, opts->reqw_inms, opts->mseql);
+        printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\tsequences: [%d]\n\tsymbols: [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n\tplugin: <%s>\n",
+               get_time_as_log(), opts->pFilename, opts->state, opts->lno, opts->num_litr, opts->num_seq, opts->sym_count / 2, opts->reqw_inms, opts->mseql,
+               g_plugin ? g_plugin->name() : "none");
 
         for(i = 0; i < opts->num_litr; i++)
             printf("\tliteral[%d] = [%s]\n", i+1, opts->litr[i]);
@@ -267,6 +271,8 @@ int main(int argc, char *argv[])
     struct timeval tv;
     option_block options;
     int i;
+
+    g_plugin = NULL;
 
     memset(&options, 0, sizeof(options));
 
