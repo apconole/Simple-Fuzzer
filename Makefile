@@ -15,7 +15,7 @@ CP      =/bin/cp
 CFLAGS=-g -Wall -I.
 CPPFLAGS=-g -Wall -fPIC -I. 
 
-LIBS=
+LIBS= -ldl
 SF_OBJS=file-utils.o sfuzz.o os-abs.o
 SNOOP_OBJS=snoop.o os-abs.o
 PROGS=sfuzz

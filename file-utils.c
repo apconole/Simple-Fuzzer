@@ -31,8 +31,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 
 #include "sfuzz.h"
+#include "sfuzz-plugin.h"
 #include "options-block.h"
 #include "os-abs.h"
 
@@ -42,6 +44,37 @@ void file_error(char *msg, option_block *opts)
     fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",
             get_time_as_log(), opts->pFilename, opts->lno, msg);
     exit(-1);
+}
+
+void *plugin_handle = NULL;
+
+void plugin_load(char *filename, option_block *opts)
+{
+    char fileline[8192] = {0};
+    int  length         = strcspn(filename, " \n\r");
+    
+    if( length > 8191 )
+    {
+        file_error("filename for plugin is too large!", opts);
+        return;
+    }
+    
+    strncpy(fileline, filename, length);
+
+    if( plugin_handle != NULL )
+    {
+        file_error("limit 1 plugin per script!", opts);
+        return;
+    }
+    
+    plugin_handle = dlopen(fileline, RTLD_LAZY);
+    if(plugin_handle == NULL)
+    {
+        file_error("unable to open plugin specified", opts);
+        return;
+    }
+    
+    
 }
 
 unsigned char convertAsciiHexCharToBin(char asciiHexChar)
@@ -312,6 +345,16 @@ int processFileLine(option_block *opts, char *line, int line_len)
     }
 
     /*not a comment, regular state*/
+    if(!strncasecmp("plugin", line, 6))
+    {
+        delim = strstr(line, " ");
+        if(delim == NULL)
+        {
+            file_error("plugin line with no file specified. abort!", opts);
+        }
+        plugin_load(delim, opts);
+        return 0;
+    }
     
     if(!strncasecmp("literal", line, 7))
     {

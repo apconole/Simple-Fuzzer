@@ -37,4 +37,7 @@ typedef struct _pprovisor
 
 } plugin_provisor;
 
+/* only one "plugin" will be loaded at a time. */
+extern plugin_provisor *g_plugin;
+
 #endif
