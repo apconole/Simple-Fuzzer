@@ -48,10 +48,13 @@ void file_error(char *msg, option_block *opts)
 
 void *plugin_handle = NULL;
 
+typedef void (*plugin_init)(plugin_provisor *);
+
 void plugin_load(char *filename, option_block *opts)
 {
+    plugin_init ir;
     char fileline[8192] = {0};
-    int  length         = strcspn(filename, " \n\r");
+    int  length         = strcspn(filename+1, " \n\r");
     
     if( length > 8191 )
     {
@@ -59,7 +62,7 @@ void plugin_load(char *filename, option_block *opts)
         return;
     }
     
-    strncpy(fileline, filename, length);
+    strncpy(fileline, filename+1, length);
 
     if( plugin_handle != NULL )
     {
@@ -67,14 +70,40 @@ void plugin_load(char *filename, option_block *opts)
         return;
     }
     
-    plugin_handle = dlopen(fileline, RTLD_LAZY);
+    plugin_handle = dlopen(fileline, RTLD_NOW);
     if(plugin_handle == NULL)
     {
+        fprintf(stderr, "[%s] fileline\n", fileline);
         file_error("unable to open plugin specified", opts);
         return;
     }
     
+    ir = (plugin_init)dlsym(plugin_handle, "plugin_init");
+    if(ir == NULL)
+    {
+        fprintf(stderr, "--- plugin loading: [%s][%s] ---\n", fileline,
+                dlerror());
+        file_error("unable to locate entrypoint in plugin", opts);
+        return;
+    }
+
+    g_plugin = (plugin_provisor*)malloc(sizeof(plugin_provisor));
     
+    if(g_plugin == NULL)
+    {
+        file_error("unable to allocate plugin descriptor", opts);
+        return;
+    }
+
+    memset(g_plugin, 0, sizeof(plugin_provisor));
+    
+    ir(g_plugin);
+
+    if(g_plugin->name == NULL || g_plugin->version == NULL)
+    {
+        file_error("plugin is invalid!", opts);
+        return;
+    }
 }
 
 unsigned char convertAsciiHexCharToBin(char asciiHexChar)
@@ -211,8 +240,6 @@ void add_b_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                   option_block *opts)
 {
     sym_t *pSym;
-    char buf[8192]= {0};
-    char buf2[8192] = {0};
 
     if((sym_len >= 8192) ||
        (sym_val_len >= 8192))

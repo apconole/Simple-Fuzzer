@@ -12,13 +12,14 @@ INSTALL	=$(CCPATH)install
 MKDIR	=/bin/mkdir
 CP      =/bin/cp
 
-CFLAGS=-g -Wall -I.
+CFLAGS=-g -Wall -I. -fPIC
 CPPFLAGS=-g -Wall -fPIC -I. 
 
 LIBS= -ldl
 SF_OBJS=file-utils.o sfuzz.o os-abs.o
 SNOOP_OBJS=snoop.o os-abs.o
-PROGS=sfuzz
+EXAMPLE_OBJS=sfuzz-plugin-example.o
+PROGS=sfuzz sfuzz-plugin-example.so
 
 ifeq ($(TARGET_PLAT),)
 TARGET_PLAT=linux
@@ -38,6 +39,9 @@ all: $(PROGS)
 
 sfuzz: $(SF_OBJS)
 	$(CC) -o $@ $(SF_OBJS) $(LIBS)
+
+sfuzz-plugin-example.so: sfuzz-plugin-example.o
+	$(LD) -shared sfuzz-plugin-example.o -o sfuzz-plugin-example.so
 
 snoop: $(SNOOP_OBJS)
 	$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)
