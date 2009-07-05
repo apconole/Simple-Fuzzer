@@ -31,6 +31,9 @@
 #ifndef __SFUZZ_H__
 #define __SFUZZ_H__
 
+#include "options-block.h"
+
 extern char *get_time_as_log();
+extern void file_error(char *msg, option_block *opts);
 
 #endif

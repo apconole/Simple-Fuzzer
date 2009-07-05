@@ -365,6 +365,9 @@ void fuzz(option_block *opts, char *req, int len)
 {
     int i = 0;
     FILE *log = stdout;
+    char *r2, *tmp;
+    char *p1, *tmp2;
+    int r2_len,p1_len;
     sym_t *pSym;
 
     if(opts->fp_log)
@@ -373,6 +376,20 @@ void fuzz(option_block *opts, char *req, int len)
     if(opts->verbosity != QUIET)
         fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
                 ++fuzznum);
+
+#ifndef NOPLUGIN
+    if(g_plugin != NULL && 
+       ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
+        PLUGIN_PROVIDES_PAYLOAD_PARSE))
+    {
+        tmp2 = req;
+        p1_len = len * 2;
+        p1 = malloc(p1_len);
+        g_plugin->payload_trans(opts, req, len, p1, p1_len);
+        req = p1;
+        len = p1_len;
+    }
+#endif
     
     if(opts->sym_count)
     {
@@ -420,6 +437,27 @@ void fuzz(option_block *opts, char *req, int len)
         }
     }
     
+#ifndef NOPLUGIN
+    if(g_plugin != NULL && 
+       ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
+        PLUGIN_PROVIDES_FUZZ_MODIFICATION))
+    {
+        r2 = malloc(len * 2);
+        r2_len = len * 2;
+        g_plugin->fuzz_trans(opts, req, len, r2, &r2_len);
+        tmp = req;
+        req = r2;
+        len = r2_len;
+    }
+
+    if(g_plugin != NULL && 
+       ((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) == 
+        PLUGIN_PROVIDES_TRANSPORT_TYPE))
+    {
+        g_plugin->trans(opts, req, len);
+    }
+    else 
+#endif
     if(opts->tcp_flag)
     {
         os_send_tcp(opts, req, len);
@@ -428,6 +466,24 @@ void fuzz(option_block *opts, char *req, int len)
     {
         os_send_udp(opts, req, len);
     }
+
+#ifndef NOPLUGIN
+    if(g_plugin != NULL && 
+       ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
+        PLUGIN_PROVIDES_FUZZ_MODIFICATION))
+    {
+        free(req);
+        req = tmp;
+    }
+
+    if(g_plugin != NULL && 
+       ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
+        PLUGIN_PROVIDES_PAYLOAD_PARSE))
+    {
+        free(req);
+        req = tmp2;
+    }
+#endif
     
 }
 

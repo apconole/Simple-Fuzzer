@@ -32,6 +32,7 @@
 
 #include "options-block.h"
 #include "os-abs.h"
+#include "sfuzz-plugin.h"
 
 #ifdef __WIN32__
 #include "winsock.h"
@@ -246,16 +247,28 @@ void os_send_tcp(option_block *opts, char *str, int len)
     ret = select(sockfd+1, &fds, NULL, NULL, &tv);
     if(ret > 0)
     {
-        if(FD_ISSET(sockfd, &fds) && (opts->verbosity != QUIET))
+        if(FD_ISSET(sockfd, &fds))
         {
             char buf[8192] = {0};
-            read(sockfd, &buf, 8192);
-            fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
-                    get_time_as_log(),
-                    buf);
+            int r_len = 0;
+            r_len = read(sockfd, &buf, 8192);
+            if(opts->verbosity != QUIET)
+                fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
+                        get_time_as_log(),
+                        buf);
+#ifndef NOPLUGIN
+            if((g_plugin != NULL) &&
+               ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+                PLUGIN_PROVIDES_POST_FUZZ))
+            {
+                g_plugin->post_fuzz(opts, buf, r_len);
+            }
+#endif
+
+            
         }
     }
-
+    
     if(opts->close_conn)
         opts->sockfd = -1;
     
@@ -275,6 +288,9 @@ void os_send_tcp(option_block *opts, char *str, int len)
 void os_send_udp(option_block *opts, char *str, int len)
 {
     FILE *log = stdout;
+    struct timeval tv;
+    fd_set fds;
+    unsigned long int to = MAX(100, opts->time_out);
 
 #ifdef __WIN32__
     WSADATA wsda;
@@ -311,6 +327,41 @@ void os_send_udp(option_block *opts, char *str, int len)
         fprintf(stderr,"[%s] error: udp send() failed.\n", get_time_as_log());
         fprintf(log,"[%s] error: udp send() failed.\n", get_time_as_log());
         return;
+    }
+
+    if(opts->verbosity != QUIET)
+        fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
+                get_time_as_log());
+    
+    FD_ZERO(&fds);
+    FD_SET(sockfd, &fds);
+
+    tv.tv_sec  = to / 1000;
+    tv.tv_usec = (to % 1000) * 1000; /*time out*/
+
+    ret = select(sockfd+1, &fds, NULL, NULL, &tv);
+    if(ret > 0)
+    {
+        if(FD_ISSET(sockfd, &fds))
+        {
+            char buf[8192] = {0};
+            int r_len = 0;
+            r_len = read(sockfd, &buf, 8192);
+            if(opts->verbosity != QUIET)
+                fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
+                        get_time_as_log(),
+                        buf);
+#ifndef NOPLUGIN
+            if((g_plugin != NULL) &&
+               ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+                PLUGIN_PROVIDES_POST_FUZZ))
+            {
+                g_plugin->post_fuzz(opts, buf, r_len);
+            }
+#endif
+
+            
+        }
     }
 
 #ifdef __WIN32__

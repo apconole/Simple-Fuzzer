@@ -46,9 +46,86 @@ void file_error(char *msg, option_block *opts)
     exit(-1);
 }
 
+#ifndef NOPLUGIN
 void *plugin_handle = NULL;
 
 typedef void (*plugin_init)(plugin_provisor *);
+
+void plugin_sanity(option_block *opts)
+{
+    if(g_plugin == NULL)
+        return;
+
+    if(g_plugin->capex == NULL)
+    {
+        file_error("plugin doesn't provide a capex.", opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;        
+    }
+
+    if(((g_plugin->capex() & PLUGIN_PROVIDES_LINE_OPTS) ==
+        PLUGIN_PROVIDES_LINE_OPTS) && 
+       (g_plugin->config == NULL))
+    {
+        file_error(
+          "plugin claims to provide config parsing but doesn't implement it!",
+          opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;
+    }
+
+    if(((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
+        PLUGIN_PROVIDES_PAYLOAD_PARSE) && 
+       (g_plugin->payload_trans == NULL))
+    {
+        file_error(
+         "plugin claims to provide payload parsing but doesn't implement it!",
+         opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;
+    }
+
+    if(((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) ==
+        PLUGIN_PROVIDES_TRANSPORT_TYPE) && 
+       (g_plugin->trans == NULL))
+    {
+        file_error(
+          "plugin claims to provide transportation but doesn't implement it!",
+          opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;
+    }
+    
+    if(((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
+        PLUGIN_PROVIDES_FUZZ_MODIFICATION) && 
+       (g_plugin->fuzz_trans == NULL))
+    {
+        file_error(
+          "plugin claims to provide fuzz transform but doesn't implement it!",
+          opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;
+    }
+
+    if(((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+        PLUGIN_PROVIDES_POST_FUZZ) && 
+       (g_plugin->post_fuzz == NULL))
+    {
+        file_error(
+            "plugin claims to provide postfuzz but doesn't implement it!",
+            opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;
+    }
+
+    
+}
 
 void plugin_load(char *filename, option_block *opts)
 {
@@ -104,7 +181,10 @@ void plugin_load(char *filename, option_block *opts)
         file_error("plugin is invalid!", opts);
         return;
     }
+
+    plugin_sanity(opts);
 }
+#endif
 
 unsigned char convertAsciiHexCharToBin(char asciiHexChar)
 {
@@ -372,6 +452,8 @@ int processFileLine(option_block *opts, char *line, int line_len)
     }
 
     /*not a comment, regular state*/
+
+#ifndef NOPLUGIN
     if(!strncasecmp("plugin", line, 6))
     {
         delim = strstr(line, " ");
@@ -382,7 +464,8 @@ int processFileLine(option_block *opts, char *line, int line_len)
         plugin_load(delim, opts);
         return 0;
     }
-    
+#endif
+
     if(!strncasecmp("literal", line, 7))
     {
         delim = strstr(line, "=");
@@ -535,6 +618,15 @@ int processFileLine(option_block *opts, char *line, int line_len)
         add_b_symbol(line+1, (delim - (line+1)), delim+1, sze, opts);
         return 0;
     }
+
+#ifndef NOPLUGIN
+    if(g_plugin != NULL && 
+       ((g_plugin->capex() & PLUGIN_PROVIDES_LINE_OPTS) == 
+        PLUGIN_PROVIDES_LINE_OPTS))
+    {
+        return g_plugin->config(opts, line, line_len);
+    }
+#endif
 
     file_error("invalid config file.", opts);
     return 1;

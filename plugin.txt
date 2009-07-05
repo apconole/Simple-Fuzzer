@@ -1,0 +1,31 @@
+sfuzz plugin reference guide
+
+foreward.
+   this guide needs a lot of work. i have only included a set of cookbooks.
+
+i. introduction
+   the sfuzz plugin system provides a few key hook points for accessing fuzz
+data. it allows for additional config line options, adding new transport types,
+modification of fuzzed payload before transmission and analysis of the returned
+fuzz data. this gives plugin writers much more control over how the engine 
+behaves.
+   currently, only one plugin may be loaded at any given time. however, future
+versions may lift this restriction.
+
+ii. cookbook of plugin-fu
+  all plugins need to provide a plugin_init function which takes a 
+plugin_provisor structure. further, all plugins must fill in the capex, name,
+and version function pointers with appropriate functions. the following table
+lists each function hook point, and how to signal to the engine that you would
+like to overload that hook point.
+
+  hook     |  structure  | prototype                | capex return code
+function   |   member    |                          |
+-------------------------------------------------------------------------------
+transport  |   trans     | void foo                 | return 
+           |             | (option_block *, void *, |PLUGIN_PROVIDES_TRANSPORT_ 
+           |             |  int );                  |TYPE; 
+-------------------------------------------------------------------------------
+per-line   |   config    | void foo (option_block*, | return
+config     |             |    char *, int);         |PLUGIN_PROVIDES_LINE_OPTS;
+-------------------------------------------------------------------------------
