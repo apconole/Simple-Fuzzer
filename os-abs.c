@@ -492,3 +492,24 @@ void dump(void* b, int len, FILE *dump){
     }
     fprintf(out, "  %*s\n\n", 16+(16-len%16)*2, str);
 }
+
+#ifdef __WIN32__
+/*this is a "workaround" for the fact that windows isn't 'compliant' and
+  has it's own dynamic loading functions. basically, we'll just wrap them
+  here.
+  It's noteworthy that these are very quick 'n dirty, and shouldn't be taken
+  as a terribly good replacement. just something that works.
+*/
+
+/*return a handle to a .dll/.so file*/
+void *dlopen(const char *name, int opts)
+{
+    
+}
+
+/*get an entrypoint in the function.*/
+void *dlsym(void *handle, const char *symbol_name)
+{
+
+}
+#endif

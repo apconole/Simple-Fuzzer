@@ -1,0 +1,34 @@
+simple fuzzer installation/building guide
+
+simple fuzzer uses a simple gnu-make driven Makefile which constains all of the
+build and installation jobs. the Makefile aims to determine which platform it
+currently will be building for (via the uname -s call), building the engine,
+plugins, and sniffer (if supported). currently, there is code for linux, osx,
+and windows (tested on XP only).
+
+building when you know which platform you'll be using is simple:
+make TARGET_PLAT=platform
+where platform is:
+
+Darwin
+Linux
+win
+
+
+once you run this make, you should have sfuzz (or sfuzz.exe on windows 
+machines), as well as a number of .o and .so files which are all part of the
+system. the .so files are plugins, which can help augment sfuzz by adding 
+special knowledge of a protocol, adding transport layers, or even enhancing the
+fuzz case generation code.
+
+for supported snoop platforms (currently, windows and linux) running that same
+make command, but adding snoop to the end will build the sniffer piece. the
+sniffer is useful for observing responses when you have small connection 
+timeouts (for instance, you're looking to flood a test server with requests to
+simulate user load).
+
+for linux and os-x platforms, running make install would be advised since this
+will put sfuzz, associated scripts, and plugins into the correct 
+/usr/local/share/sfuzz-db directory. If you'd like to change this location, 
+refer to the Makefile. Windows users may have to manually adjust the included
+scripts to get include locations correct.

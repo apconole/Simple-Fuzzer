@@ -60,6 +60,7 @@ install: all
 	$(INSTALL) sfuzz /usr/local/bin/sfuzz
 	$(MKDIR) -p /usr/local/share/sfuzz-db
 	$(CP) sfuzz-sample/* /usr/local/share/sfuzz-db
+	$(CP) *.so /usr/local/share/sfuzz-db
 	echo Installed.
 
 uninstall:

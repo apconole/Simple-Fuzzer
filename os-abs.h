@@ -41,4 +41,10 @@ extern int  smemrepl(char *buf, size_t buflen, char *old, char *new, int newl);
 extern int  atoip(const char *pIpStr);
 extern void dump(void *b, int len, FILE *out);
 
+#ifdef __WIN32__
+#define RTLD_NOW 0
+extern void *dlopen(const char *, int);
+extern void *dlsym(void *, const char *);
+#endif
+
 #endif
