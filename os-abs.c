@@ -504,12 +504,32 @@ void dump(void* b, int len, FILE *dump){
 /*return a handle to a .dll/.so file*/
 void *dlopen(const char *name, int opts)
 {
+    HMODULE hModule;
+    UINT uMode;
+
+    /*disable the critical error dialog.*/
+    uMode = SetErrorMode( SEM_FAILCRITICALERRORS );
     
+    if( file != NULL )
+    {
+        hModule = GetModuleHandle( NULL );
+    }
+    else
+    {
+        strrepl(file, strlen(file), "/", "\\");
+        hModule = LoadLibraryEx( (LPSTR) file, NULL,
+                                 LOAD_WITH_ALTERED_SEARCH_PATH);
+    }
+
+    SetErrorMode ( uMode );
+    return (void *)hModule;
 }
 
 /*get an entrypoint in the function.*/
 void *dlsym(void *handle, const char *symbol_name)
 {
-
+    FARPROC symbol = GetProcAddress(handle, symbol_name);
+    
+    return (void *) symbol;
 }
 #endif
