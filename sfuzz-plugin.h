@@ -73,4 +73,14 @@ typedef struct _pprovisor
 /* only one "plugin" will be loaded at a time. */
 extern plugin_provisor *g_plugin;
 
+extern char *get_time_as_log();
+
+static inline void file_error(char *msg, option_block *opts)
+{
+    fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",
+            get_time_as_log(), opts->pFilename, opts->lno, msg);
+    exit(-1);
+}
+
+
 #endif
