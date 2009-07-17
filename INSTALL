@@ -32,3 +32,7 @@ will put sfuzz, associated scripts, and plugins into the correct
 /usr/local/share/sfuzz-db directory. If you'd like to change this location, 
 refer to the Makefile. Windows users may have to manually adjust the included
 scripts to get include locations correct.
+
+For the ssl plugin it's required that you have the openssl development 
+libraries installed. This is currently not tested on windows, but is tested on
+os-x and linux to be working.
