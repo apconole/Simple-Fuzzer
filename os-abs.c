@@ -54,7 +54,6 @@ typedef char * caddr_t;
 #include <errno.h>
 #endif
 
-extern char *get_time_as_log();
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -531,5 +530,11 @@ void *dlsym(void *handle, const char *symbol_name)
     FARPROC symbol = GetProcAddress(handle, symbol_name);
     
     return (void *) symbol;
+}
+
+/*should make this better*/
+char *dlerror()
+{
+    return "Windows not supported for error reporting!";
 }
 #endif

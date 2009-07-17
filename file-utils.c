@@ -42,12 +42,6 @@
 #include "os-abs.h"
 
 void read_config(option_block *opts);
-void file_error(char *msg, option_block *opts)
-{
-    fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",
-            get_time_as_log(), opts->pFilename, opts->lno, msg);
-    exit(-1);
-}
 
 #ifndef NOPLUGIN
 void *plugin_handle = NULL;

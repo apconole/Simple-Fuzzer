@@ -33,4 +33,6 @@
 
 #include "options-block.h"
 
+extern char *get_time_as_log();
+
 #endif
