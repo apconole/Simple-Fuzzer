@@ -532,10 +532,4 @@ void *dlsym(void *handle, const char *symbol_name)
     
     return (void *) symbol;
 }
-
-/*should make this better*/
-char *dlerror()
-{
-    return "Windows not supported for error reporting!";
-}
 #endif
