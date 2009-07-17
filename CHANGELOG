@@ -1,5 +1,6 @@
 v 0.5
   Added rudimentary plugin support.
+  Added binary value increment support.
 
 v 0.4
   Fixed the windows snoop version - sniffing responses under windows - hooray!

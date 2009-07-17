@@ -175,6 +175,12 @@ ___________________________________________________________________________
 +++++++++++++++++++ specifying binary data:
 +++++++++++++++++++ !X=de ad 0xbe Efca \xfe BADCab
 +++++++++++++++++++--------------------------------------------------------
+| ++X             | Special flag for binary symbols that will attempt to
++++++++++++++++++++ increment the start value after every fuzz case. NOTE:
++++++++++++++++++++ the engine tries to be "intelligent" about incrementing,
++++++++++++++++++++ but for symbol values larger than 4 bytes, or symbols on
++++++++++++++++++++ big endian machines, there may be errors resulting.
++++++++++++++++++++--------------------------------------------------------
 
 caveat: all config files MUST end with a newline.
 

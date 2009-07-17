@@ -18,21 +18,28 @@ CPPFLAGS=-g -Wall -fPIC -I.
 LIBS= -ldl
 SF_OBJS=file-utils.o sfuzz.o os-abs.o
 SNOOP_OBJS=snoop.o os-abs.o
-EXAMPLE_OBJS=sfuzz-plugin-example.o
-PROGS=sfuzz sfuzz-plugin-example.so
+EXAMPLE_OBJS=sfuzz-plugin-example.o sfuzz-plugin-ssl-transport.o
+PROGS=sfuzz sfuzz-plugin-example.so sfuzz-plugin-ssl-transport.so
 
 ifeq ($(TARGET_PLAT),)
-TARGET_PLAT=linux
+TARGET_PLAT = $(shell uname -s)
 endif
 
-ifeq ($(TARGET_PLAT),linux)
+ifeq ($(TARGET_PLAT),Linux)
 CFLAGS += -D__LINUX__
+SHARED_OPTS = -shared
+endif
+
+ifeq ($(TARGET_PLAT),Darwin)
+CFLAGS += -D__LINUX__
+SHARED_OPTS = -dynamiclib -undefined dynamic_lookup -single_module
 endif
 
 ifeq ($(TARGET_PLAT),win)
 CCPATH=
 LIBS += -lws2_32
 CFLAGS += -D__WIN32__
+SHARED_OPTS = -shared
 endif
 
 all: $(PROGS)
@@ -40,8 +47,8 @@ all: $(PROGS)
 sfuzz: $(SF_OBJS)
 	$(CC) -o $@ $(SF_OBJS) $(LIBS)
 
-sfuzz-plugin-example.so: sfuzz-plugin-example.o
-	$(LD) -shared sfuzz-plugin-example.o -o sfuzz-plugin-example.so
+%.so: %.o
+	$(CC)  $(SHARED_OPTS) -o $@ $<
 
 snoop: $(SNOOP_OBJS)
 	$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)

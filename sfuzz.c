@@ -54,13 +54,13 @@ int execute_fuzz(option_block *opts);
 void dump_options(option_block *opts)
 {
     int i;
-
+    
     if(opts != NULL)
     {
         printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\tsequences: [%d]\n\tsymbols: [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n\tplugin: <%s>\n",
                get_time_as_log(), opts->pFilename, opts->state, opts->lno, opts->num_litr, opts->num_seq, opts->sym_count / 2, opts->reqw_inms, opts->mseql,
                g_plugin ? g_plugin->name() : "none");
-
+        
         for(i = 0; i < opts->num_litr; i++)
             printf("\tliteral[%d] = [%s]\n", i+1, opts->litr[i]);
         for(i = 0; i < opts->num_seq; i++)
@@ -140,7 +140,7 @@ void sanity(option_block *opts)
         )
     {
         fprintf(stderr, 
-           "[%s] error: must specify a host and port when using netmode.\n",
+             "[%s] error: must specify a host and port when using netmode.\n",
                 get_time_as_log());
         print_help();
         exit(-1);
@@ -421,6 +421,11 @@ void fuzz(option_block *opts, char *req, int len)
             pSym = &(opts->b_syms_array[i]);
             len = smemrepl(req, len, pSym->sym_name, pSym->sym_val, 
                            pSym->is_len);
+	    if(pSym->increment)
+            {
+                int *increm = (int*)pSym->sym_val;
+                *increm = (*increm)+1;
+            }
         }
     }
 
@@ -466,8 +471,15 @@ void fuzz(option_block *opts, char *req, int len)
     {
         os_send_udp(opts, req, len);
     }
-
 #ifndef NOPLUGIN
+    else if((g_plugin != NULL) &&
+	    ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+	     PLUGIN_PROVIDES_POST_FUZZ))
+    {
+        g_plugin->post_fuzz(opts, req, len);
+    }
+    
+
     if(g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
         PLUGIN_PROVIDES_FUZZ_MODIFICATION))
@@ -527,7 +539,9 @@ int execute_fuzz(option_block *opts)
             if(opts->mseql && ((tsze + reqsize) > opts->mseql))
             {
                 /*ohnoes overflow*/
-                fprintf(stderr, "[%s] error: overflow.\n", get_time_as_log());
+                fprintf(stderr, "[%s] error: overflow[%d:%d].\n", 
+			get_time_as_log(), opts->mseql, 
+			(tsze + reqsize));
                 exit(-1);
             }
             

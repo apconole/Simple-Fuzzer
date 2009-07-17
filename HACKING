@@ -30,7 +30,8 @@ main(argc,argv)
        for each sequence, replace FUZZ with a step'd amount of sequence, and call
                 fuzz()
 
-       fuzz() - calls the appropriate output function
+       fuzz() - replaces symboles and then calls the appropriate output
+                function
 
 end
 

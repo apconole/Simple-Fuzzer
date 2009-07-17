@@ -35,7 +35,7 @@
 
 char *example_name()
 {
-    return "sfuzz-plugin-example";
+    return "Simple Fuzzer plugin demo";
 }
 
 char *example_version()
@@ -47,12 +47,23 @@ int example_capex()
 {
     /*note: you may provide any number of hooks by |'ing together
             each capability to provide. */
-    return PLUGIN_PROVIDES_POST_FUZZ;
+    return PLUGIN_PROVIDES_POST_FUZZ | PLUGIN_PROVIDES_LINE_OPTS;
 }
 
 void example_post_fuzz(option_block *opts, void *i, int l)
 {
     printf("postFuzz!\n");
+}
+
+int example_line_opts(option_block *opts, char *s, int i)
+{
+  if(!strncasecmp(s, "example", 7))
+    {
+      printf("line handle: [%s]\n", s);
+      return 0;
+    }
+  file_error("invalid line passed to plugin!", opts);
+  return 1;
 }
 
 /*start here*/
@@ -68,4 +79,5 @@ void plugin_init(plugin_provisor *pr)
     pr->version = example_version;
     pr->capex = example_capex;
     pr->post_fuzz = example_post_fuzz;
+    pr->config = example_line_opts;
 }

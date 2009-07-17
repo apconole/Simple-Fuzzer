@@ -36,6 +36,7 @@ typedef struct
     char sym_name[8192];
     char sym_val[8192];
     int  is_len;
+    char increment;
 } sym_t;
 
 typedef struct

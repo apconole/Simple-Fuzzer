@@ -344,6 +344,25 @@ void add_b_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     memcpy(pSym->sym_name, sym_name, sym_len);
     memcpy(pSym->sym_val,  sym_val,  sym_val_len);
     pSym->is_len = sym_val_len;
+    pSym->increment = 0;
+}
+
+void set_bsym_increment(option_block *opts, char *symname)
+{
+    int i = 0;
+    sym_t *pSym;
+
+    for(;i<opts->b_sym_count;++i)
+    {
+        pSym = (sym_t*) &(opts->b_syms_array[i]);
+        if(!strcmp(symname, pSym->sym_name))
+	{
+            pSym->increment = 1;  
+            return;
+	}
+    }
+    
+    file_error("unable to locate symbol",opts);
 }
 
 void add_literal(option_block *opts, char *literal, int len)
@@ -479,6 +498,12 @@ int processFileLine(option_block *opts, char *line, int line_len)
             file_error("literal string is null!", opts);
         }
         add_literal(opts, delim+1, sze);
+        return 0;
+    }
+
+    if(!strncasecmp("++", line, 2))
+    {
+        set_bsym_increment(opts, line+2);
         return 0;
     }
 
@@ -628,6 +653,7 @@ int processFileLine(option_block *opts, char *line, int line_len)
     }
 #endif
 
+    fprintf(stderr, "[%s]\n", line);
     file_error("invalid config file.", opts);
     return 1;
 }

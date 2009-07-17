@@ -2,8 +2,9 @@
 
 (defconst sfuzz-font-lock-keywords
   (list
-   '("\\<endcfg\\|ENDCFG\\|literal\\|LITERAL\\|sequence\\|SEQUENCE\\|include\\|INCLUDE\\|maxseqlen\\|MAXSEQLEN\\|seqstep\\|SEQSTEP\\|reqwait\\|REQWAIT\\|FUZZ\\>" . font-lock-builtin-face)
+   '("\\<endcfg\\|ENDCFG\\|literal\\|LITERAL\\|sequence\\|SEQUENCE\\|include\\|INCLUDE\\|maxseqlen\\|MAXSEQLEN\\|seqstep\\|SEQSTEP\\|reqwait\\|REQWAIT\\|plugin\\|PLUGIN\\|FUZZ\\>" . font-lock-builtin-face)
    '("^!.*=" . font-lock-variable-name-face)
+   '("^++.*=" . font-lock-variable-name-face)
    '("^$.*=" . font-lock-constant-face)
    '("^#.*" . font-lock-comment-face)
    '("^//.*" . font-lock-comment-face)
