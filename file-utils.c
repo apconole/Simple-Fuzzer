@@ -31,7 +31,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef __WIN32__
 #include <dlfcn.h>
+#endif
 
 #include "sfuzz.h"
 #include "sfuzz-plugin.h"

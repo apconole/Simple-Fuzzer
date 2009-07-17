@@ -510,14 +510,14 @@ void *dlopen(const char *name, int opts)
     /*disable the critical error dialog.*/
     uMode = SetErrorMode( SEM_FAILCRITICALERRORS );
     
-    if( file != NULL )
+    if( name != NULL )
     {
         hModule = GetModuleHandle( NULL );
     }
     else
     {
-        strrepl(file, strlen(file), "/", "\\");
-        hModule = LoadLibraryEx( (LPSTR) file, NULL,
+        strrepl(name, strlen(name), "/", "\\");
+        hModule = LoadLibraryEx( (LPSTR) name, NULL,
                                  LOAD_WITH_ALTERED_SEARCH_PATH);
     }
 
@@ -531,5 +531,11 @@ void *dlsym(void *handle, const char *symbol_name)
     FARPROC symbol = GetProcAddress(handle, symbol_name);
     
     return (void *) symbol;
+}
+
+/*should make this better*/
+char *dlerror()
+{
+    return "Windows not supported for error reporting!";
 }
 #endif

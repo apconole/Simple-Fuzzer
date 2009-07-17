@@ -45,6 +45,7 @@ extern void dump(void *b, int len, FILE *out);
 #define RTLD_NOW 0
 extern void *dlopen(const char *, int);
 extern void *dlsym(void *, const char *);
+extern char *dlerror();
 #endif
 
 #endif

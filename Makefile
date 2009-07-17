@@ -15,7 +15,7 @@ CP      =/bin/cp
 CFLAGS=-g -Wall -I. -fPIC
 CPPFLAGS=-g -Wall -fPIC -I. 
 
-LIBS= -ldl
+LIBS= 
 SF_OBJS=file-utils.o sfuzz.o os-abs.o
 SNOOP_OBJS=snoop.o os-abs.o
 EXAMPLE_OBJS=sfuzz-plugin-example.o sfuzz-plugin-ssl-transport.o
@@ -28,11 +28,13 @@ endif
 ifeq ($(TARGET_PLAT),Linux)
 CFLAGS += -D__LINUX__
 SHARED_OPTS = -shared
+LIBS += -ldl
 endif
 
 ifeq ($(TARGET_PLAT),Darwin)
 CFLAGS += -D__LINUX__
 SHARED_OPTS = -dynamiclib -undefined dynamic_lookup -single_module
+LIBS += -ldl
 endif
 
 ifeq ($(TARGET_PLAT),win)

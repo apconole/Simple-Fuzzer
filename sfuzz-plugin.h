@@ -31,11 +31,6 @@
 #ifndef __SFUZZ_PLUGIN_DEFS_H__
 #define __SFUZZ_PLUGIN_DEFS_H__
 
-#ifdef __WIN32__
-#warn Warning - windows not yet supported with plugins. disabling.
-#define NOPLUGIN
-#endif
-
 #include "options-block.h"
 
 #define PLUGIN_PROVIDES_LINE_OPTS         0x00000001
