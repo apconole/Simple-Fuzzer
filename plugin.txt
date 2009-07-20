@@ -29,3 +29,155 @@ transport  |   trans     | void foo                 | return
 per-line   |   config    | void foo (option_block*, | return
 config     |             |    char *, int);         |PLUGIN_PROVIDES_LINE_OPTS;
 -------------------------------------------------------------------------------
+pre-subst  |  payload_trans | void foo (option_block*,| return
+           |                |    void *i, int il,   |PLUGIN_PROVIDES_PAYLOAD_
+           |                |    void *o, int ol);  |PARSE;
+-------------------------------------------------------------------------------
+post-subst | fuzz_trans  | void foo(option_block*,  | return
+           |             |    void *i, int il,      |PLUGIN_PROVIDES_FUZZ_
+           |             |    void *o, int ol);     |MODIFICATION;
+-------------------------------------------------------------------------------
+response   | post_fuzz   | void foo(option_block*,  | return
+           |             |    void *rbuf, int rbl); |PLUGIN_PROVIDES_POST_FUZZ
+-------------------------------------------------------------------------------
+
+   be sure to familiarize yourself with the option_block structure, and the
+entirety of file-utils.c and sfuzz.c before delving too deep in plugin writing.
+
+iii. building a plugin
+  this will cover the "hello world" of plugins. we're going to provide a new
+transport type (icmp), a config option (whether we do correct checksum), and
+some substitution parsing.
+
+first, all plugins require a name, version, and capex. For an empty shell of a
+plugin, the following will work:
+---------------------------------cut below-------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+
+/*always include this last!*/
+#include "sfuzz-plugin.h"
+
+char *skel_name()
+{
+    return "skeleton plugin";
+}
+
+char *skel_ver()
+{
+    return "0.1";
+}
+
+int skel_capex()
+{
+    return 0;
+}
+
+void plugin_init(plugin_provisor *pp)
+{
+    pp->capex   = skel_capex;
+    pp->name    = skel_name;
+    pp->version = skel_ver;
+
+    printf("loaded plugin!\n");
+}
+
+-------------------------------------------------------------------------------
+
+to build, make sure you have the header files available, and (on linux) simply:
+gcc -I(PATH_TO_SFUZZ_HEADERS) -shared -o skel-plugin.so skel-plugin.c
+
+obviously, this plugin doesn't do anything, and the capex return value indicates
+that it offers nothing (return value of 0). lets add a config line parsing
+feature.
+
+for the following example, delete the existing capex function and replace it 
+with the code below.
+
+---------------------------------cut below-------------------------------------
+
+int skel_capex()
+{
+    return PLUGIN_PROVIDES_LINE_OPTS;
+}
+
+int icmp_code_val = 0;
+/**
+ * the following function will read a config option of icmp_code and set the
+ * icmp_code_val global to the correct value
+ */
+int skel_line_parse(option_block *opts, char *line, int len)
+{
+    char *delim;
+    int sze;
+    if(!strncasecmp(line, "icmp_code", 9))
+    {
+        delim = strstr(line, "=");
+        if(delim == NULL)
+        {
+            file_error("icmp_code not assigned!", opts);
+        }
+        sze = strlen(delim+1);
+        if(sze == 0)
+        {
+            file_error("icmp_code is null!", opts);
+        }
+        icmp_code_val = atoi(delim+1);
+        printf("icmp_code is: [%d]\n", icmp_code_val);
+        return 0; /* return 0 to indicate success*/
+    }
+
+    /*return non-zero to indicate parse error.*/
+    return 1;
+}
+
+-------------------------------------------------------------------------------
+
+now modify the plugin init function by adding this line:
+
+pp->config = skel_line_parse;
+
+and recompile.
+
+now lets build a test config to use this new plugin:
+
+---------------------------------cut below-------------------------------------
+plugin ./skel-plugin.so
+
+icmp_code=13
+
+endcfg
+ICMP_CKSUM_CORRECT
+--
+ICMP_CKSUM_INCORRECT
+--
+
+-------------------------------------------------------------------------------
+
+try it out. just make a simple fuzz command line, that outputs to the screen.
+voila! the first two lines should read:
+
+loaded plugin!
+icmp_code is: [13]
+
+congratulations! you've gotten your first plugin with option parsing working.
+now lets add icmp transport functionality.
+
+take a break, have a drink (beer, coffee, juice, water, etc.), stretch. we're
+going to add the underlying icmp raw socket next, and that requires some 
+knowledge of icmp.
+
+ready? good.
+
+we have a new configuration option, and now we need to write the transport layer
+modification code to support our icmp transport.
+
+lets build the payload 'fuzz' piece.
+
+---------------------------------cut below-------------------------------------
+
+int skel_payload_xform(option_block *opts, void *i, int il, void *o, int ol)
+{
+    char *payload = (char *)o;
+    
+}

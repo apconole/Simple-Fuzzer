@@ -147,7 +147,7 @@ void plugin_load(char *filename, option_block *opts)
     plugin_handle = dlopen(fileline, RTLD_NOW);
     if(plugin_handle == NULL)
     {
-        fprintf(stderr, "[%s] fileline\n", fileline);
+        fprintf(stderr, "[%s] plugin\n", fileline);
         file_error("unable to open plugin specified", opts);
         return;
     }
