@@ -1,2 +1,3 @@
 - STRESS test this bad larry
 - Remove ascii string dependancies (? - need to flush them all out)
+- Fix Vista & XP SP2 snoop
