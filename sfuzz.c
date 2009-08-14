@@ -394,7 +394,7 @@ void fuzz(option_block *opts, char *req, int len)
         tmp2 = req;
         p1_len = len * 2;
         p1 = malloc(p1_len);
-        g_plugin->payload_trans(opts, req, len, p1, p1_len);
+        g_plugin->payload_trans(opts, req, len, p1, &p1_len);
         req = p1;
         len = p1_len;
     }

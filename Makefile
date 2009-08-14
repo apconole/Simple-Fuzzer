@@ -26,12 +26,14 @@ TARGET_PLAT = $(shell uname -s)
 endif
 
 ifeq ($(TARGET_PLAT),Linux)
-CFLAGS += -D__LINUX__
-SHARED_OPTS = -shared
+LDFLAGS = -rdynamic
+CFLAGS += -D__LINUX__ -rdynamic
+SHARED_OPTS = -shared -rdynamic
 LIBS += -ldl
 endif
 
 ifeq ($(TARGET_PLAT),Darwin)
+LDFLAGS =
 CFLAGS += -D__LINUX__
 SHARED_OPTS = -dynamiclib -undefined dynamic_lookup -single_module
 LIBS += -ldl
@@ -39,6 +41,7 @@ endif
 
 ifeq ($(TARGET_PLAT),win)
 CCPATH=
+LDFLAGS=
 LIBS += -lws2_32
 CFLAGS += -D__WIN32__
 SHARED_OPTS = -shared
@@ -47,7 +50,7 @@ endif
 all: $(PROGS)
 
 sfuzz: $(SF_OBJS)
-	$(CC) -o $@ $(SF_OBJS) $(LIBS)
+	$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
 
 %.so: %.o
 	$(CC)  $(SHARED_OPTS) -o $@ $<

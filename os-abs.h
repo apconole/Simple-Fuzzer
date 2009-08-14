@@ -40,6 +40,7 @@ extern int  strrepl(char *buf, size_t buflen, char *old, char *new);
 extern int  smemrepl(char *buf, size_t buflen, char *old, char *new, int newl);
 extern int  atoip(const char *pIpStr);
 extern void dump(void *b, int len, FILE *out);
+extern int  mssleep(unsigned long int);
 
 #ifdef __WIN32__
 #define RTLD_NOW 0

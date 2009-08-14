@@ -36,6 +36,8 @@
 #include <dlfcn.h>
 #endif
 
+#include <errno.h>
+
 #include "sfuzz.h"
 #include "sfuzz-plugin.h"
 #include "options-block.h"
@@ -144,10 +146,10 @@ void plugin_load(char *filename, option_block *opts)
         return;
     }
     
-    plugin_handle = dlopen(fileline, RTLD_NOW);
+    plugin_handle = dlopen(fileline, RTLD_NOW | RTLD_GLOBAL);
     if(plugin_handle == NULL)
     {
-        fprintf(stderr, "[%s] plugin\n", fileline);
+        fprintf(stderr, "[%s: %s] plugin\n", fileline, dlerror());
         file_error("unable to open plugin specified", opts);
         return;
     }
