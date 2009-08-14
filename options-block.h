@@ -117,6 +117,7 @@ typedef struct
     /*dump output as hex*/
     char hexl_dump;
 
+    char new_logfile;
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024

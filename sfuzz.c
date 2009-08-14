@@ -165,6 +165,9 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
             opts->no_literal_fuzz = 0;
             opts->no_sequence_fuzz = 1;
             break;
+        case 'n':
+            opts->new_logfile = 1;
+            break;
         case 'q':
             opts->verbosity = QUIET;
             break;
@@ -294,6 +297,11 @@ int main(int argc, char *argv[])
 
     if(options.pLogFilename[0] != 0)
     {
+        if(options.new_logfile)
+        {
+            strncat(options.pLogFilename, ".0", MAX_FILENAME_SIZE);
+        }
+
         log = fopen(options.pLogFilename, "w");
         if(log != NULL)
         {
@@ -496,6 +504,19 @@ void fuzz(option_block *opts, char *req, int len)
         req = tmp2;
     }
 #endif
+
+    if((opts->new_logfile) && (opts->pLogFilename))
+    {
+        char *z_set;
+        char z_buf[80] = {0};
+        fclose(opts->fp_log);
+        z_set = rindex(opts->pLogFilename, '.');
+        if(z_set)
+            *z_set = 0;
+        snprintf(z_buf, 80, ".%d", fuzznum);
+        strncat(opts->pLogFilename, z_buf, MAX_FILENAME_SIZE);
+        opts->fp_log = fopen(opts->pLogFilename, "w");
+    }
     
 }
 
