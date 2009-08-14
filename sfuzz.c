@@ -104,6 +104,7 @@ void print_help()
     printf("\n");
     printf("\t-f\t Config File\n");
     printf("\t-L\t Log file\n");
+    printf("\t-n\t Create a new logfile after each fuzz\n");
     printf("\t-r\t Trim the tailing newline\n");
     printf("\t-D\t Define a symbol and value (X=y).\n");
     printf("\t-l\t Only perform literal fuzzing\n");
