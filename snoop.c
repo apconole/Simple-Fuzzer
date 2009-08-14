@@ -43,7 +43,7 @@
 
 #define INCREMENT_CAP   0
 #define SOCK_FAM_TYPE   AF_INET
-#define SOCK_PROTO_TYPE IPPROTO_IP
+#define SOCK_PROTO_TYPE IPPROTO_RAW
 typedef unsigned int uint;
 #else
 #include <sys/socket.h>
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
-    
+
     if(argc > 1)
     {
         addr = atoip(argv[1]);
