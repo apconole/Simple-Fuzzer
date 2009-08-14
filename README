@@ -66,6 +66,8 @@ output modes:
 logging:
   -L filename
     this option specifies a file to write instead of the standard output
+  -n
+    this option will start a new log file after each fuzz attempt
   -X
     this option specifies that the fuzz outputs to the log / screen should be
     printed as a hexadecimal dump.
