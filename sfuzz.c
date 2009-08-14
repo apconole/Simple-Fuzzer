@@ -511,7 +511,7 @@ void fuzz(option_block *opts, char *req, int len)
         char *z_set;
         char z_buf[80] = {0};
         fclose(opts->fp_log);
-        z_set = rindex(opts->pLogFilename, '.');
+        z_set = strrchr(opts->pLogFilename, '.');
         if(z_set)
             *z_set = 0;
         snprintf(z_buf, 80, ".%d", fuzznum);

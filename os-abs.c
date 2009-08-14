@@ -493,6 +493,7 @@ void dump(void* b, int len, FILE *dump){
 }
 
 #ifdef __WIN32__
+
 /*this is a "workaround" for the fact that windows isn't 'compliant' and
   has it's own dynamic loading functions. basically, we'll just wrap them
   here.
@@ -509,7 +510,7 @@ void *dlopen(const char *name, int opts)
     /*disable the critical error dialog.*/
     uMode = SetErrorMode( SEM_FAILCRITICALERRORS );
     
-    if( name != NULL )
+    if( name == NULL )
     {
         hModule = GetModuleHandle( NULL );
     }

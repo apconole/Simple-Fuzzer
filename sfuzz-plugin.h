@@ -83,5 +83,4 @@ static inline void file_error(char *msg, option_block *opts)
     exit(-1);
 }
 
-
 #endif

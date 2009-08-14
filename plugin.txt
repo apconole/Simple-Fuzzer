@@ -19,6 +19,14 @@ and version function pointers with appropriate functions. the following table
 lists each function hook point, and how to signal to the engine that you would
 like to overload that hook point.
 
+NOTE: currently, due to the way windows links, in order to properly load a
+      ".so" file generated, it is imperative that the .c file containing the
+      plugin has the following line:
+
+      plugin_provisor *g_plugin;
+
+      Hopefully, this will be resolved before 1.0 release. No promises.
+
   hook     |  structure  | prototype                | capex return code
 function   |   member    |                          |
 -------------------------------------------------------------------------------
@@ -335,7 +343,7 @@ void skel_transport(option_block *opts, void *i, int il)
      server.sin_addr.s_addr = opts->host; /*should be in network order*/
 
      ret = sendto(sockfd, (char *)i, il, 0, (struct sockaddr*)&server, 
-                  sizeof(struct sockaddr));
+                  sizeof(struct sockaddr_in));
 
      if((ret < 0) || (ret != il))
      {

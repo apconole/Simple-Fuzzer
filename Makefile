@@ -9,8 +9,6 @@ CCPATH=/usr/bin/
 CC	=$(CCPATH)gcc
 CPP	=$(CCAPTH)g++
 INSTALL	=$(CCPATH)install
-MKDIR	=/bin/mkdir
-CP      =/bin/cp
 
 CFLAGS=-g -Wall -I. -fPIC
 CPPFLAGS=-g -Wall -fPIC -I. 
@@ -30,6 +28,10 @@ LDFLAGS = -rdynamic
 CFLAGS += -D__LINUX__ -rdynamic
 SHARED_OPTS = -shared -rdynamic
 LIBS += -ldl
+RM = /bin/rm
+MKDIR = /bin/mkdir
+CP = /bin/cp
+SHARED_INC = 
 endif
 
 ifeq ($(TARGET_PLAT),Darwin)
@@ -37,6 +39,10 @@ LDFLAGS =
 CFLAGS += -D__LINUX__
 SHARED_OPTS = -dynamiclib -undefined dynamic_lookup -single_module
 LIBS += -ldl
+RM = /bin/rm
+MKDIR = /bin/mkdir
+CP = /bin/cp
+SHARED_INC=
 endif
 
 ifeq ($(TARGET_PLAT),win)
@@ -44,7 +50,11 @@ CCPATH=
 LDFLAGS=
 LIBS += -lws2_32
 CFLAGS += -D__WIN32__
-SHARED_OPTS = -shared
+SHARED_OPTS = -shared -lws2_32 
+SHARED_INC = file-utils.o os-abs.o
+RM = del
+MKDIR = md
+CP = copy
 endif
 
 all: $(PROGS)
@@ -53,7 +63,7 @@ sfuzz: $(SF_OBJS)
 	$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
 
 %.so: %.o
-	$(CC)  $(SHARED_OPTS) -o $@ $<
+	$(CC) -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
 
 snoop: $(SNOOP_OBJS)
 	$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)

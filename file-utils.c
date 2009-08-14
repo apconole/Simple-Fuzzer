@@ -146,7 +146,7 @@ void plugin_load(char *filename, option_block *opts)
         return;
     }
     
-    plugin_handle = dlopen(fileline, RTLD_NOW | RTLD_GLOBAL);
+    plugin_handle = dlopen(fileline, RTLD_NOW);
     if(plugin_handle == NULL)
     {
         fprintf(stderr, "[%s: %s] plugin\n", fileline, dlerror());

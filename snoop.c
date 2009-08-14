@@ -112,6 +112,9 @@ void DebugPrint(char *buf){
 #endif /* DEBUG */
 }
 
+#include "sfuzz-plugin.h"
+
+plugin_provisor *g_plugin;
 
 void PrintAddr(char* msg, unsigned char *addr, EAddress is_ip){
     int i;
