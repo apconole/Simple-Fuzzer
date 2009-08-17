@@ -384,7 +384,7 @@ void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
         return NULL;
  
     for(start = (const char *)hs; start <= l_occurance; ++start)
-        if(start[0] == ((const char *)start)[0] &&
+        if((start[0] == ((const char *)nd)[0]) &&
            !memcmp((const void *)&start[1],
                    (const void *)((const char *)nd+1),
                    ndl-1))
@@ -460,7 +460,7 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
         memmove(f+newl, f+oldl, origl - (f - buf));
         memcpy(f, new, newl);
 
-        str = f + oldl;
+        str = f + newl;
 
         origl -= oldl;
         origl += newl;
