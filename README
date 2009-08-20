@@ -183,6 +183,16 @@ ___________________________________________________________________________
 +++++++++++++++++++ but for symbol values larger than 4 bytes, or symbols on
 +++++++++++++++++++ big endian machines, there may be errors resulting.
 +++++++++++++++++++--------------------------------------------------------
+|-"reserved words"| The following fuzz case keywords are considered special
++++++++++++++++++++ cases and may not be used as symbols (or undefined behavior
++++++++++++++++++++ will occur:
++++++++++++++++++++ __SEQUENCE_NUM_ASCII__ - This keyword only applies to 
++++++++++++++++++++            sequences and will increment after each sequence
++++++++++++++++++++            addition where it is replaced. (ex: if you have
++++++++++++++++++++            a sequence defined as AAA__SEQUENCE_NUM_ASCII__
++++++++++++++++++++            and a max sequence length of 100, you'll get
++++++++++++++++++++            AAA0001AAA0002AAA0003... etc).
++++++++++++++++++++--------------------------------------------------------
 
 caveat: all config files MUST end with a newline.
 

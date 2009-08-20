@@ -535,6 +535,7 @@ int execute_fuzz(option_block *opts)
     int preqsize= 0;
     int i       = 0;
     int k       = 0;
+    unsigned int seq4b = 0;
 
     if(opts->state != FUZZ)
     {
@@ -628,6 +629,7 @@ int execute_fuzz(option_block *opts)
                 /*do the sequences*/
                 for(tsze = 0; tsze < opts->num_seq; ++tsze)
                 {
+                    char seq_buf[5] = {0};
                     /*at this point, we do sequences. Sequencing will be done*/
                     /*by filling to maxseqlen, in increments of seqstep*/
                     memcpy(req2, req, (p-req));
@@ -636,13 +638,24 @@ int execute_fuzz(option_block *opts)
                     
                     for(k = opts->seqstep; k <= opts->mseql; k+= opts->seqstep)
                     {
+                        seq4b = 0;
                         req2 = j;
                         req2 += (p-req);
                         
                         for(i=0;i < k; ++i)
                         {
                             *req2++ =
-                                *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
+                                *(opts->seq[tsze] + 
+                                  (i % opts->seq_lens[tsze]));
+                            
+                            if(strstr(j, "__SEQUENCE_NUM_ASCII__"))
+                            {
+                                snprintf(seq_buf, 5, "%04d", seq4b++);
+                                strrepl(j, strlen(j), "__SEQUENCE_NUM_ASCII__",
+                                        seq_buf);
+                                req2 -= 18;
+                            }
+                               
                         }
                         
                         memcpy(req2, (char *)(p+4), strlen(p+4));
