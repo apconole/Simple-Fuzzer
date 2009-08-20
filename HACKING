@@ -45,7 +45,18 @@ file-utils.c
 
 os-abs.c
   contains get_time_as_log, atoip, process_error, mssleep, os_send_tcp, 
-           os_send_udp, isws, strrepl
+           os_send_udp, isws, strrepl, smemrepl, all of the windows support 
+           functions
 
 snoop.c
   contains a crappy sniffer for linux
+
+plugin hacking:
+  Read plugin.txt for a primer/cookbook on plugin writing for sfuzz. A good
+  thing to understand is that running a plugin from an untrusted source is
+  the same as running an untrusted binary - don't do it! Especially as root.
+
+  Most of the hooks can be found by searching for all the dereferences of
+  g_plugin (which is a "plugin_provisor" object). The definitions can be found
+  in file-utils.c and sfuzz-plugin.h
+
