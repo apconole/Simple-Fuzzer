@@ -528,16 +528,16 @@ int processFileLine(option_block *opts, char *line, int line_len)
         if(delim == NULL)
             file_error("lineterm value not assigned!", opts);
         sze = strlen(delim+1);
-
+        state = strlen(line) - sze;
         if(sze)
         {
-            if((line[strlen(delim)] == '\\') || 
-               (line[strlen(delim)] == '0'))
+            if((line[state] == '\\') || 
+               (line[state] == '0'))
             {
-                if(line[strlen(delim)+1] == 'x')
-                    sze = ascii_to_bin(line+strlen(delim));
+                if(line[state] == 'x')
+                    sze = ascii_to_bin(line+state);
             }
-            memcpy(opts->line_term, line+strlen(delim), sze);
+            memcpy(opts->line_term, line+state, sze);
         }
         opts->line_terminator_size = sze;
         return 0;
