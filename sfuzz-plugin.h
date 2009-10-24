@@ -43,12 +43,12 @@ typedef int  (*plugin_capex)();
 
 typedef int  (*plugin_config_line)(option_block *opts, char *l, int i);
 
-typedef void (*plugin_transport)(option_block *opts, void *d, int len);
+typedef int  (*plugin_transport)(option_block *opts, void *d, int len);
 
-typedef int (*plugin_payload_transform)(option_block *opts, void *i, int il, 
+typedef int  (*plugin_payload_transform)(option_block *opts, void *i, int il, 
                                         void *o, int *ol);
 
-typedef int (*plugin_fuzz_transform)(option_block *opts, void *inf, int infl, 
+typedef int  (*plugin_fuzz_transform)(option_block *opts, void *inf, int infl, 
                                      void *of, int *ofl);
 
 typedef void (*post_fuzz_mod)(option_block *opts, void *rbuf, int rblen);

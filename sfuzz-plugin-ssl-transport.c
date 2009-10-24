@@ -152,6 +152,7 @@ int ssl_transport_insecure_send(option_block *opts, void *d, int i)
       }
     
     mssleep(opts->reqw_inms);
+    return 0;
 }
 
 int ssl_transport_capex()

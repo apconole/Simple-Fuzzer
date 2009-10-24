@@ -1,3 +1,8 @@
+v 0.6
+  Added line terminator specifier
+  Added begin-at-test specifier
+  Added end-on-fail specifier
+
 v 0.5
   Added rudimentary plugin support.
   Added binary value increment support.

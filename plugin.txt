@@ -30,7 +30,7 @@ NOTE: currently, due to the way windows links, in order to properly load a
   hook     |  structure  | prototype                | capex return code
 function   |   member    |                          |
 -------------------------------------------------------------------------------
-transport  |   trans     | void foo                 | return 
+transport  |   trans     | int foo                  | return 
            |             | (option_block *, void *, |PLUGIN_PROVIDES_TRANSPORT_ 
            |             |  int );                  |TYPE; 
 -------------------------------------------------------------------------------
@@ -300,7 +300,7 @@ int skel_payload_xform(option_block *opts, void *i, int il, void *o, int *ol)
    return 0;
 }
 
-void skel_transport(option_block *opts, void *i, int il)
+int skel_transport(option_block *opts, void *i, int il)
 {
     FILE *log = stdout;
     struct timeval tv;
@@ -335,7 +335,7 @@ void skel_transport(option_block *opts, void *i, int il)
             
             fprintf(log,"[%s] error: unable to acquire socket.\n",
                     get_time_as_log());
-            return;
+            return -1;
         }
      }
         
@@ -351,7 +351,7 @@ void skel_transport(option_block *opts, void *i, int il)
                 get_time_as_log());
         fprintf(log, "[%s] error: unable to transmit.\n",
                 get_time_as_log());
-        return;
+        return -1;
      }
 
      if(opts->verbosity != QUIET)
@@ -393,7 +393,7 @@ void skel_transport(option_block *opts, void *i, int il)
     }
     
     mssleep(opts->reqw_inms);
-
+    return 0;
 }
 
 -------------------------------------------------------------------------------

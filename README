@@ -77,6 +77,8 @@ config file:
     this option specifies the fuzzing "script" - covered later.
 
 network host:
+  -e
+    this option stops testing when the host fails to respond.
   -S host
     this option sets the remote host to which we will connect
   -p port
@@ -95,6 +97,9 @@ variables:
     strlen('bar'). See basic.nuke.crlf for the canonical example.
 
 misc:
+  -b number
+    starts fuzzing at test case 'number'
+
   -q
     sets "quiet" mode - output will only contain fuzzed payload (if -O is 
     specified) and the potential response.

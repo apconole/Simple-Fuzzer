@@ -96,6 +96,8 @@ void print_help()
     printf("\t-q\t Silent output mode (generally for CLI fuzzing)\n");
     printf("\t-X\t prints the output in hex\n");
     printf("\n");
+    printf("\t-b\t Begin fuzzing at the test specified.\n");
+    printf("\t-e\t End testing on failure.\n");
     printf("\t-t\t Wait time for reading the socket\n");
     printf("\t-S\t Remote host\n");
     printf("\t-p\t Port\n");
@@ -156,8 +158,19 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
     int   sze;
     while(*line != 0)
     {
+/*
+used:
+beslnqrtpvfh
+XRSTUOLVD
+ */
         switch(*line++)
         {
+        case 'b':
+            opts->start_test = atoi(lastarg);
+            break;
+        case 'e':
+            opts->stop_on_fail = 1;
+            break;
         case 's':
             opts->no_sequence_fuzz = 0;
             opts->no_literal_fuzz = 1;
@@ -384,15 +397,18 @@ void fuzz(option_block *opts, char *req, int len)
     int r2_len,p1_len;
     sym_t *pSym;
 
+    int fuzz_this_time = (opts->start_test <= ++fuzznum) ? 
+        1 : 0;
+
     if(opts->fp_log)
         log = opts->fp_log;
 
-    if(opts->verbosity != QUIET)
+    if( fuzz_this_time && opts->verbosity != QUIET )
         fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
-                ++fuzznum);
+                fuzznum);
 
 #ifndef NOPLUGIN
-    if(g_plugin != NULL && 
+    if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
         PLUGIN_PROVIDES_PAYLOAD_PARSE))
     {
@@ -405,7 +421,7 @@ void fuzz(option_block *opts, char *req, int len)
     }
 #endif
     
-    if(opts->sym_count)
+    if(fuzz_this_time && opts->sym_count)
     {
         /*xxx : enhancement - loop backwards allowing people to define
                 a string (aaa for example) and use that string within
@@ -428,7 +444,8 @@ void fuzz(option_block *opts, char *req, int len)
         }
     }
 
-    if(opts->b_sym_count)
+    if(opts->b_sym_count) /* we let this one through because we need the
+                             increments to happen. */
     {
         for(i = 0; i < opts->b_sym_count; ++i)
         {
@@ -443,7 +460,7 @@ void fuzz(option_block *opts, char *req, int len)
         }
     }
 
-    if(opts->out_flag)
+    if(fuzz_this_time && opts->out_flag)
     {
         if(opts->hexl_dump)
         {
@@ -457,7 +474,7 @@ void fuzz(option_block *opts, char *req, int len)
     }
     
 #ifndef NOPLUGIN
-    if(g_plugin != NULL && 
+    if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
         PLUGIN_PROVIDES_FUZZ_MODIFICATION))
     {
@@ -469,7 +486,7 @@ void fuzz(option_block *opts, char *req, int len)
         len = r2_len;
     }
 
-    if(g_plugin != NULL && 
+    if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) == 
         PLUGIN_PROVIDES_TRANSPORT_TYPE))
     {
@@ -477,16 +494,16 @@ void fuzz(option_block *opts, char *req, int len)
     }
     else 
 #endif
-    if(opts->tcp_flag)
+    if(fuzz_this_time && opts->tcp_flag)
     {
         os_send_tcp(opts, req, len);
     }
-    else if(opts->udp_flag)
+    else if(fuzz_this_time && opts->udp_flag)
     {
         os_send_udp(opts, req, len);
     }
 #ifndef NOPLUGIN
-    else if((g_plugin != NULL) &&
+    else if(fuzz_this_time && (g_plugin != NULL) &&
 	    ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
 	     PLUGIN_PROVIDES_POST_FUZZ))
     {
@@ -494,7 +511,7 @@ void fuzz(option_block *opts, char *req, int len)
     }
     
 
-    if(g_plugin != NULL && 
+    if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
         PLUGIN_PROVIDES_FUZZ_MODIFICATION))
     {
@@ -502,7 +519,7 @@ void fuzz(option_block *opts, char *req, int len)
         req = tmp;
     }
 
-    if(g_plugin != NULL && 
+    if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
         PLUGIN_PROVIDES_PAYLOAD_PARSE))
     {
@@ -511,7 +528,7 @@ void fuzz(option_block *opts, char *req, int len)
     }
 #endif
 
-    if((opts->new_logfile) && (opts->pLogFilename))
+    if(fuzz_this_time && (opts->new_logfile) && (opts->pLogFilename))
     {
         char *z_set;
         char z_buf[80] = {0};
@@ -580,10 +597,6 @@ int execute_fuzz(option_block *opts)
 //            *(req+reqsize+tsze) = 0;
             if(opts->line_terminator_size)
             {
-                printf("[+] debug: [%d]:[%X %X]\n",
-                       opts->line_terminator_size,
-                       opts->line_term[0],
-                       opts->line_term[1]);
                 memcpy(req+reqsize, opts->line_term, 
                        opts->line_terminator_size);
             }

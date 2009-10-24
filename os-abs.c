@@ -170,7 +170,7 @@ int mssleep(unsigned long int sleepTimeInMS)
     return select(0, NULL, NULL, NULL, &tv);
 }
 
-void os_send_tcp(option_block *opts, char *str, int len)
+int os_send_tcp(option_block *opts, char *str, int len)
 {
     FILE *log = stdout;
     struct timeval tv;
@@ -205,7 +205,7 @@ void os_send_tcp(option_block *opts, char *str, int len)
             
             fprintf(log,"[%s] error: unable to acquire socket.\n",
                     get_time_as_log());
-            return;
+            return -1;
         }
         
         server.sin_family = AF_INET;
@@ -221,7 +221,7 @@ void os_send_tcp(option_block *opts, char *str, int len)
             fprintf(log,
                     "[%s] error: unable to connect to remote system [%s].\n",
                     get_time_as_log(), process_error());
-            return;
+            return -1;
         }
     }
 
@@ -231,7 +231,7 @@ void os_send_tcp(option_block *opts, char *str, int len)
     {
         fprintf(stderr,"[%s] error: tcp send() failed.\n", get_time_as_log());
         fprintf(log,"[%s] error: tcp send() failed.\n", get_time_as_log());
-        return;
+        return -1;
     }
     if(opts->verbosity != QUIET)
         fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
@@ -282,9 +282,10 @@ void os_send_tcp(option_block *opts, char *str, int len)
     }
     
     mssleep(opts->reqw_inms);
+    return 0;
 }
 
-void os_send_udp(option_block *opts, char *str, int len)
+int os_send_udp(option_block *opts, char *str, int len)
 {
     FILE *log = stdout;
     struct timeval tv;
@@ -311,7 +312,7 @@ void os_send_udp(option_block *opts, char *str, int len)
                 get_time_as_log());
         fprintf(log,"[%s] error: unable to acquire socket.\n",
                 get_time_as_log());
-        return;
+        return -1;
     }
 
     server.sin_family = AF_INET;
@@ -325,7 +326,7 @@ void os_send_udp(option_block *opts, char *str, int len)
     {
         fprintf(stderr,"[%s] error: udp send() failed.\n", get_time_as_log());
         fprintf(log,"[%s] error: udp send() failed.\n", get_time_as_log());
-        return;
+        return -1;
     }
 
     if(opts->verbosity != QUIET)
@@ -370,6 +371,7 @@ void os_send_udp(option_block *opts, char *str, int len)
     close(sockfd);
 #endif
     mssleep(opts->reqw_inms);
+    return 0;
 }
 
 void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
