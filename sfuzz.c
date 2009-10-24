@@ -290,7 +290,11 @@ int main(int argc, char *argv[])
 
     memset(options.pFilename, 0, MAX_FILENAME_SIZE-1);
     memset(options.pLogFilename, 0, MAX_FILENAME_SIZE-1);
-    
+
+    /*default line terminator*/
+    options.line_term[0]         = '\n';
+    options.line_terminator_size = 1;
+
     options.state     = CMD_LINE_OPTS;
     process_opts(argc, argv, &options);
     
@@ -570,9 +574,23 @@ int execute_fuzz(option_block *opts)
             }
             
             memcpy(req+reqsize, line, tsze);
-            *(req+reqsize+tsze-1)='\n';
-            *(req+reqsize+tsze) = 0;
-            reqsize += tsze;
+            reqsize += tsze-1;
+
+//            *(req+reqsize+tsze-1)='\n';
+//            *(req+reqsize+tsze) = 0;
+            if(opts->line_terminator_size)
+            {
+                printf("[+] debug: [%d]:[%X %X]\n",
+                       opts->line_terminator_size,
+                       opts->line_term[0],
+                       opts->line_term[1]);
+                memcpy(req+reqsize, opts->line_term, 
+                       opts->line_terminator_size);
+            }
+
+            reqsize += opts->line_terminator_size;
+
+            *(req+reqsize) = 0;
         }
         if(feof(opts->fp)) break;
         

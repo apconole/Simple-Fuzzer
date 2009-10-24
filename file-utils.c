@@ -457,18 +457,6 @@ int processFileLine(option_block *opts, char *line, int line_len)
         break;
     }
 
-    if(opts->state == READ_MALFORM_BLOCK)
-    {
-        if(!strncmp("--", line, 2))
-        {
-            //end of malformed string.
-            opts->state = CONFIG_PARSE_BEGIN;
-            return 0;
-        }
-//        appendMalformedStr(opts, line);
-        return 0;
-    }
-
     /*not a comment, regular state*/
 
 #ifndef NOPLUGIN
@@ -534,13 +522,26 @@ int processFileLine(option_block *opts, char *line, int line_len)
         return 0;
     }
 
-#if CONFIG_USE_MALFORMED_BLOCK_FMT
-    if(!strncasecmp("malform-block", line, 13))
+    if(!strncasecmp("lineterm", line, 8))
     {
-        opts->state = READ_MALFORM_BLOCK;
+        delim = strstr(line, "=");
+        if(delim == NULL)
+            file_error("lineterm value not assigned!", opts);
+        sze = strlen(delim+1);
+
+        if(sze)
+        {
+            if((line[strlen(delim)] == '\\') || 
+               (line[strlen(delim)] == '0'))
+            {
+                if(line[strlen(delim)+1] == 'x')
+                    sze = ascii_to_bin(line+strlen(delim));
+            }
+            memcpy(opts->line_term, line+strlen(delim), sze);
+        }
+        opts->line_terminator_size = sze;
         return 0;
     }
-#endif
 
     if(!strncasecmp("maxseqlen", line, 9))
     {
@@ -678,7 +679,6 @@ void read_config(option_block *opts)
     opts->lno   = 1;
     do
     {
-
         if((len = readLine(opts, line, 8192, 0)) == 0)
             done = 1;
         else

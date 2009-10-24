@@ -118,6 +118,17 @@ typedef struct
     char hexl_dump;
 
     char new_logfile;
+
+    /*line terminator*/
+    char line_terminator_size;
+    char line_term[1024];
+
+    /*begin-at-test*/
+    unsigned int start_test;
+    
+    /*stop-testing-on-fail-to-connect*/
+    char stop_on_fail;
+
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024
