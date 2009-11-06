@@ -1,0 +1,100 @@
+# minimal POP3 fuzzer for sfuzz
+# - Aaron Conole
+
+# choose 10101 because I've seen people use 10000
+maxseqlen=10101
+
+# step in 1024 byte blocks
+seqstep=1024
+
+# sequence of 'A' is good enough for just finding faults
+sequence=A
+sequence=%%s
+sequence=%%n
+sequence=%#123456x
+sequence=%%#123456x
+sequence=%.1024d
+sequence=%#0123456x%08x%x%s%p%d%n%o%u%c%h%l%q%j%z%Z%t%i%e%g%f%a%C%S%08x%%
+
+# good to include standard 'these crash things' strings
+literal=�
+# 0xCB
+literal=�
+# 0xCD
+literal=�
+#basic format string vulns
+literal=%n
+literal=%#123456x
+literal=%s
+literal=%%s
+literal=%20s
+literal=%%20s
+literal=%20x
+literal=%%20x
+literal=%n%n%n%n%n
+literal=%p%p%p%p%p
+literal=%x%x%x%x%x
+literal=%d%d%d%d%d
+literal=%s%s%s%s%s
+literal=%s%p%x%d
+literal=%.1024d
+literal=%.1025d
+literal=%.2048d
+literal=%.2049d
+literal=%.4096d
+literal=%.4097d
+literal=%99999999999s
+literal=%08x
+literal=%%20d
+literal=%%20n
+literal=%%20x
+literal=%%20s
+literal=%#0123456x%08x%x%s%p%d%n%o%u%c%h%l%q%j%z%Z%t%i%e%g%f%a%C%S%08x%%
+
+lineterm=\x0d\x0a
+
+# 200ms timeout between requests
+reqwait=200
+endcfg
+FUZZ
+--
+USER FUZZ
+--
+PASS FUZZ
+--
+USER MAILUSER
+PASS MAILPASS
+LIST FUZZ
+--
+USER MAILUSER
+PASS MAILUSER
+RETR FUZZ
+--
+USER MAILUSER
+PASS MAILUSER
+DELE FUZZ
+--
+USER MAILUSER
+PASS MAILUSER
+APOP FUZZ __SEQUENCE_NUM_ASCII__
+--
+USER MAILUSER
+PASS MAILUSER
+APOP __SEQUENCE_NUM_ASCII__ FUZZ
+--
+APOP MAILUSER FUZZ
+--
+TOP FUZZ __SEQUENCE_NUM_ASCII__
+--
+USER MAILUSER
+PASS MAILUSER
+TOP FUZZ __SEQUENCE_NUM_ASCII__
+--
+USER MAILUSER
+PASS MAILUSER
+TOP __SEQUENCE_NUM_ASCII__ FUZZ
+--
+USER MAILUSER
+PASS MAILUSER
+UIDL FUZZ
+--
