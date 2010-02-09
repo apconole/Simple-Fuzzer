@@ -2,6 +2,10 @@ v 0.6
   Added line terminator specifier
   Added begin-at-test specifier
   Added end-on-fail specifier
+  Added IPv6 support
+  Added hex specifier for literal strings
+  Print test case number
+  Added response subtitutions (ie: use data from the previous packet)
 
 v 0.5
   Added rudimentary plugin support.

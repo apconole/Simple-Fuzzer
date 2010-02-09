@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

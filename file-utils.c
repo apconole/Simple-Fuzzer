@@ -435,6 +435,12 @@ int readLine(option_block *opts, char *line, int len, int ign_cr)
     return size;
 }
 
+void add_subst_symbol(char *sym_name, int sym_len, char *sym_val, 
+                      int sym_val_len, option_block *opts, int i)
+{
+    printf("Add a substitution symbol!\n");
+}
+
 int processFileLine(option_block *opts, char *line, int line_len)
 {
     FILE *t;
@@ -644,6 +650,20 @@ int processFileLine(option_block *opts, char *line, int line_len)
             file_error("binary text is invalid!", opts);
         }
         add_b_symbol(line+1, (delim - (line+1)), delim+1, sze, opts);
+        return 0;
+    } else if (line[0] == "[")
+    {
+        delim = strstr(line+1, "=");
+        if(delim == NULL)
+        {
+            file_error("symbol not assigned!", opts);
+        }
+        sze = strlen(delim+1);
+        if(sze == 0)
+        {
+            file_error("symbol is null!", opts);
+        }
+        add_subst_symbol(line+1, (delim - (line+1)), delim+1, sze, opts, 0);
         return 0;
     }
 
