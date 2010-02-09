@@ -217,12 +217,15 @@ unsigned int ascii_to_bin(char *str_bin)
     unsigned char firstNibble;
     unsigned char secondNibble;
 
-    while(*str_bin != 0)if(*str_bin++ != ' ')
-                        {
-                            if(*str_bin == 'x'){*str_bin = ' ';continue;}
-                            str[size_no_ws] = *(str_bin-1);
-                            size_no_ws++;
-                        }
+    while(*str_bin != 0)
+        if(*str_bin++ != ' ')
+        {
+            if(*(str_bin-1) == 'x')
+            {*(str_bin-1)=' ';continue;}
+            
+            str[size_no_ws] = *(str_bin-1);
+            size_no_ws++;
+        }
 
     str_bin -= rewind;
 

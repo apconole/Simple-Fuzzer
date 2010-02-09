@@ -50,7 +50,7 @@ plugin_provisor *g_plugin;
 extern int readLine(option_block *opts, char *line, int len, int ign_cr);
 extern void read_config(option_block *opts);
 int execute_fuzz(option_block *opts);
-
+extern unsigned int ascii_to_bin(char *str_bin);
 void dump_options(option_block *opts)
 {
     int i;
@@ -554,6 +554,7 @@ int execute_fuzz(option_block *opts)
     char *req2 = malloc(opts->mseql + 8192);
     char *preq = malloc(opts->mseql + 8192);
     char *p, *j;
+    char c,f,b;
 
     int tsze    = 0;
     int reqsize = 0;
@@ -643,19 +644,56 @@ int execute_fuzz(option_block *opts)
             {
                 for(tsze = 0; tsze < opts->num_litr; ++tsze)
                 {
+                    char litr_is_bin = 0;
                     i = 0;
                     
                     /*first, do the literals, which are filled in as-is*/
                     strcpy(req2, req);
+                    c = *(
+                        (opts->litr[tsze]) + 
+                        strspn(opts->litr[tsze], " "));
+
+                    b = *(1+
+                        (opts->litr[tsze]) + 
+                        strspn(opts->litr[tsze], " "));
                     
-                    /*because of this, we cannot properly handle binary atm.*/
-                /*a more robust solution would be to have a memrepl function*/
-                    strrepl(req2, reqsize, "FUZZ", opts->litr[tsze]);
+                    f = *(2 +
+                        (opts->litr[tsze])+
+                        strspn(opts->litr[tsze], " "));
+
+                    if((c == '0') ||
+                       (c == '\\'))
+                    {
+                        if((b == 'x') &&
+                           ((f >= '0') &&
+                            (f <= '9')))
+                           litr_is_bin = 1;
+                    }
+
+                    if(c == 'x')
+                        if((f >= '0') && (f <= '9'))
+                            litr_is_bin = 1;
+
+                    if(!litr_is_bin)
+                        i = strrepl(req2, reqsize, "FUZZ", opts->litr[tsze]);
+                    else
+                    {
+                        char blit[8192] = {0};
+                        int blit_len = 0;
+                        strcpy(blit,opts->litr[tsze]+
+                               strspn(opts->litr[tsze]," "));
+
+                        strrepl(blit, strlen(blit), "0x", " ");
+                        strrepl(blit, strlen(blit), "\\x", " ");
+
+                        blit_len = ascii_to_bin(blit);
+                        i = smemrepl(req2, reqsize, "FUZZ",blit, blit_len );
+                    }
                     
                     if(opts->send_initial_nonfuzz_again)
                         fuzz(opts, preq, preqsize);
                     
-                    fuzz(opts, req2, strlen(req2));
+                    fuzz(opts, req2, i);
                 }
             }
             
