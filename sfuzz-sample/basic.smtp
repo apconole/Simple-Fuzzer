@@ -18,6 +18,24 @@ EHLO FUZZ
 LHLO FUZZ
 --
 HELO smtp-server
+EXPN FUZZ
+--
+EHLO smtp-server
+EXPN FUZZ
+--
+LHLO smtp-server
+EXPN FUZZ
+--
+HELO smtp-server
+XTRN FUZZ
+--
+EHLO smtp-server
+XTRN FUZZ
+--
+LHLO smtp-server
+XTRN FUZZ
+--
+HELO smtp-server
 MAIL FROM:<FUZZ>
 --
 HELO smtp-server

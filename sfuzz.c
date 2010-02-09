@@ -197,12 +197,15 @@ XRSTUOLVD
         case 'S':
             opts->host     = atoip(lastarg);
             strncpy(opts->host_spec, lastarg, MAX_HOSTSPEC_SIZE);
+            opts->host_spec[MAX_HOSTSPEC_SIZE-1] = 0;
             break;
 	case 't':
             opts->time_out = atoi(lastarg);
             break;
         case 'p':
             opts->port    = atoi(lastarg);
+            strncpy(opts->port_spec, lastarg, MAX_PORTSPEC_SIZE);
+            opts->port_spec[MAX_PORTSPEC_SIZE-1] = 0;
             break;
         case 'T':
             opts->tcp_flag = 1;
@@ -300,6 +303,7 @@ int main(int argc, char *argv[])
     options.pFilename = malloc(MAX_FILENAME_SIZE);
     options.pLogFilename = malloc(MAX_FILENAME_SIZE);
     options.host_spec = malloc(MAX_HOSTSPEC_SIZE);
+    options.port_spec = malloc(MAX_PORTSPEC_SIZE);
 
     memset(options.pFilename, 0, MAX_FILENAME_SIZE-1);
     memset(options.pLogFilename, 0, MAX_FILENAME_SIZE-1);

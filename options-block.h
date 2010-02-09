@@ -31,6 +31,8 @@
 #ifndef __OPTIONS_BLOCK_H__
 #define __OPTIONS_BLOCK_H__
 
+#include <arpa/inet.h>
+
 typedef struct
 {
     char sym_name[8192];
@@ -82,6 +84,7 @@ typedef struct
 
     /*port num - int for atoi*/
     int port;
+    char *port_spec;
 
     /*keep open*/
     char close_conn;
@@ -134,6 +137,7 @@ typedef struct
 #define MAX_FILENAME_SIZE  1024
 #define MAX_SUBCHAR_SIZE   1024
 #define MAX_HOSTSPEC_SIZE  100
+#define MAX_PORTSPEC_SIZE  50
 
 #define CMD_LINE_OPTS         0
 #define INIT_READ             1

@@ -75,46 +75,50 @@ char *get_time_as_log()
     return buffer;
 }
 
+/* this is going to be crappy! */
 int atoip(const char *pIpStr)
 {
-    struct hostent *ent;
-    struct sockaddr_in sa;
+#ifdef __WIN32__
+    WSADATA wsaData;
+#endif
+    struct addrinfo hints, *servinfo, *p;
     int t;
 #ifdef __WIN32__
-    WSADATA wsda;
-    WSAStartup(0x0101, &wsda);
+    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0)
+    {
+        fprintf(stderr, "[%s]: error: Unable to init winsock!\n",
+                get_time_as_log());
+        fprintf(log, "[%s]: error: Unable to init winsock!\n",
+                get_time_as_log());
+        return -1;
+    }
 #endif
 
-    t = inet_addr(pIpStr);
-    
-    if(inet_addr(pIpStr) == -1)
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family   = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if(getaddrinfo(pIpStr, NULL, &hints, &servinfo) != 0)
+        return 0;
+
+    for(p = servinfo; p != NULL; p = p->ai_next)
     {
-        ent = gethostbyname(pIpStr);
-        if(ent != NULL)
+        if(p->ai_family == AF_INET)
         {
-            if(ent->h_addrtype != AF_INET)
-            {
-                fprintf(stderr, "[%s] error: address/host '%s' not of AF_INET.\n",
-                        get_time_as_log(), pIpStr);
-                exit(-1);
-            }
-            else
-            {
-                memcpy ((caddr_t) & sa.sin_addr, ent->h_addr, ent->h_length);
-                t = sa.sin_addr.s_addr;
-            }
+            t = ((struct sockaddr_in*)(p->ai_addr))->sin_addr.s_addr;
+            break;
         }
+        else if(p->ai_family = AF_INET6)
+            t = 1; /* for IPv6 we treat it as a "true" value */
         else
-        {
-            fprintf(stderr, "[%s] error: address/host '%s' unknown.\n",
-                    get_time_as_log(), pIpStr);
-            exit(-1);
-        }
+            t = 0;
     }
+
+    freeaddrinfo(servinfo);
 #ifdef __WIN32__
     WSACleanup();
-#endif
-    
+#endif    
     return t;
 }
 
@@ -172,22 +176,36 @@ int mssleep(unsigned long int sleepTimeInMS)
 
 int os_send_tcp(option_block *opts, char *str, int len)
 {
+#ifdef __WIN32__
+    WSADATA wsaData;
+#endif
     FILE *log = stdout;
     struct timeval tv;
     fd_set fds;
-#ifdef __WIN32__
-    WSADATA wsda;
-#endif
-    int sockfd;
-    struct sockaddr_in server;
+    int sockfd = -1;
+
+    int family;
+
+    struct addrinfo hints, *servinfo, *p;
+
     int ret;
+    int snt = 0;
     unsigned long int to = MAX(100, opts->time_out);
-    
-#ifdef __WIN32__
-    WSAStartup(0x0101, &wsda);
-#endif
+
     if(opts->fp_log)
         log = opts->fp_log;
+
+#ifdef __WIN32__
+    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0)
+    {
+        fprintf(stderr, "[%s]: error: Unable to init winsock!\n",
+                get_time_as_log());
+        fprintf(log, "[%s]: error: Unable to init winsock!\n",
+                get_time_as_log());
+        return -1;
+    }
+#endif
+
     
     if(opts->sockfd != -1)
     {
@@ -195,47 +213,96 @@ int os_send_tcp(option_block *opts, char *str, int len)
     }
     else
     {
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        opts->sockfd = sockfd;
-        
-        if(sockfd < 0)
+        memset(&hints, 0, sizeof(hints));
+
+        hints.ai_family   = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+
+        if(getaddrinfo(opts->host_spec, opts->port_spec, &hints, &servinfo) != 0)
         {
-            fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+            fprintf(stderr, "[%s]: error: unable to get addrinfo\n",
                     get_time_as_log());
+            fprintf(log, "[%s]: error: unable to get addrinfo\n",
+                    get_time_as_log());
+#ifdef __WIN32__
+            WSACleanup();
+#endif
+            return -1;
+        }
+        
+        for(p = servinfo; p!= NULL && sockfd == -1; p = p->ai_next)
+        {
+            sockfd = socket(p->ai_family, p->ai_socktype,
+                            p->ai_protocol);
+            if(sockfd < 0)
+                continue;
             
-            fprintf(log,"[%s] error: unable to acquire socket.\n",
-                    get_time_as_log());
-            return -1;
+            opts->sockfd = sockfd;
+            
+            if(p == NULL)
+            {
+                fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+                        get_time_as_log());
+                
+                fprintf(log,"[%s] error: unable to acquire socket.\n",
+                        get_time_as_log());
+                freeaddrinfo(servinfo);
+#ifdef __WIN32__
+                WSACleanup();
+#endif
+                return -1;
+            }
+            
+            if(connect(sockfd, 
+                       p->ai_addr, p->ai_addrlen) < 0)
+            {
+#ifdef __WIN32__
+                closesocket(sockfd);
+#else
+                close(sockfd);
+#endif
+                sockfd = -1;
+                continue;
+            }
         }
-        
-        server.sin_family = AF_INET;
-        server.sin_port   = htons(opts->port);
-        server.sin_addr.s_addr = opts->host; /*should be in network order*/
-        
-        if(connect(sockfd, 
-                   (struct sockaddr *)&server, sizeof(struct sockaddr)) < 0)
-        {
-            fprintf(stderr,
-                    "[%s] error: unable to connect to remote system [%s].\n",
-                    get_time_as_log(), process_error());
-            fprintf(log,
-                    "[%s] error: unable to connect to remote system [%s].\n",
-                    get_time_as_log(), process_error());
-            return -1;
-        }
+        freeaddrinfo(servinfo);
     }
 
-    ret = send(sockfd, str, len, 0);
-    
-    if(ret < 0)
+    if(sockfd == -1)
     {
-        fprintf(stderr,"[%s] error: tcp send() failed.\n", get_time_as_log());
-        fprintf(log,"[%s] error: tcp send() failed.\n", get_time_as_log());
+        fprintf(stderr,
+                "[%s] error: unable to connect to remote system [%s].\n",
+                get_time_as_log(), process_error());
+        fprintf(log,
+                "[%s] error: unable to connect to remote system [%s].\n",
+                get_time_as_log(), process_error());
+#ifdef __WIN32__
+        WSACleanup();
+#endif
         return -1;
     }
+
+    while(len)
+    {
+        ret = send(sockfd, str + snt, len, 0);
+    
+        if(ret < 0)
+        {
+            fprintf(stderr,"[%s] error: tcp send() failed.\n", get_time_as_log());
+            fprintf(log,"[%s] error: tcp send() failed.\n", get_time_as_log());
+#ifdef __WIN32__
+            WSACleanup();
+#endif
+            return -1;
+        }
+        len -= ret;
+        snt += ret;
+    }
+    
+
     if(opts->verbosity != QUIET)
-        fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
-                get_time_as_log());
+        fprintf(log, "[%s] info: tx fuzz - (%d bytes) - scanning for reply.\n",
+                get_time_as_log(), snt);
     
     FD_ZERO(&fds);
     FD_SET(sockfd, &fds);
@@ -274,58 +341,101 @@ int os_send_tcp(option_block *opts, char *str, int len)
     if((opts->close_conn) && (!opts->forget_conn))
     {
 #ifdef __WIN32__
-        WSACleanup();
-        closesocket(sockfd);
+        closesocket(sockfd)
 #else
         close(sockfd);
 #endif
     }
     
     mssleep(opts->reqw_inms);
+#ifdef __WIN32__
+    WSACleanup();
+#endif
     return 0;
 }
 
 int os_send_udp(option_block *opts, char *str, int len)
 {
+#ifdef __WIN32__
+    WSADATA wsaData;
+#endif
+
     FILE *log = stdout;
     struct timeval tv;
     fd_set fds;
     unsigned long int to = MAX(100, opts->time_out);
-
-#ifdef __WIN32__
-    WSADATA wsda;
-#endif
+    struct addrinfo hints, *servinfo, *p;
     int sockfd;
-    struct sockaddr_in server;
     int ret;
     
-#ifdef __WIN32__
-    WSAStartup(0x0101, &wsda);
-#endif
     if(opts->fp_log)
         log = opts->fp_log;
     
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sockfd < 0)
+#ifdef __WIN32__
+    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0)
     {
-        fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+        fprintf(stderr, "[%s]: error: Unable to init winsock!\n",
                 get_time_as_log());
-        fprintf(log,"[%s] error: unable to acquire socket.\n",
+        fprintf(log, "[%s]: error: Unable to init winsock!\n",
                 get_time_as_log());
         return -1;
     }
+#endif
 
-    server.sin_family = AF_INET;
-    server.sin_port   = htons(opts->port);
-    server.sin_addr.s_addr = opts->host; /*should be in network order*/
+    memset(&hints, 0, sizeof(hints));
+    
+    hints.ai_family   = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    
+    if(getaddrinfo(opts->host_spec, opts->port_spec, &hints, &servinfo) != 0)
+    {
+        fprintf(stderr, "[%s]: error: unable to get addrinfo\n",
+                get_time_as_log());
+        fprintf(log, "[%s]: error: unable to get addrinfo\n",
+                get_time_as_log());
+#ifdef __WIN32__
+        WSACleanup();
+#endif
+        return -1;
+    }
+    
+    for(p = servinfo; p!= NULL; p = p->ai_next)
+    {
+        
+        sockfd = socket(p->ai_family, p->ai_socktype,
+                        p->ai_protocol);
+        if(sockfd < 0)
+            continue;
+
+            opts->sockfd = sockfd;
+            
+            if(p == NULL)
+            {
+                fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+                        get_time_as_log());
+                
+                fprintf(log,"[%s] error: unable to acquire socket.\n",
+                        get_time_as_log());
+                freeaddrinfo(servinfo);
+#ifdef __WIN32__
+                WSACleanup();
+#endif
+                return -1;
+            }
+    }
 
     ret = sendto(sockfd, str, len, 0,
-               (struct sockaddr *)&server, sizeof(struct sockaddr));
+                 p->ai_addr, p->ai_addrlen);
+
+    freeaddrinfo(servinfo);
     
     if(ret < 0)
     {
         fprintf(stderr,"[%s] error: udp send() failed.\n", get_time_as_log());
         fprintf(log,"[%s] error: udp send() failed.\n", get_time_as_log());
+#ifdef __WIN32__
+        WSACleanup();
+#endif
         return -1;
     }
 
@@ -363,10 +473,9 @@ int os_send_udp(option_block *opts, char *str, int len)
             
         }
     }
-
 #ifdef __WIN32__
-    WSACleanup();
     closesocket(sockfd);
+    WSACleanup();
 #else
     close(sockfd);
 #endif
