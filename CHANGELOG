@@ -6,6 +6,7 @@ v 0.6
   Added hex specifier for literal strings
   Print test case number
   Added response subtitutions (ie: use data from the previous packet)
+       -offset/text based only
 
 v 0.5
   Added rudimentary plugin support.
