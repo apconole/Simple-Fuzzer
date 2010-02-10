@@ -592,12 +592,12 @@ int processFileLine(option_block *opts, char *line, int line_len)
         delim = strstr(line, "=");
         if(delim == NULL)
             file_error("replacement policy not specified.", opts);
-        sze = strlen(delim+1);
-        if(!strncasecmp(sze, "always", 6))
+        f = delim+1;
+        if(!strncasecmp(f, "always", 6))
         {
             opts->repl_pol = 1;
         }
-        else if(!strncasecmp(sze, "once", 5))
+        else if(!strncasecmp(f, "once", 5))
         {
             opts->repl_pol = 2; 
         }

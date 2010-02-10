@@ -31,6 +31,8 @@
 #ifndef __SFUZZ_PLUGIN_DEFS_H__
 #define __SFUZZ_PLUGIN_DEFS_H__
 
+#include <stdlib.h>
+
 #include "options-block.h"
 
 #define PLUGIN_PROVIDES_LINE_OPTS         0x00000001

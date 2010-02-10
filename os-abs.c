@@ -109,7 +109,7 @@ int atoip(const char *pIpStr)
             t = ((struct sockaddr_in*)(p->ai_addr))->sin_addr.s_addr;
             break;
         }
-        else if(p->ai_family = AF_INET6)
+        else if(p->ai_family == AF_INET6)
             t = 1; /* for IPv6 we treat it as a "true" value */
         else
             t = 0;
@@ -183,8 +183,6 @@ int os_send_tcp(option_block *opts, char *str, int len)
     struct timeval tv;
     fd_set fds;
     int sockfd = -1;
-
-    int family;
 
     struct addrinfo hints, *servinfo, *p;
 

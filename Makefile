@@ -17,7 +17,8 @@ LIBS=
 SF_OBJS=file-utils.o sfuzz.o os-abs.o
 SNOOP_OBJS=snoop.o os-abs.o
 EXAMPLE_OBJS=sfuzz-plugin-example.o sfuzz-plugin-ssl-transport.o
-PROGS=sfuzz sfuzz-plugin-example.so sfuzz-plugin-ssl-transport.so
+PROGS=sfuzz
+PLUGS=sfuzz-plugin-example.so sfuzz-plugin-ssl-transport.so
 
 ifeq ($(TARGET_PLAT),)
 TARGET_PLAT = $(shell uname -s)
@@ -59,6 +60,8 @@ endif
 
 all: $(PROGS)
 
+plugins: $(PLUGS)
+
 sfuzz: $(SF_OBJS)
 	$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
 
@@ -83,4 +86,4 @@ uninstall:
 	$(RM) -f  /usr/local/bin/sfuzz
 
 clean:
-	rm -f core *~ *.o $(PROGS) snoop
+	rm -f core *~ *.o $(PROGS) snoop $(PLUGS)
