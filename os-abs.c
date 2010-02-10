@@ -322,6 +322,25 @@ int os_send_tcp(option_block *opts, char *str, int len)
                 fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
                         get_time_as_log(),
                         buf);
+            if((opts->s_syms_count) && (opts->repl_pol))
+            {
+                for(ret = 0; ret < opts->s_syms_count; ++ret)
+                {
+                    sym_t *pSym = &(opts->s_syms[ret]);
+                    int    cpy_len = pSym->is_len;
+
+                    if((opts->repl_pol == 2) &&
+                       pSym->increment)
+                        continue;
+
+                    if(cpy_len > r_len)
+                        continue;
+                    memset(pSym->sym_val, 0, 1024);
+                    memcpy(pSym->sym_val, buf+(pSym->offset),cpy_len);
+                    pSym->sym_val[cpy_len] = 0;
+                    pSym->increment = 1;
+                }
+            }
 #ifndef NOPLUGIN
             if((g_plugin != NULL) &&
                ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==

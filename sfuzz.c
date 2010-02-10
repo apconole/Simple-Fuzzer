@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
     options.pLogFilename = malloc(MAX_FILENAME_SIZE);
     options.host_spec = malloc(MAX_HOSTSPEC_SIZE);
     options.port_spec = malloc(MAX_PORTSPEC_SIZE);
-
+    options.repl_pol = 2; /* once ! for always, choose 1. */
     memset(options.pFilename, 0, MAX_FILENAME_SIZE-1);
     memset(options.pLogFilename, 0, MAX_FILENAME_SIZE-1);
 
@@ -432,7 +432,7 @@ void fuzz(option_block *opts, char *req, int len)
     }
 #endif
     
-    if(fuzz_this_time && opts->sym_count)
+    if(fuzz_this_time && ((opts->sym_count) || (opts->s_syms_count)))
     {
         /*xxx : enhancement - loop backwards allowing people to define
                 a string (aaa for example) and use that string within
@@ -451,12 +451,20 @@ void fuzz(option_block *opts, char *req, int len)
         {
             pSym = &(opts->syms_array[i]);
             if(!pSym->is_len)
-            len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+                len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
         }
+
+        for(i = opts->s_syms_count - 1; i >= 0; --i)
+        {
+            pSym = &(opts->s_syms[i]);
+            len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+            printf("[%s] -> [%s]\n", pSym->sym_name, pSym->sym_val);
+        }
+
     }
 
-    if(opts->b_sym_count) /* we let this one through because we need the
-                             increments to happen. */
+    if(opts->b_sym_count) /* we let this one through in skip cases
+                             because we need the increments to happen. */
     {
         for(i = 0; i < opts->b_sym_count; ++i)
         {

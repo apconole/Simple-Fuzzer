@@ -494,9 +494,12 @@ void add_subst_symbol(char *sym_name, int sym_len, char *sym_val,
         opts->s_syms_count++;
 
         pSym = &(opts->s_syms[opts->s_syms_count - 1]);
-        
-        memcpy(pSym->sym_name, sym_name, strlen(sym_name));
+
+        memset(pSym->sym_name, 0, 8192);
+        memset(pSym->sym_val, 0, 8192);
+        memcpy(pSym->sym_name, sym_name, sym_len);
         memcpy(pSym->sym_val, subst_def, strlen(subst_def));
+
         pSym->is_len = subst_length;
         pSym->offset = subst_offset;
 
@@ -581,6 +584,26 @@ int processFileLine(option_block *opts, char *line, int line_len)
             file_error("sequence string is null!", opts);
         }
         add_sequence(opts, delim+1, sze);
+        return 0;
+    }
+
+    if(!strncasecmp("reppol", line, 6))
+    {
+        delim = strstr(line, "=");
+        if(delim == NULL)
+            file_error("replacement policy not specified.", opts);
+        sze = strlen(delim+1);
+        if(!strncasecmp(sze, "always", 6))
+        {
+            opts->repl_pol = 1;
+        }
+        else if(!strncasecmp(sze, "once", 5))
+        {
+            opts->repl_pol = 2; 
+        }
+        else
+            file_error("replacement policy not recognized.", opts);
+
         return 0;
     }
     

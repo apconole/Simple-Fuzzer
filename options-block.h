@@ -135,6 +135,7 @@ typedef struct
     char stop_on_fail;
 
     /*substitution symbols*/
+    char repl_pol;
     sym_t *s_syms;
     unsigned int s_syms_count;
 
