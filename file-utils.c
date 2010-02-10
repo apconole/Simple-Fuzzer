@@ -438,7 +438,72 @@ int readLine(option_block *opts, char *line, int len, int ign_cr)
 void add_subst_symbol(char *sym_name, int sym_len, char *sym_val, 
                       int sym_val_len, option_block *opts, int i)
 {
-    printf("Add a substitution symbol!\n");
+    sym_t *pSym;
+    size_t start_len = strspn(sym_val, " \t");
+    if((*(sym_val+start_len) != '[') ||
+       (*(sym_val+sym_val_len-1) != ']'))
+    {
+        file_error("substitution variable syntax error", opts);
+    }
+
+    ++start_len; *(sym_val+sym_val_len-1) = '\0';
+
+    if(*(sym_val+start_len) == '/')
+    {
+        file_error("BETA version does not support this feature", opts);
+    }
+    else
+    {
+        char *string_tok;
+        int subst_offset  = -1;
+        int subst_length  = -1;
+        char * subst_def = sym_val;
+
+        /*should be in the format of offset:length:default value*/
+        string_tok = strtok((sym_val+start_len), ":");
+        subst_def += strlen(string_tok) + 1;
+        subst_offset = strtol(string_tok, NULL, 10);
+        if((errno) || (subst_offset < 0))
+        {
+            file_error("parse error during substitution - invalid number",
+                       opts);
+        }
+
+        /*should be in the format of offset:length:default value*/
+        string_tok = strtok(NULL, ":");
+        subst_def += strlen(string_tok) + 1;
+        subst_length = strtol(string_tok, NULL, 10);
+        if((errno) || (subst_length <= 0))
+        {
+            file_error("parse error during substitution - invalid number",
+                       opts);
+        }
+
+        ++subst_def;
+
+        /*at this point, offset, length, and def are specified.
+          build the symbol entry*/
+
+        opts->s_syms = realloc(opts->s_syms, 
+                               (opts->s_syms_count+1) * sizeof(sym_t));
+        if(opts->s_syms == NULL)
+        {
+            file_error("OOM adding substitution symbol", opts);
+        }
+
+        opts->s_syms_count++;
+
+        pSym = &(opts->s_syms[opts->s_syms_count - 1]);
+        
+        memcpy(pSym->sym_name, sym_name, strlen(sym_name));
+        memcpy(pSym->sym_val, subst_def, strlen(subst_def));
+        pSym->is_len = subst_length;
+        pSym->offset = subst_offset;
+
+        /*added "substitution" symbol*/
+        
+        return;
+    }
 }
 
 int processFileLine(option_block *opts, char *line, int line_len)
@@ -651,7 +716,7 @@ int processFileLine(option_block *opts, char *line, int line_len)
         }
         add_b_symbol(line+1, (delim - (line+1)), delim+1, sze, opts);
         return 0;
-    } else if (line[0] == "[")
+    } else if (line[0] == '|')
     {
         delim = strstr(line+1, "=");
         if(delim == NULL)

@@ -37,7 +37,9 @@ typedef struct
 {
     char sym_name[8192];
     char sym_val[8192];
+    char *sym_match;
     int  is_len;
+    int  offset;
     char increment;
 } sym_t;
 
@@ -131,6 +133,10 @@ typedef struct
     
     /*stop-testing-on-fail-to-connect*/
     char stop_on_fail;
+
+    /*substitution symbols*/
+    sym_t *s_syms;
+    unsigned int s_syms_count;
 
 } option_block;
 

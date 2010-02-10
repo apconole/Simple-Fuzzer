@@ -57,9 +57,9 @@ void dump_options(option_block *opts)
     
     if(opts != NULL)
     {
-        printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\tsequences: [%d]\n\tsymbols: [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n\tplugin: <%s>\n",
+        printf("[%s] dumping options:\n\tfilename: <%s>\n\tstate:    <%d>\n\tlineno:   <%d>\n\tliterals:  [%d]\n\tsequences: [%d]\n\tsymbols: [%d]\n\treq_del:  <%d>\n\tmseq_len: <%d>\n\tplugin: <%s>\n\ts_syms: <%d>\n",
                get_time_as_log(), opts->pFilename, opts->state, opts->lno, opts->num_litr, opts->num_seq, opts->sym_count / 2, opts->reqw_inms, opts->mseql,
-               g_plugin ? g_plugin->name() : "none");
+               g_plugin ? g_plugin->name() : "none", opts->s_syms_count);
         
         for(i = 0; i < opts->num_litr; i++)
             printf("\tliteral[%d] = [%s]\n", i+1, opts->litr[i]);
@@ -70,6 +70,13 @@ void dump_options(option_block *opts)
             if(!(opts->syms_array[i].is_len))
                 printf("\tsym [%s]->[%s]\n", opts->syms_array[i].sym_name,
                        opts->syms_array[i].sym_val);
+        }
+
+        for(i = 0; i < opts->s_syms_count; ++i)
+        {
+            printf("\t|sym| [%s] -> %d[%d:%s]\n", 
+                   opts->s_syms[i].sym_name, opts->s_syms[i].is_len,
+                   opts->s_syms[i].offset, opts->s_syms[i].sym_val);
         }
     }
 }
