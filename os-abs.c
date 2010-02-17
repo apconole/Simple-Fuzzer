@@ -308,6 +308,8 @@ int os_send_tcp(option_block *opts, char *str, int len)
     tv.tv_sec  = to / 1000;
     tv.tv_usec = (to % 1000) * 1000; /*time out*/
 
+    mssleep(opts->reqw_inms);
+
     ret = select(sockfd+1, &fds, NULL, NULL, &tv);
     if(ret > 0)
     {
@@ -364,7 +366,6 @@ int os_send_tcp(option_block *opts, char *str, int len)
 #endif
     }
     
-    mssleep(opts->reqw_inms);
 #ifdef __WIN32__
     WSACleanup();
 #endif
@@ -466,6 +467,8 @@ int os_send_udp(option_block *opts, char *str, int len)
     tv.tv_sec  = to / 1000;
     tv.tv_usec = (to % 1000) * 1000; /*time out*/
 
+    mssleep(opts->reqw_inms);
+
     ret = select(sockfd+1, &fds, NULL, NULL, &tv);
     if(ret > 0)
     {
@@ -496,7 +499,6 @@ int os_send_udp(option_block *opts, char *str, int len)
 #else
     close(sockfd);
 #endif
-    mssleep(opts->reqw_inms);
     return 0;
 }
 
