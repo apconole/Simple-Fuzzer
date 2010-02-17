@@ -440,6 +440,12 @@ void fuzz(option_block *opts, char *req, int len)
                 THIS creates a problem - our length field substitution
                 depends on having lengths before non-lengths. The answer
                 of course, is to just have 2 loops, apply the lenghts first*/
+        for(i = opts->s_syms_count - 1; i >= 0; --i)
+        {
+            pSym = &(opts->s_syms[i]);
+            len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+        }
+
         for(i = opts->sym_count - 1; i >= 0; --i)
         {
             pSym = &(opts->syms_array[i]);
@@ -452,13 +458,6 @@ void fuzz(option_block *opts, char *req, int len)
             pSym = &(opts->syms_array[i]);
             if(!pSym->is_len)
                 len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
-        }
-
-        for(i = opts->s_syms_count - 1; i >= 0; --i)
-        {
-            pSym = &(opts->s_syms[i]);
-            len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
-            printf("[%s] -> [%s]\n", pSym->sym_name, pSym->sym_val);
         }
 
     }
