@@ -221,7 +221,11 @@ unsigned int ascii_to_bin(char *str_bin)
         if(*str_bin++ != ' ')
         {
             if(*(str_bin-1) == 'x')
-            {*(str_bin-1)=' ';continue;}
+            {
+                *(str_bin-2) = *(str_bin-1)=' ';
+                --size_no_ws;
+                continue;
+            }
             
             str[size_no_ws] = *(str_bin-1);
             size_no_ws++;
@@ -502,6 +506,7 @@ void add_subst_symbol(char *sym_name, int sym_len, char *sym_val,
 
         pSym->is_len = subst_length;
         pSym->offset = subst_offset;
+        pSym->s_len =  strlen(subst_def);
 
         /*added "substitution" symbol*/
         
@@ -769,6 +774,175 @@ int processFileLine(option_block *opts, char *line, int line_len)
     return 1;
 }
 
+static char **searchPath;
+static int    searchPathCount;
+
+void sfuzz_setsearchpath(const char *path)
+{
+    const char *cp, *tp;
+    int pathLen, ii;
+    char **pathStr;
+
+    if(!path || !*path)
+    {
+        if(searchPath)free(searchPath);
+        searchPath = 0;
+        searchPathCount = 0;
+        return;
+    }
+
+    for(cp = path, pathLen = 0; *cp; ++cp)
+    {
+        if(':' == *cp)++pathLen;
+    }
+
+    ++pathLen;
+
+    if(searchPath){
+        free(searchPath);
+        searchPath = 0;
+        searchPathCount = 0;
+    }
+
+    searchPath = (char **)(calloc(pathLen, sizeof(char *)));
+
+    for(cp = path, pathStr = searchPath, ii = 0, tp = strchr(path, ':');
+        (NULL != tp) && (ii < pathLen); ++ii)
+    {
+        if((cp == NULL) || (tp == NULL))
+        {
+            free(searchPath);
+            searchPath = 0;
+            searchPathCount = 0;
+            return;
+        }
+
+        if(tp == cp) {
+            *pathStr = strdup(".");
+        }
+        else
+        {
+            const char *sp;
+            char *dp;
+            *pathStr = (char *)malloc(tp-cp+1);
+            if(*pathStr == NULL)
+            {
+                free(searchPath);
+                searchPath = 0;
+                searchPathCount = 0;
+                return;    
+            }
+            for(dp = *pathStr, sp = cp; sp < tp; *dp++ = *sp++);
+            *dp = 0;
+        }
+
+        ++pathStr;
+        cp = tp+1;
+        tp = strchr(cp, ':');
+    }
+
+    if(*cp) 
+    {
+        *pathStr = strdup(cp);
+    } else {
+        *pathStr = strdup(".");
+    }
+
+    searchPathCount = pathLen;
+}
+
+void sfuzz_searchpath_prepend(const char *pathname)
+{
+    int searchPathStrLength = 0;
+    char *searchPathStr = NULL;
+    int i;
+
+    if(!pathname || !*pathname) /* do nothing on null */
+        return;
+
+    searchPathStrLength = strlen(pathname)+1;
+
+    for(i = 0; i < searchPathCount; ++i)
+    {
+        searchPathStrLength += strlen(searchPath[i]) + 1;
+    }
+
+    searchPathStr = malloc(searchPathStrLength+1);
+
+    if(searchPathStr == NULL)
+        return;
+
+    strcpy(searchPathStr, pathname);
+
+    for(i = 0; i < searchPathCount; ++i)
+    {
+        strcat(searchPathStr, ":");
+        strcat(searchPathStr, searchPath[i]);
+    }
+
+    sfuzz_setsearchpath(searchPathStr);
+
+    free(searchPathStr);
+}
+
+FILE *sfuzz_fopen(const char *filename, const char *perms)
+{
+    FILE *fp;
+    const char *fileStr;
+    char **pathStr;
+    int ii;
+    char *cp;
+    char nameBuff[4096];
+
+    if(strlen(filename) >= sizeof(nameBuff))
+    {
+        return NULL;
+    }
+
+    strcpy(nameBuff, filename);
+    
+    for(cp = nameBuff; *cp; ++cp)
+    {
+        if('\\' == *cp) *cp = '/';
+    }
+
+    fp = fopen(nameBuff, perms);
+    if(fp != NULL)
+    {
+        return fp;
+    }
+
+    for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
+    {
+        for(fileStr = filename; fileStr && *fileStr; 
+            fileStr = strpbrk(fileStr+1, "/\\")) 
+        {
+            if((strlen(*pathStr) >= 4096) ||
+               (strlen(*pathStr) + strlen(fileStr) + 2 >= 4096))
+            {
+                return NULL;
+            }
+            memset(nameBuff, 0, sizeof(nameBuff));
+            strcpy(nameBuff, *pathStr);
+            if(*(nameBuff + strlen(nameBuff) - 1) != '/')
+            {
+                *(nameBuff + strlen(nameBuff)) = '/';
+                *(nameBuff + strlen(nameBuff)+1) = '\0';
+            }
+
+            strcat(nameBuff, fileStr);
+            for(cp = nameBuff; *cp; ++cp)
+            {
+                if('\\' == *cp) *cp = '/';
+            }
+            fp = fopen(nameBuff, perms);
+            if(fp != NULL) return fp;
+        }
+    }
+
+    return NULL;
+}
+
 void read_config(option_block *opts)
 {
     char  done = 0;
@@ -776,12 +950,23 @@ void read_config(option_block *opts)
     FILE *f;
     
     char line[8192]; // should never have more than an 8k line.
+    char path[1024] = {0};
+    char *tmp;
 
     if(opts->state != INIT_READ)
         file_error("invalid state for config reading.", opts);
 
-    f = fopen(opts->pFilename, "r");
-
+    if((tmp = strrchr(opts->pFilename, '/')) ||
+       (tmp = strrchr(opts->pFilename, '\\')))
+    {
+        if((tmp - opts->pFilename) > sizeof(path)-1)
+            file_error("file path too long.", opts);
+        memcpy(path, opts->pFilename, (tmp - opts->pFilename));
+        sfuzz_searchpath_prepend(path);
+    }
+    
+    f = sfuzz_fopen(opts->pFilename, "r");
+    
     if(f == NULL)
         file_error("unable to open file.", opts);
 

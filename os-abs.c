@@ -234,7 +234,9 @@ int os_send_tcp(option_block *opts, char *str, int len)
                             p->ai_protocol);
             if(sockfd < 0)
                 continue;
-            
+
+            printf("[%x]\n", ((struct sockaddr_in*)(p->ai_addr))->sin_addr.s_addr);
+
             opts->sockfd = sockfd;
             
             if(p == NULL)
@@ -338,6 +340,7 @@ int os_send_tcp(option_block *opts, char *str, int len)
                     memset(pSym->sym_val, 0, 1024);
                     memcpy(pSym->sym_val, buf+(pSym->offset),cpy_len);
                     pSym->sym_val[cpy_len] = 0;
+                    pSym->s_len = cpy_len;
                     pSym->increment = 1;
                 }
             }

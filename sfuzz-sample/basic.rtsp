@@ -12,7 +12,7 @@ reqwait=200
 maxseqlen=50050
 
 #include the basic fuzz sequences and literals
-include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
+include basic-fuzz-strings.list
 
 #test 1 - describe fuzz
 #test 2 - more describe fuzzing

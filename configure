@@ -1,0 +1,272 @@
+#!/bin/sh
+# GNU Autotools might not be available on all platforms
+# CONVERSELY, sh is available on most platforms (except windows)
+# So, just set everything up, and do the magic.
+# NOTE: use a configure.bat file for windows.
+
+if [ "$1" = "-h" ]; then
+  echo Options:
+  echo "  --prefix=path              prefix path to install sfuzz and its datafiles"
+  echo "  --enable-snoop             turn on snoop compilation"
+  echo "  --enable-plugin-samples    compile plugin samples as well"
+  echo "  --disable-plugins          compile without plugin support"
+  echo "  --help                     this message"
+  exit 0
+fi
+
+if [ "$1" = "--help" ]; then
+  echo Options:
+  echo "  --prefix=path              prefix path to install sfuzz and its datafiles"
+  echo "  --enable-snoop             turn on snoop compilation"
+  echo "  --enable-plugin-samples    compile plugin samples as well"
+  echo "  --disable-plugins          compile without plugin support"
+  echo "  --help                     this message"
+  exit 0
+fi
+
+echo
+echo "Starting simple fuzzer auto configuration ..."
+rm -f Makefile
+
+WHICH=/usr/bin/which
+SED=`$WHICH sed 2> /dev/null`
+CAT=`$WHICH cat 2> /dev/null`
+UNAME=`$WHICH uname 2> /dev/null`
+DIRNAME=`$WHICH dirname 2> /dev/null`
+BASENAME=`$WHICH basename 2> /dev/null`
+CP=`$WHICH cp 2> /dev/null`
+LS=`$WHICH ls 2> /dev/null`
+GREP=`$WHICH grep 2> /dev/null`
+RM=`$WHICH rm 2> /dev/null`
+MKDIR=`$WHICH mkdir 2> /dev/null`
+
+PREFIX=""
+SSL_PATH=""
+SSL_IPATH=""
+CRYPTO_PATH=""
+SSL_PLUGIN_SUPPORT=""
+PLUGIN_SUPPORT="enable"
+SNOOP_SUPPORT=""
+LIBDIRS=`$CAT /etc/ld.so.conf 2> /dev/null`
+OS_SYSTEM=`$UNAME -s 2> /dev/null`
+XCFLAGS="-g -O2 -Wall -I."
+XSHARED_LIBS=""
+XSHARED_OPTS=""
+XSHARED_INC=""
+CC_LOCATION=`$WHICH gcc 2> /dev/null`
+HAS_INSTALL=`$WHICH install 2> /dev/null`
+
+if [ '!' "X" = "X$*" ]; then
+  while [ $# -gt 0 ];
+  do
+    if [ "X" = "X$PREFIX" ]; then
+  	  PREFIX_TMP=`echo "$1"|$SED 's/.*--prefix=//'`
+	  if [ $PREFIX_TMP != $1 ]; then
+		  PREFIX=$PREFIX_TMP
+	  fi
+    fi
+    if [ "X" = "X$SSL_PLUGIN_SUPPORT" ]; then
+       SSL_PLUGIN_SUPPORT_TMP=`echo "$1"|$SED 's/.*--enable-plugin-samples//'`
+       if [ -z $SSL_PLUGIN_SUPPORT_TMP ]; then
+	     SSL_PLUGIN_SUPPORT="enable"
+       fi
+    fi
+    if [ "X" = "X$SNOOP_SUPPORT" ]; then
+        SNOOP_SUPPORT_TMP=`echo "$1"|$SED 's/.*--enable-snoop//'`
+        if [ -z $SNOOP_SUPPORT_TMP ]; then
+            SNOOP_SUPPORT="enable"
+        fi
+    fi
+    if [ "X" = "X$PLUGIN_SUPPORT" ]; then
+        PLUGIN_SUPPORT_TMP=`echo "$1"|$SED 's/.*--disable-plugins//'`
+        if [ -z $PLUGIN_SUPPORT_TMP ]; then
+            PLUGIN_SUPPORT="disable"
+            SSL_PLUGIN_SUPPORT="disable"
+        fi
+    fi
+    shift
+  done
+fi
+
+if [ "X" = "X$PREFIX" ]; then
+    PREFIX="/usr/local"
+fi
+
+XCFLAGS="$XCFLAGS -DPREFIX=\\\"$PREFIX\\\""
+
+if [ "X" = "X$HAS_INSTALL" ]; then
+    HAS_INSTALL="$CP"
+fi
+
+if [ "X" = "X$OS_SYSTEM" ]; then
+    echo "WARN: unable to determine OS type using uname - defaulting to linux"
+    echo "      ... this could be bad. Ensure uname is available."
+    OS_SYSTEM="Linux"
+fi
+
+echo -n "Checking for gcc ..."
+if [ "X" = "X$CC_LOCATION" ]; then
+    echo "                                    ... NOT found"
+    echo -n "Checking for cc ..."
+    CC_LOCATION=`$WHICH cc 2> /dev/null`
+    if [ "X" = "X$CC_LOCATION" ]; then
+        echo "                                     ... NOT found"
+        echo " ERROR: No C compiler available. If you think this is in error, manually edit the configure script and set the CC_LOCATION value"
+        exit 1
+    fi
+fi
+
+echo "                                         ... found"
+
+CC_LOCATION_VAL=`$DIRNAME $CC_LOCATION`
+CC_COMPILER_VAL=`$BASENAME $CC_LOCATION`
+
+echo -n "Checking for libssl (libssl/ssl.h) ..."
+for i in  $LIBDIRS /lib  /usr/lib /usr/local/lib /opt/local/lib \
+/*ssl /usr/*ssl /opt/*ssl /usr/local/*ssl /opt/local/*ssl \
+/*ssl/lib /usr/*ssl/lib /opt/*ssl/lib /usr/local/*ssl/lib /opt/local/*ssl/lib .
+do
+    if [ "X" = "X$SSL_PATH" ]; then
+        if [ -f "$i/libssl.so" -o -f "$i/libssl.dylib" ]; then
+            SSL_PATH="$i"
+        fi
+    fi
+    if [ "X" = "X$SSL_PATH" ]; then
+        TMP_LIB=`$LS $i/libssl.so* /bin/cygssl*.dll 2> /dev/null | $GREP ssl`
+        if [ -n "$TMP_LIB" ]; then
+          SSL_PATH="$i"
+        fi
+    fi
+    if [ "X" = "X$CRYPTO_PATH" ]; then
+        if [ -f "$i/libcrypto.so" -o -f "$i/libcrypto.dylib" ]; then
+            CRYPTO_PATH="$i"
+        fi
+    fi
+    if [ "X" = "X$CRYPTO_PATH" ]; then
+        TMP_LIB=`$LS $i/libcrypto.so* /bin/cygcrypto*.dll 2> /dev/null | $GREP crypto`
+        if [ -n "$TMP_LIB" ]; then
+          CRYPTO_PATH="$i"
+        fi
+    fi
+done
+
+for i in /usr/local/include /*ssl/include /usr/include \
+/opt/*ssl/include /usr/*ssl/include /usr/local/*ssl/include .
+do
+    if [ "X" = "X$SSL_IPATH" ]; then
+        if [ -f "$i/openssl/ssl.h" ]; then
+            SSL_IPATH="$i"
+        fi
+    fi
+done
+
+if [ "X" = "X$SSL_PATH" ]; then
+    SSL_IPATH=""
+    CRYPTO_PATH=""
+fi
+if [ "X" = "X$SSL_IPATH" ]; then
+    SSL_PATH=""
+    CRYPTO_PATH=""
+fi
+if [ -n "$SSL_PATH" ]; then
+    echo "                       ... found"
+    
+fi
+if [ "X" = "X$SSL_PATH" ]; then
+    echo "                       ... NOT found, support disabled"
+    echo "*** for the sample ssl plugin get it from http://www.openssl.org ***"
+    if [ "X" != "X$SSL_PLUGIN_SUPPORT" ]; then
+        echo "WARN: Disabled ssl plugin building support."
+        SSL_PLUGIN_SUPPORT="disable"
+    fi
+fi
+
+echo -n "Checking for libdl.so ..."
+for i in  $LIBDIRS /lib /usr/lib /usr/local/lib
+do
+    if [ "X" = "X$HAVE_LIBDL" ]; then
+        if [ -f "$i/libdl.so" ]; then
+            HAVE_LIBDL="yes"
+        fi
+    fi
+done
+LIBS=""
+if [ -n $HAVE_LIBDL ]; then
+    echo "                                    ... found"
+    XCFLAGS="$XCFLAGS -fPIC"
+    XSHARED_LIBS="$XSHARED_LIBS -ldl"
+    LIBS="$XSHARED_LIBS"
+    if [ "Darwin" = "$OS_SYSTEM" ]; then
+        XCFLAGS="$XCFLAGS -D__LINUX__"
+        XSHARED_OPTS="-dynamiclib -undefined dynamic_lookup -single_module"
+    elif [ "Linux" = "$OS_SYSTEM" ]; then
+        XCFLAGS="$XCFLAGS -D__LINUX__ -rdynamic"
+        XSHARED_OPTS="$XSHARED_OPTS -shared -rdynamic"
+    fi
+fi
+if [ "X" = "X$HAVE_LIBDL" ]; then
+    echo "                                    ... NOT found, support disabled"
+fi
+
+echo "Done configuring ... writing Makefile"
+
+$CAT > Makefile <<__MAKEFILE_EOF__
+# This file was automatically built by the simple fuzzer configuration process
+# Manual edits will not be saved if you run configure again
+# you have been warned.
+
+### Variables for building
+CCPATH=$CC_LOCATION_VAL
+CC=$CC_COMPILER_VAL
+INSTALL=$HAS_INSTALL
+CFLAGS=$XCFLAGS
+TARGET_PLAT=$OS_SYSTEM
+CP=$CP
+SED=$SED
+CAT=$CAT
+UNAME=$UNAME
+DIRNAME=$DIRNAME
+BASENAME=$BASENAME
+LS=$LS
+GREP=$GREP
+PREFIX=$PREFIX
+RM=$RM
+MKDIR=$MKDIR
+SHARED_INC=$XSHARED_INC
+SHARED_OPTS=$XSHARED_OPTS
+
+SF_OBJS=file-utils.o sfuzz.o os-abs.o
+SNOOP_OBJS=snoop.o os-abs.o
+PLUGIN_EXAMPLE_OBJS=sfuzz-plugin-example.o sfuzz-plugin-ssl-transport.o
+
+LIBS=$LIBS
+
+__MAKEFILE_EOF__
+
+# now to determine targets (ie: sfuzz is obvious, but snoop and plugins are
+# also required
+PROGS="sfuzz"
+
+if [ $PLUGIN_SUPPORT = "enable" ]; then
+    PROGS="$PROGS sfuzz-plugin-example.so "
+    if [ "$SSL_PLUGIN_SUPPORT" = "enable" ]; then
+        PROGS="$PROGS sfuzz-plugin-ssl-transport.so"
+    fi
+fi
+
+if [ "$SNOOP_SUPPORT" = "enable" ]; then
+    PROGS="$PROGS snoop"
+fi
+
+$CAT >> Makefile <<__MAKEFILE_EOF__
+PROGS=$PROGS
+
+all: $PROGS
+	@echo Finished building.
+
+__MAKEFILE_EOF__
+
+$CAT ./Makefile.in >> Makefile
+
+echo "Finished. Now run 'make'"
+exit 0

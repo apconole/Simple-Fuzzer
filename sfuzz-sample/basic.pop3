@@ -9,49 +9,12 @@ seqstep=1024
 
 # sequence of 'A' is good enough for just finding faults
 sequence=A
-sequence=%%s
-sequence=%%n
-sequence=%#123456x
-sequence=%%#123456x
-sequence=%.1024d
-sequence=%#0123456x%08x%x%s%p%d%n%o%u%c%h%l%q%j%z%Z%t%i%e%g%f%a%C%S%08x%%
+sequence=}
+sequence={
 
-# good to include standard 'these crash things' strings
-literal=�
-# 0xCB
-literal=�
-# 0xCD
-literal=�
-#basic format string vulns
-literal=%n
-literal=%#123456x
-literal=%s
-literal=%%s
-literal=%20s
-literal=%%20s
-literal=%20x
-literal=%%20x
-literal=%n%n%n%n%n
-literal=%p%p%p%p%p
-literal=%x%x%x%x%x
-literal=%d%d%d%d%d
-literal=%s%s%s%s%s
-literal=%s%p%x%d
-literal=%.1024d
-literal=%.1025d
-literal=%.2048d
-literal=%.2049d
-literal=%.4096d
-literal=%.4097d
-literal=%99999999999s
-literal=%08x
-literal=%%20d
-literal=%%20n
-literal=%%20x
-literal=%%20s
-literal=%#0123456x%08x%x%s%p%d%n%o%u%c%h%l%q%j%z%Z%t%i%e%g%f%a%C%S%08x%%
+include basic-fuzz-strings.list
 
-!CRLF=0x0d 0x0a
+!CRLF=0d0a
 
 #lime terminator
 lineterm=CRLF

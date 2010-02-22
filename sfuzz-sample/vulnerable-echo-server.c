@@ -1,3 +1,7 @@
+/***
+ * Vulnerable echo server - from Vivek Ramachandran's securitytube.net video
+ * not verbatim, but close (using dump() for hex).
+ */
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/socket.h>

@@ -94,6 +94,7 @@ void print_help()
     print_version();
     printf("url:\t http://aconole.brad-x.com/programs/sfuzz.html\n");
     printf("EMAIL:\t apconole@yahoo.com\n");
+    printf("Build-prefix: %s", PREFIX);
     printf("\n");
     printf("\t-h\t This message.\n");
     printf("\t-V\t Version information.\n");
@@ -292,6 +293,7 @@ void process_opts(int argc, char *argv[], option_block *opts)
     }
     sanity(opts);
 }
+extern void sfuzz_setsearchpath(const char *path);
 
 int main(int argc, char *argv[])
 {
@@ -301,7 +303,7 @@ int main(int argc, char *argv[])
     int i;
 
     g_plugin = NULL;
-
+    sfuzz_setsearchpath(PREFIX"/sfuzz-db");
     memset(&options, 0, sizeof(options));
 
     gettimeofday(&tv, NULL);
@@ -443,16 +445,17 @@ void fuzz(option_block *opts, char *req, int len)
         for(i = opts->s_syms_count - 1; i >= 0; --i)
         {
             pSym = &(opts->s_syms[i]);
-            len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+            len = smemrepl(req, len, pSym->sym_name, pSym->sym_val, 
+                               pSym->s_len);
         }
-
+        
         for(i = opts->sym_count - 1; i >= 0; --i)
         {
             pSym = &(opts->syms_array[i]);
             if(pSym->is_len)
                 len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
         }
-
+        
         for(i = opts->sym_count - 1; i >= 0; --i)
         {
             pSym = &(opts->syms_array[i]);

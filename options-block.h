@@ -39,6 +39,7 @@ typedef struct
     char sym_val[8192];
     char *sym_match;
     int  is_len;
+    int  s_len;
     int  offset;
     char increment;
 } sym_t;

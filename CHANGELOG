@@ -1,4 +1,5 @@
 v 0.6
+  Added ./configure script
   Added line terminator specifier
   Added begin-at-test specifier
   Added end-on-fail specifier

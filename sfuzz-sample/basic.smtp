@@ -5,7 +5,7 @@
 #   from-address
 #   to-address
 
-include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
+include basic-fuzz-strings.list
 
 reqwait=200
 maxseqlen=50050

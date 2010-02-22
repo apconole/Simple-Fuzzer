@@ -16,8 +16,8 @@ sequence=%%n
 literal=AREALLYBADSTRING
 literal=oaiwrlkjgaoiul;234987 103984a;lk-814 1
 
-include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
-include /usr/local/share/sfuzz-db/http-etc-enumeration.list
+include basic-fuzz-strings.list
+include http-etc-enumeration.list
 
 #This is the amount of time to wait between network requests. It has no bearing
 #on 'output' mode, since that wouldn't make much sense. Time is in MILLIseconds

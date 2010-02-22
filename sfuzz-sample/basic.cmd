@@ -1,7 +1,7 @@
 #A really basic sfuzz config for fuzzing sfuzz
 
-include /usr/local/share/sfuzz-db/basic-fuzz-strings.list
-include /usr/local/share/sfuzz-db/std-cmdline-exploits.list
+include basic-fuzz-strings.list
+include std-cmdline-exploits.list
 
 endcfg
 ./sfuzz -f FUZZ

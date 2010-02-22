@@ -1,0 +1,35 @@
+sfuzz: $(SF_OBJS)
+	@echo "[CC] $@"
+	@$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
+
+%.so: %.o
+	@echo "[CC] $@"
+	@$(CC) -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
+
+snoop: $(SNOOP_OBJS)
+	@echo "[CC] $@"
+	@$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)
+
+%.o: %.c
+	@echo "[CC] $@"
+	@$(CC) -c -o $@ $(CFLAGS) $<
+
+install: all
+	@echo "Installing to: $(PREFIX)"
+	@$(INSTALL) sfuzz $(PREFIX)/bin/sfuzz
+	@$(MKDIR) -p $(PREFIX)/share/sfuzz-db
+	@$(CP) ./sfuzz-sample/* $(PREFIX)/share/sfuzz-db
+	@$(CP) ./*.so $(PREFIX)/share/sfuzz-db
+	@echo Installed.
+
+uninstall:
+	@$(RM) -rf $(PREFIX)/share/sfuzz-db
+	@$(RM) -f  $(PREFIX)/bin/sfuzz
+	@echo "Uninstalled."
+
+clean:
+	@$(RM) -f core *~ *.o $(PROGS)
+
+dist-clean: clean
+	@$(RM) -f ./Makefile
+	@echo Makefile / configuration removed.
