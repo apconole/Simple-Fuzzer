@@ -1,0 +1,350 @@
+# HTTP browser fuzzing
+
+#change to the remote host.
+#$hostname=host.com
+# HINT: you can set these from the command line (-D hostname=host.com) rather
+#       than modifying this file.
+
+#sequences - sequences are expanded to fill maxseqlen in the buffer.
+#Future versions will allow for special formatting options.
+
+# The following is the TCP server plugin
+plugin sfuzz-server-plugin.so
+
+include basic-fuzz-strings.list
+
+!CRLF=0x0d 0x0a
+
+lineterm=CRLF
+
+maxseqlen=10240
+seqstep=1024
+endcfg
+FUZZ/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+
+<html><head>
+<meta http-equiv="refresh" content="1">
+<title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/FUZZ 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 FUZZ OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 FUZZ
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+FUZZ: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: FUZZ
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: FUZZ
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: FUZZ
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: FUZZ
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: FUZZ
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: FUZZ
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: FUZZ
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 FUZZ 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: FUZZ, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 FUZZ
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=.google.com
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<FUZZ>
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=FUZZ
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--
+HTTP/1.0 200 OK
+Date: Tue, 23 Feb 2010 19:01:12 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Set-Cookie: PREF=ID=61a6847fab803d01:TM=1266951672:LM=1266951672:S=rl_r96acyVz5pgRm; expires=Thu, 23-Feb-2012 19:01:12 GMT; path=/; domain=FUZZ.HOST_DOMAIN
+Set-Cookie: NID=32=DSHSkCxWGL255Pl42rMYh-At6Yjx5cvNIsr_2muDHL4LzStl0eMvlWPeveX_f4YxldY7qXCLQaNAwedFaUBa71DMnQC3ed8Z1CYmoZmPzS43DToSHPWjL8dBHjk12wtJ; expires=Wed, 25-Aug-2010 19:01:12 GMT; path=/; domain=HOST_DOMAIN; HttpOnly
+Server: gws
+X-XSS-Protection: 0
+<html><head><title>Test Killa!</title>
+</head>
+<body>
+<H1> You didn't crash</H1>
+</body>
+</html>
+
+
+--

@@ -1,38 +1,21 @@
 simple fuzzer installation/building guide
 
-simple fuzzer uses a simple gnu-make driven Makefile which constains all of the
-build and installation jobs. the Makefile aims to determine which platform it
-currently will be building for (via the uname -s call), building the engine,
-plugins, and sniffer (if supported). currently, there is code for linux, osx,
-and windows (tested on XP only).
+simple fuzzer uses a custom configure script for building a standard GNU make
+build script. running './configure' (or 'configure' for the windows users)
+should work to build a script for a "standard" simple fuzzer distribution.
 
-building when you know which platform you'll be using is simple:
-make TARGET_PLAT=platform
-where platform is:
+simple fuzzer also comes with some ssl plugin example, as well as a really 
+simple sniffer called snoop. these may be enabled by turning on / off the
+relevant switches during configuration. see './configure --help' for more
+information on what switches are avaiable.
 
-Darwin
-Linux
-win
+once configured, simply run 'make' and sfuzz, as well as the optional packages
+should be built. from there, a 'make install' will install simple fuzzer into
+PREFIX/bin and PREFIX/share/sfuzz-db. alternatively, you may simply run simple
+fuzzer from the local directory with ./sfuzz <options>
 
+uninstallation is simply running make uninstall.
 
-once you run this make, you should have sfuzz (or sfuzz.exe on windows 
-machines), as well as a number of .o and .so files which are all part of the
-system. the .so files are plugins, which can help augment sfuzz by adding 
-special knowledge of a protocol, adding transport layers, or even enhancing the
-fuzz case generation code.
-
-for supported snoop platforms (currently, windows and linux) running that same
-make command, but adding snoop to the end will build the sniffer piece. the
-sniffer is useful for observing responses when you have small connection 
-timeouts (for instance, you're looking to flood a test server with requests to
-simulate user load).
-
-for linux and os-x platforms, running make install would be advised since this
-will put sfuzz, associated scripts, and plugins into the correct 
-/usr/local/share/sfuzz-db directory. If you'd like to change this location, 
-refer to the Makefile. Windows users may have to manually adjust the included
-scripts to get include locations correct.
-
-For the ssl plugin it's required that you have the openssl development 
-libraries installed. This is currently not tested on windows, but is tested on
-os-x and linux to be working.
+simple fuzzer 0.6 has been tested to work only on the GNU/Linux operating
+system, currently. sqa efforts to test on freebsd, mac os x, and windows xp->7
+are under way.

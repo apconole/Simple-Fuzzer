@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
     int i;
 
     g_plugin = NULL;
-    sfuzz_setsearchpath(PREFIX"/sfuzz-db");
+    sfuzz_setsearchpath("./:"PREFIX"/sfuzz-db");
     memset(&options, 0, sizeof(options));
 
     gettimeofday(&tv, NULL);

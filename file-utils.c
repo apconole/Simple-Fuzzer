@@ -50,6 +50,233 @@ void *plugin_handle = NULL;
 
 typedef void (*plugin_init)(plugin_provisor *);
 
+static char **searchPath;
+static int    searchPathCount;
+
+void sfuzz_setsearchpath(const char *path)
+{
+    const char *cp, *tp;
+    int pathLen, ii;
+    char **pathStr;
+
+    if(!path || !*path)
+    {
+        if(searchPath)free(searchPath);
+        searchPath = 0;
+        searchPathCount = 0;
+        return;
+    }
+
+    for(cp = path, pathLen = 0; *cp; ++cp)
+    {
+        if(':' == *cp)++pathLen;
+    }
+
+    ++pathLen;
+
+    if(searchPath){
+        free(searchPath);
+        searchPath = 0;
+        searchPathCount = 0;
+    }
+
+    searchPath = (char **)(calloc(pathLen, sizeof(char *)));
+
+    for(cp = path, pathStr = searchPath, ii = 0, tp = strchr(path, ':');
+        (NULL != tp) && (ii < pathLen); ++ii)
+    {
+        if((cp == NULL) || (tp == NULL))
+        {
+            free(searchPath);
+            searchPath = 0;
+            searchPathCount = 0;
+            return;
+        }
+
+        if(tp == cp) {
+            *pathStr = strdup(".");
+        }
+        else
+        {
+            const char *sp;
+            char *dp;
+            *pathStr = (char *)malloc(tp-cp+1);
+            if(*pathStr == NULL)
+            {
+                free(searchPath);
+                searchPath = 0;
+                searchPathCount = 0;
+                return;    
+            }
+            for(dp = *pathStr, sp = cp; sp < tp; *dp++ = *sp++);
+            *dp = 0;
+        }
+
+        ++pathStr;
+        cp = tp+1;
+        tp = strchr(cp, ':');
+    }
+
+    if(*cp) 
+    {
+        *pathStr = strdup(cp);
+    } else {
+        *pathStr = strdup(".");
+    }
+
+    searchPathCount = pathLen;
+}
+
+void sfuzz_searchpath_prepend(const char *pathname)
+{
+    int searchPathStrLength = 0;
+    char *searchPathStr = NULL;
+    int i;
+
+    if(!pathname || !*pathname) /* do nothing on null */
+        return;
+
+    searchPathStrLength = strlen(pathname)+1;
+
+    for(i = 0; i < searchPathCount; ++i)
+    {
+        searchPathStrLength += strlen(searchPath[i]) + 1;
+    }
+
+    searchPathStr = malloc(searchPathStrLength+1);
+
+    if(searchPathStr == NULL)
+        return;
+
+    strcpy(searchPathStr, pathname);
+
+    for(i = 0; i < searchPathCount; ++i)
+    {
+        strcat(searchPathStr, ":");
+        strcat(searchPathStr, searchPath[i]);
+    }
+
+    sfuzz_setsearchpath(searchPathStr);
+
+    free(searchPathStr);
+}
+
+FILE *sfuzz_fopen(const char *filename, const char *perms)
+{
+    FILE *fp;
+    const char *fileStr;
+    char **pathStr;
+    int ii;
+    char *cp;
+    char nameBuff[4096];
+
+    if(strlen(filename) >= sizeof(nameBuff))
+    {
+        return NULL;
+    }
+
+    strcpy(nameBuff, filename);
+    
+    for(cp = nameBuff; *cp; ++cp)
+    {
+        if('\\' == *cp) *cp = '/';
+    }
+
+    fp = fopen(nameBuff, perms);
+    if(fp != NULL)
+    {
+        return fp;
+    }
+
+    for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
+    {
+        for(fileStr = filename; fileStr && *fileStr; 
+            fileStr = strpbrk(fileStr+1, "/\\")) 
+        {
+            if((strlen(*pathStr) >= 4096) ||
+               (strlen(*pathStr) + strlen(fileStr) + 2 >= 4096))
+            {
+                return NULL;
+            }
+            memset(nameBuff, 0, sizeof(nameBuff));
+            strcpy(nameBuff, *pathStr);
+            if(*(nameBuff + strlen(nameBuff) - 1) != '/')
+            {
+                *(nameBuff + strlen(nameBuff)) = '/';
+                *(nameBuff + strlen(nameBuff)+1) = '\0';
+            }
+
+            strcat(nameBuff, fileStr);
+            for(cp = nameBuff; *cp; ++cp)
+            {
+                if('\\' == *cp) *cp = '/';
+            }
+            fp = fopen(nameBuff, perms);
+            if(fp != NULL) return fp;
+        }
+    }
+
+    return NULL;
+}
+
+FILE *sfuzz_dlopen(const char *filename, int flag)
+{
+    void *fp;
+    const char *fileStr;
+    char **pathStr;
+    int ii;
+    char *cp;
+    char nameBuff[4096];
+
+    if(strlen(filename) >= sizeof(nameBuff))
+    {
+        return NULL;
+    }
+
+    strcpy(nameBuff, filename);
+    
+    for(cp = nameBuff; *cp; ++cp)
+    {
+        if('\\' == *cp) *cp = '/';
+    }
+
+    fp = dlopen(nameBuff, flag);
+    if(fp != NULL)
+    {
+        return fp;
+    }
+
+    for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
+    {
+        for(fileStr = filename; fileStr && *fileStr; 
+            fileStr = strpbrk(fileStr+1, "/\\")) 
+        {
+            if((strlen(*pathStr) >= 4096) ||
+               (strlen(*pathStr) + strlen(fileStr) + 2 >= 4096))
+            {
+                return NULL;
+            }
+            memset(nameBuff, 0, sizeof(nameBuff));
+            strcpy(nameBuff, *pathStr);
+            if(*(nameBuff + strlen(nameBuff) - 1) != '/')
+            {
+                *(nameBuff + strlen(nameBuff)) = '/';
+                *(nameBuff + strlen(nameBuff)+1) = '\0';
+            }
+
+            strcat(nameBuff, fileStr);
+            for(cp = nameBuff; *cp; ++cp)
+            {
+                if('\\' == *cp) *cp = '/';
+            }
+            fp = dlopen(nameBuff, flag);
+            if(fp != NULL) return fp;
+        }
+    }
+
+    return NULL;
+}
+
 void plugin_sanity(option_block *opts)
 {
     if(g_plugin == NULL)
@@ -146,11 +373,12 @@ void plugin_load(char *filename, option_block *opts)
         return;
     }
     
-    plugin_handle = dlopen(fileline, RTLD_NOW);
+    plugin_handle = sfuzz_dlopen(fileline, RTLD_NOW);
     if(plugin_handle == NULL)
     {
         fprintf(stderr, "[%s: %s] plugin\n", fileline, dlerror());
         file_error("unable to open plugin specified", opts);
+
         return;
     }
     
@@ -772,175 +1000,6 @@ int processFileLine(option_block *opts, char *line, int line_len)
     fprintf(stderr, "[%s]\n", line);
     file_error("invalid config file.", opts);
     return 1;
-}
-
-static char **searchPath;
-static int    searchPathCount;
-
-void sfuzz_setsearchpath(const char *path)
-{
-    const char *cp, *tp;
-    int pathLen, ii;
-    char **pathStr;
-
-    if(!path || !*path)
-    {
-        if(searchPath)free(searchPath);
-        searchPath = 0;
-        searchPathCount = 0;
-        return;
-    }
-
-    for(cp = path, pathLen = 0; *cp; ++cp)
-    {
-        if(':' == *cp)++pathLen;
-    }
-
-    ++pathLen;
-
-    if(searchPath){
-        free(searchPath);
-        searchPath = 0;
-        searchPathCount = 0;
-    }
-
-    searchPath = (char **)(calloc(pathLen, sizeof(char *)));
-
-    for(cp = path, pathStr = searchPath, ii = 0, tp = strchr(path, ':');
-        (NULL != tp) && (ii < pathLen); ++ii)
-    {
-        if((cp == NULL) || (tp == NULL))
-        {
-            free(searchPath);
-            searchPath = 0;
-            searchPathCount = 0;
-            return;
-        }
-
-        if(tp == cp) {
-            *pathStr = strdup(".");
-        }
-        else
-        {
-            const char *sp;
-            char *dp;
-            *pathStr = (char *)malloc(tp-cp+1);
-            if(*pathStr == NULL)
-            {
-                free(searchPath);
-                searchPath = 0;
-                searchPathCount = 0;
-                return;    
-            }
-            for(dp = *pathStr, sp = cp; sp < tp; *dp++ = *sp++);
-            *dp = 0;
-        }
-
-        ++pathStr;
-        cp = tp+1;
-        tp = strchr(cp, ':');
-    }
-
-    if(*cp) 
-    {
-        *pathStr = strdup(cp);
-    } else {
-        *pathStr = strdup(".");
-    }
-
-    searchPathCount = pathLen;
-}
-
-void sfuzz_searchpath_prepend(const char *pathname)
-{
-    int searchPathStrLength = 0;
-    char *searchPathStr = NULL;
-    int i;
-
-    if(!pathname || !*pathname) /* do nothing on null */
-        return;
-
-    searchPathStrLength = strlen(pathname)+1;
-
-    for(i = 0; i < searchPathCount; ++i)
-    {
-        searchPathStrLength += strlen(searchPath[i]) + 1;
-    }
-
-    searchPathStr = malloc(searchPathStrLength+1);
-
-    if(searchPathStr == NULL)
-        return;
-
-    strcpy(searchPathStr, pathname);
-
-    for(i = 0; i < searchPathCount; ++i)
-    {
-        strcat(searchPathStr, ":");
-        strcat(searchPathStr, searchPath[i]);
-    }
-
-    sfuzz_setsearchpath(searchPathStr);
-
-    free(searchPathStr);
-}
-
-FILE *sfuzz_fopen(const char *filename, const char *perms)
-{
-    FILE *fp;
-    const char *fileStr;
-    char **pathStr;
-    int ii;
-    char *cp;
-    char nameBuff[4096];
-
-    if(strlen(filename) >= sizeof(nameBuff))
-    {
-        return NULL;
-    }
-
-    strcpy(nameBuff, filename);
-    
-    for(cp = nameBuff; *cp; ++cp)
-    {
-        if('\\' == *cp) *cp = '/';
-    }
-
-    fp = fopen(nameBuff, perms);
-    if(fp != NULL)
-    {
-        return fp;
-    }
-
-    for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
-    {
-        for(fileStr = filename; fileStr && *fileStr; 
-            fileStr = strpbrk(fileStr+1, "/\\")) 
-        {
-            if((strlen(*pathStr) >= 4096) ||
-               (strlen(*pathStr) + strlen(fileStr) + 2 >= 4096))
-            {
-                return NULL;
-            }
-            memset(nameBuff, 0, sizeof(nameBuff));
-            strcpy(nameBuff, *pathStr);
-            if(*(nameBuff + strlen(nameBuff) - 1) != '/')
-            {
-                *(nameBuff + strlen(nameBuff)) = '/';
-                *(nameBuff + strlen(nameBuff)+1) = '\0';
-            }
-
-            strcat(nameBuff, fileStr);
-            for(cp = nameBuff; *cp; ++cp)
-            {
-                if('\\' == *cp) *cp = '/';
-            }
-            fp = fopen(nameBuff, perms);
-            if(fp != NULL) return fp;
-        }
-    }
-
-    return NULL;
 }
 
 void read_config(option_block *opts)

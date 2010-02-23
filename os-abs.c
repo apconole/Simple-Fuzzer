@@ -235,8 +235,6 @@ int os_send_tcp(option_block *opts, char *str, int len)
             if(sockfd < 0)
                 continue;
 
-            printf("[%x]\n", ((struct sockaddr_in*)(p->ai_addr))->sin_addr.s_addr);
-
             opts->sockfd = sockfd;
             
             if(p == NULL)

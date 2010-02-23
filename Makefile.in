@@ -1,14 +1,14 @@
 sfuzz: $(SF_OBJS)
-	@echo "[CC] $@"
+	@echo "[LINK] $@"
 	@$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
 
-%.so: %.o
-	@echo "[CC] $@"
-	@$(CC) -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
-
 snoop: $(SNOOP_OBJS)
-	@echo "[CC] $@"
+	@echo "[LINK] $@"
 	@$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)
+
+%.so: %.o os-abs.o
+	@echo "[LINK] $@"
+	@$(CC) -o $@ $< os-abs.o $(SHARED_INC) $(SHARED_OPTS)
 
 %.o: %.c
 	@echo "[CC] $@"
