@@ -31,8 +31,6 @@
 #ifndef __OPTIONS_BLOCK_H__
 #define __OPTIONS_BLOCK_H__
 
-#include <arpa/inet.h>
-
 typedef struct
 {
     char sym_name[8192];

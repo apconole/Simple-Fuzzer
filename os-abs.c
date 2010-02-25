@@ -35,7 +35,8 @@
 #include "sfuzz-plugin.h"
 
 #ifdef __WIN32__
-#include "winsock.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
 typedef char * caddr_t;
 #else
 #include <stdlib.h>
@@ -82,13 +83,11 @@ int atoip(const char *pIpStr)
     WSADATA wsaData;
 #endif
     struct addrinfo hints, *servinfo, *p;
-    int t;
+    int t = 0;
 #ifdef __WIN32__
-    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0)
+    if(WSAStartup(MAKEWORD(2,0), &wsaData) != 0)
     {
         fprintf(stderr, "[%s]: error: Unable to init winsock!\n",
-                get_time_as_log());
-        fprintf(log, "[%s]: error: Unable to init winsock!\n",
                 get_time_as_log());
         return -1;
     }
@@ -361,7 +360,7 @@ int os_send_tcp(option_block *opts, char *str, int len)
     if((opts->close_conn) && (!opts->forget_conn))
     {
 #ifdef __WIN32__
-        closesocket(sockfd)
+        closesocket(sockfd);
 #else
         close(sockfd);
 #endif
@@ -384,7 +383,7 @@ int os_send_udp(option_block *opts, char *str, int len)
     fd_set fds;
     unsigned long int to = MAX(100, opts->time_out);
     struct addrinfo hints, *servinfo, *p;
-    int sockfd;
+    int sockfd = -1;
     int ret;
     
     if(opts->fp_log)

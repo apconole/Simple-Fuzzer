@@ -1,14 +1,14 @@
-sfuzz: $(SF_OBJS)
+sfuzz sfuzz.exe: $(SF_OBJS)
 	@echo "[LINK] $@"
 	@$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
 
-snoop: $(SNOOP_OBJS)
+snoop snoop.exe: $(SNOOP_OBJS)
 	@echo "[LINK] $@"
 	@$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)
 
-%.so: %.o os-abs.o
+%.so: %.c $(SHARED_INC)
 	@echo "[LINK] $@"
-	@$(CC) -o $@ $< os-abs.o $(SHARED_INC) $(SHARED_OPTS)
+	@$(CC) $(CFLAGS) -D__PLUGIN_BUILD__ -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
 
 %.o: %.c
 	@echo "[CC] $@"
@@ -16,20 +16,21 @@ snoop: $(SNOOP_OBJS)
 
 install: all
 	@echo "Installing to: $(PREFIX)"
-	@$(INSTALL) sfuzz $(PREFIX)/bin/sfuzz
-	@$(MKDIR) -p $(PREFIX)/share/sfuzz-db
-	@$(CP) ./sfuzz-sample/* $(PREFIX)/share/sfuzz-db
-	@$(CP) ./*.so $(PREFIX)/share/sfuzz-db
+	@$(INSTALL) sfuzz $(BIN_DIR)sfuzz
+	@$(MKDIR) -p $(SHARE_DIR)sfuzz-db
+	@$(CP) $(SFUZZ_SAMPLE)* $(SHARE_DIR)sfuzz-db
+	@$(CP) *.so $(SHARE_DIR)sfuzz-db
 	@echo Installed.
 
 uninstall:
-	@$(RM) -rf $(PREFIX)/share/sfuzz-db
-	@$(RM) -f  $(PREFIX)/bin/sfuzz
+	@$(RM) -rf $(SHARE_DIR)sfuzz-db
+	@$(RM) -f  $(BIN_DIR)sfuzz
+	@$(RM) -f  $(BIN_DIR)sfuzz.exe
 	@echo "Uninstalled."
 
 clean:
-	@$(RM) -f core *~ *.o $(PROGS)
+	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe *.so
 
 dist-clean: clean
-	@$(RM) -f ./Makefile
+	@$(RM) -f Makefile Makefile.old
 	@echo Makefile / configuration removed.

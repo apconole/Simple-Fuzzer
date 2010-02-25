@@ -45,11 +45,6 @@
 
 void read_config(option_block *opts);
 
-#ifndef NOPLUGIN
-void *plugin_handle = NULL;
-
-typedef void (*plugin_init)(plugin_provisor *);
-
 static char **searchPath;
 static int    searchPathCount;
 
@@ -276,6 +271,11 @@ FILE *sfuzz_dlopen(const char *filename, int flag)
 
     return NULL;
 }
+
+#ifndef NOPLUGIN
+void *plugin_handle = NULL;
+
+typedef void (*plugin_init)(plugin_provisor *);
 
 void plugin_sanity(option_block *opts)
 {

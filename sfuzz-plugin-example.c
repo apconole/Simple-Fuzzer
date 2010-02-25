@@ -30,6 +30,7 @@
 /* demo plugin - does some skeleton work */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "sfuzz-plugin.h"
 

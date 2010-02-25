@@ -94,7 +94,9 @@ void print_help()
     print_version();
     printf("url:\t http://aconole.brad-x.com/programs/sfuzz.html\n");
     printf("EMAIL:\t apconole@yahoo.com\n");
+#ifndef __WIN32__
     printf("Build-prefix: %s", PREFIX);
+#endif
     printf("\n");
     printf("\t-h\t This message.\n");
     printf("\t-V\t Version information.\n");
@@ -303,7 +305,13 @@ int main(int argc, char *argv[])
     int i;
 
     g_plugin = NULL;
-    sfuzz_setsearchpath("./:"PREFIX"/sfuzz-db");
+    sfuzz_setsearchpath(
+#ifndef __WIN32__
+        "./:"PREFIX"/sfuzz-db"
+#else
+        "./"
+#endif
+        );
     memset(&options, 0, sizeof(options));
 
     gettimeofday(&tv, NULL);
@@ -405,8 +413,8 @@ void fuzz(option_block *opts, char *req, int len)
 {
     int i = 0;
     FILE *log = stdout;
-    char *r2, *tmp;
-    char *p1, *tmp2;
+    char *r2, *tmp = 0;
+    char *p1, *tmp2 = 0;
     int r2_len,p1_len;
     sym_t *pSym;
 

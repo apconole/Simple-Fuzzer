@@ -75,6 +75,12 @@ typedef struct _pprovisor
 /* only one "plugin" will be loaded at a time. */
 extern plugin_provisor *g_plugin;
 
+#ifdef __WIN32__
+#ifdef __PLUGIN_BUILD__
+plugin_provisor *g_plugin; /* needed for win32 issue */
+#endif
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 

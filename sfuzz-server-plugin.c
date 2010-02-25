@@ -40,7 +40,8 @@
 #include "sfuzz.h"
 
 #ifdef __WIN32__
-#include "winsock.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
 typedef char * caddr_t;
 #else
 #include <stdlib.h>
@@ -289,8 +290,8 @@ int srv_plugin_send(option_block *opts, void *d, int i)
     if((opts->close_conn) && (!opts->forget_conn))
     {
 #ifdef __WIN32__
-        closesocket(sockfd)
-        closesocket(acceptfd)
+        closesocket(sockfd);
+        closesocket(acceptfd);
 #else
         close(sockfd);
         close(acceptfd);
