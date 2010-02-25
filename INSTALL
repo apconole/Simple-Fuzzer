@@ -16,6 +16,10 @@ fuzzer from the local directory with ./sfuzz <options>
 
 uninstallation is simply running make uninstall.
 
+NOTES: Windows users - make install / uninstall do not work properly. Refrain
+       from using this procedure.
+
 simple fuzzer 0.6 has been tested to work only on the GNU/Linux operating
-system, currently. sqa efforts to test on freebsd, mac os x, and windows xp->7
-are under way.
+system, and Windows XP currently. sqa efforts to test on freebsd, os x, and 
+windows Vista->7 are under way, and any resulting bugs will be fixed as a
+patch.
