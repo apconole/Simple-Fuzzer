@@ -1,3 +1,5 @@
+.PHONY: all install uninstall clean dist-clean distclean
+
 sfuzz sfuzz.exe: $(SF_OBJS)
 	@echo "[LINK] $@"
 	@$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
@@ -16,8 +18,8 @@ snoop snoop.exe: $(SNOOP_OBJS)
 
 install: all
 	@echo "Installing to: $(PREFIX)"
-	@$(INSTALL) sfuzz $(BIN_DIR)sfuzz
-	@$(MKDIR) -p $(SHARE_DIR)sfuzz-db
+	@$(INSTALL) sfuzz $(BIN_DIR)
+	@$(MKDIR) $(SHARE_DIR)sfuzz-db
 	@$(CP) $(SFUZZ_SAMPLE)* $(SHARE_DIR)sfuzz-db
 	@$(CP) *.so $(SHARE_DIR)sfuzz-db
 	@echo Installed.
@@ -31,6 +33,6 @@ uninstall:
 clean:
 	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe *.so
 
-dist-clean: clean
+distclean dist-clean: clean
 	@$(RM) -f Makefile Makefile.old
 	@echo Makefile / configuration removed.

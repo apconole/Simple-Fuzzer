@@ -1,5 +1,5 @@
 v 0.6
-  Added ./configure script
+  Added configure script for unix and DOS.
   Added line terminator specifier
   Added begin-at-test specifier
   Added end-on-fail specifier
@@ -9,6 +9,7 @@ v 0.6
   Added server-side plugin and sample browser fuzzing script
   Added response subtitutions (ie: use data from the previous packet)
        -offset/text based only
+  Fixed copius amounts of bugs (about 60 man-hours went into this effort)
 
 v 0.5
   Added rudimentary plugin support.

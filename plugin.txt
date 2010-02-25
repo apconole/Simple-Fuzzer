@@ -11,6 +11,12 @@ fuzz data. this gives plugin writers much more control over how the engine
 behaves.
    currently, only one plugin may be loaded at any given time. however, future
 versions may lift this restriction.
+   sfuzz does include 3 sample plugins, as well as a configuration file for one
+of the provided samples. the server plugin (sfuzz-server-plugin.so) is used to
+convert sfuzz from a client-based fuzzer, to a server-based fuzzer. this can
+be useful, for instance, to fuzz different client side software. at the moment
+the server-based fuzzer is rather 'dumb' - it just blindly sends whenever a
+client connects. a better version is in the works.
 
 ii. cookbook of plugin-fu
   all plugins need to provide a plugin_init function which takes a 

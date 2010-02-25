@@ -1,4 +1,5 @@
-- STRESS test this bad larry
 - Remove ascii string dependancies (? - need to flush them all out)
 - Fix Vista & XP SP2 snoop
 - REGEX for data return
+- Fix the make system's installer under windows.
+- Fix the server to be a bit more intelligent
