@@ -193,7 +193,7 @@ int os_send_tcp(option_block *opts, char *str, int len)
         log = opts->fp_log;
 
 #ifdef __WIN32__
-    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0)
+    if(WSAStartup(MAKEWORD(2,0), &wsaData) != 0)
     {
         fprintf(stderr, "[%s]: error: Unable to init winsock!\n",
                 get_time_as_log());
@@ -390,7 +390,7 @@ int os_send_udp(option_block *opts, char *str, int len)
         log = opts->fp_log;
     
 #ifdef __WIN32__
-    if(WSAStartup(MAKEWORD(1,1), &wsaData) != 0)
+    if(WSAStartup(MAKEWORD(2,0), &wsaData) != 0)
     {
         fprintf(stderr, "[%s]: error: Unable to init winsock!\n",
                 get_time_as_log());
@@ -425,23 +425,23 @@ int os_send_udp(option_block *opts, char *str, int len)
         if(sockfd < 0)
             continue;
 
-            opts->sockfd = sockfd;
+        if(p == NULL)
+        {
+            fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+                    get_time_as_log());
             
-            if(p == NULL)
-            {
-                fprintf(stderr,"[%s] error: unable to acquire socket.\n",
-                        get_time_as_log());
-                
-                fprintf(log,"[%s] error: unable to acquire socket.\n",
-                        get_time_as_log());
-                freeaddrinfo(servinfo);
+            fprintf(log,"[%s] error: unable to acquire socket.\n",
+                    get_time_as_log());
+            freeaddrinfo(servinfo);
 #ifdef __WIN32__
-                WSACleanup();
+            WSACleanup();
 #endif
-                return -1;
-            }
+            return -1;
+        }
+        opts->sockfd = sockfd;
+        break;
     }
-
+    
     ret = sendto(sockfd, str, len, 0,
                  p->ai_addr, p->ai_addrlen);
 
