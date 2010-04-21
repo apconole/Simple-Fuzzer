@@ -4,19 +4,13 @@
 # So, just set everything up, and do the magic.
 # NOTE: use a configure.bat file for windows.
 
-if [ "$1" = "-h" ]; then
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
   echo Options:
   echo "  --prefix=path              prefix path to install sfuzz and its datafiles"
-  echo "  --enable-snoop             turn on snoop compilation"
-  echo "  --enable-plugin-samples    compile plugin samples as well"
-  echo "  --disable-plugins          compile without plugin support"
-  echo "  --help                     this message"
-  exit 0
-fi
-
-if [ "$1" = "--help" ]; then
-  echo Options:
-  echo "  --prefix=path              prefix path to install sfuzz and its datafiles"
+  echo "  --cross=                   set the cross-compiler prefix"
+  echo "  --cc=                      set the name of the compiler"
+  echo "  --cflags=                  set additional cflags for compilation"
+  echo "  --ldflags=                 set additional ldflags for compilation"
   echo "  --enable-snoop             turn on snoop compilation"
   echo "  --enable-plugin-samples    compile plugin samples as well"
   echo "  --disable-plugins          compile without plugin support"
@@ -51,15 +45,18 @@ SSL_PATH=""
 SSL_IPATH=""
 CRYPTO_PATH=""
 SSL_PLUGIN_SUPPORT=""
+CROSS_COMPILE=""
 PLUGIN_SUPPORT="enable"
 SNOOP_SUPPORT=""
+CC_CHECK=""
 LIBDIRS=`$CAT /etc/ld.so.conf 2> /dev/null`
 OS_SYSTEM=`$UNAME -s 2> /dev/null`
 XCFLAGS="-g -O2 -Wall -I."
+XCFLAGS_EXTRA=""
+XLDFLAGS=""
 XSHARED_LIBS=""
 XSHARED_OPTS=""
 XSHARED_INC=""
-CC_LOCATION=`$WHICH gcc 2> /dev/null`
 HAS_INSTALL=`$WHICH install 2> /dev/null`
 
 if [ '!' "X" = "X$*" ]; then
@@ -67,19 +64,43 @@ if [ '!' "X" = "X$*" ]; then
   do
     if [ "X" = "X$PREFIX" ]; then
   	  PREFIX_TMP=`echo "$1"|$SED 's/.*--prefix=//'`
-	  if [ $PREFIX_TMP != $1 ]; then
+	  if [ "$PREFIX_TMP" != "$1" ]; then
 		  PREFIX=$PREFIX_TMP
 	  fi
     fi
+    if [ "X" = "X$CROSS_COMPILE" ]; then
+        CROSS_COMPILE_TMP=`echo "$1"|$SED 's/.*--cross=//'`
+        if [ "$CROSS_COMPILE_TMP" != "$1" ]; then
+            CROSS_COMPILE=${CROSS_COMPILE_TMP}-
+        fi
+    fi
+    if [ "X" = "X$CC_CHECK" ]; then
+        CC_CHECK_TMP=`echo "$1"|$SED 's/.*--cc=//'`
+        if [ "$CC_CHECK_TMP" != "$1" ]; then
+            CC_CHECK=$CC_CHECK_TMP
+        fi
+    fi
+    if [ "X" = "X$XCFLAGS_EXTRA" ]; then
+        XCFLAGS_EXTRA_TMP=`echo "$1"|$SED 's/.*--cflags=//'`
+        if [ "$XCFLAGS_EXTRA_TMP" != "$1" ]; then
+            XCFLAGS_EXTRA=$XCFLAGS_EXTRA_TMP
+        fi
+    fi
+    if [ "X" = "X$XLDFLAGS" ]; then
+        LDFLAGS_EXTRA_TMP=`echo "$1"|$SED 's/.*--cflags=//'`
+        if [ "$LDFLAGS_EXTRA_TMP" != "$1" ]; then
+            XLDFLAGS=$LDFLAGS_EXTRA_TMP
+        fi
+    fi
     if [ "X" = "X$SSL_PLUGIN_SUPPORT" ]; then
        SSL_PLUGIN_SUPPORT_TMP=`echo "$1"|$SED 's/.*--enable-plugin-samples//'`
-       if [ -z $SSL_PLUGIN_SUPPORT_TMP ]; then
+       if [ -z "$SSL_PLUGIN_SUPPORT_TMP" ]; then
 	     SSL_PLUGIN_SUPPORT="enable"
        fi
     fi
     if [ "X" = "X$SNOOP_SUPPORT" ]; then
         SNOOP_SUPPORT_TMP=`echo "$1"|$SED 's/.*--enable-snoop//'`
-        if [ -z $SNOOP_SUPPORT_TMP ]; then
+        if [ -z "$SNOOP_SUPPORT_TMP" ]; then
             SNOOP_SUPPORT="enable"
         fi
     fi
@@ -98,6 +119,12 @@ if [ "X" = "X$PREFIX" ]; then
     PREFIX="/usr/local"
 fi
 
+if [ "X" = "X$CC_CHECK" ]; then
+    CC_CHECK="gcc"
+fi
+
+CC_LOCATION=`$WHICH ${CROSS_COMPILE}${CC_CHECK} 2> /dev/null`
+
 XCFLAGS="$XCFLAGS -DPREFIX=\\\"$PREFIX\\\""
 
 if [ "X" = "X$HAS_INSTALL" ]; then
@@ -110,15 +137,25 @@ if [ "X" = "X$OS_SYSTEM" ]; then
     OS_SYSTEM="Linux"
 fi
 
-echo -n "Checking for gcc ..."
+echo -n "Checking for $CC_CHECK ..."
 if [ "X" = "X$CC_LOCATION" ]; then
     echo "                                    ... NOT found"
-    echo -n "Checking for cc ..."
-    CC_LOCATION=`$WHICH cc 2> /dev/null`
+    if [ "${CROSS_COMPILE}gcc" != "${CROSS_COMPILE}${CC_CHECK}" ]; then
+        echo -n "Checking for gcc ..."
+        CC_LOCATION=`$WHICH ${CROSS_COMPILE}gcc 2> /dev/null`
+        if [ "X" = "X$CC_LOCATION" ]; then
+            echo "                                     ... NOT found"
+        fi
+    fi
     if [ "X" = "X$CC_LOCATION" ]; then
-        echo "                                     ... NOT found"
-        echo " ERROR: No C compiler available. If you think this is in error, manually edit the configure script and set the CC_LOCATION value"
-        exit 1
+
+        echo -n "Checking for cc ..."
+        CC_LOCATION=`$WHICH ${CROSS_COMPILE}cc 2> /dev/null`
+        if [ "X" = "X$CC_LOCATION" ]; then
+            echo "                                     ... NOT found"
+            echo " ERROR: No C compiler available. If you think this is in error, manually edit the configure script and set the CC_LOCATION value"
+            exit 1
+        fi
     fi
 fi
 
@@ -225,7 +262,8 @@ $CAT > Makefile <<__MAKEFILE_EOF__
 CCPATH=$CC_LOCATION_VAL
 CC=$CC_COMPILER_VAL
 INSTALL=$HAS_INSTALL
-CFLAGS=$XCFLAGS
+CFLAGS=$XCFLAGS $XCFLAGS_EXTRA
+LDFLAGS=$XLDFLAGS
 TARGET_PLAT=$OS_SYSTEM
 CP=$CP
 SED=$SED

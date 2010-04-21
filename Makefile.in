@@ -1,4 +1,4 @@
-.PHONY: all install uninstall clean dist-clean distclean
+.PHONY: all install uninstall clean dist-clean distclean release
 
 sfuzz sfuzz.exe: $(SF_OBJS)
 	@echo "[LINK] $@"
@@ -6,7 +6,7 @@ sfuzz sfuzz.exe: $(SF_OBJS)
 
 snoop snoop.exe: $(SNOOP_OBJS)
 	@echo "[LINK] $@"
-	@$(CC) -o $@ $(SNOOP_OBJS) $(LIBS)
+	@$(CC) -o $@ $(SNOOP_OBJS) $(LDFLAGS) $(LIBS)
 
 %.so: %.c $(SHARED_INC)
 	@echo "[LINK] $@"
@@ -36,3 +36,11 @@ clean:
 distclean dist-clean: clean
 	@$(RM) -f Makefile Makefile.old
 	@echo Makefile / configuration removed.
+
+release: distclean
+	@echo Making a release tree:
+	@$(MKDIR) /tmp/sfuzz-release
+	@$(CP) -dPar * /tmp/sfuzz-release
+	@$(RM) -rf /tmp/sfuzz-release/CVS
+	@$(RM) -rf /tmp/sfuzz-release/sfuzz-sample/CVS
+	@echo /tmp/sfuzz-release is built.

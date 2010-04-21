@@ -58,6 +58,97 @@ typedef char * caddr_t;
 #include <sys/types.h>
 #include <unistd.h>
 
+unsigned char convertAsciiHexCharToBin(char asciiHexChar)
+{
+    unsigned char binByte = 0xFF;
+    if((asciiHexChar >= '0') && (asciiHexChar <= '9'))
+    {
+        binByte = asciiHexChar - '0';
+    }
+    else if((asciiHexChar >= 'a') && (asciiHexChar <= 'f'))
+    {
+        binByte = asciiHexChar - 'a' + 0x0A;
+    }
+    else if((asciiHexChar >= 'A') && (asciiHexChar <= 'f'))
+    {
+        binByte = asciiHexChar - 'A' + 0x0A;
+    }
+    return binByte;
+}
+
+
+unsigned int ascii_to_bin(char *str_bin)
+{
+    /*converts an ascii string to binary*/
+    char *out = malloc(8192);
+    char *str = malloc(8192);
+    int size_no_ws = 0;
+    int outBufIdx = 0;
+    int binBufIdx = 0;
+
+    int rewind = strlen(str_bin);
+
+    unsigned char firstNibble;
+    unsigned char secondNibble;
+
+    while(*str_bin != 0)
+        if(*str_bin++ != ' ')
+        {
+            if(*(str_bin-1) == 'x')
+            {
+                *(str_bin-2) = *(str_bin-1)=' ';
+                --size_no_ws;
+                continue;
+            }
+            
+            str[size_no_ws] = *(str_bin-1);
+            size_no_ws++;
+        }
+
+    str_bin -= rewind;
+
+    if((size_no_ws % 2) != 0)
+    {
+        firstNibble = 0;
+        secondNibble = convertAsciiHexCharToBin(str[0]);
+        if(secondNibble == 0xFF)
+        {
+            free(out);
+            free(str);
+            return -1;
+        }
+        out[outBufIdx] = ((firstNibble<<4)&0xF0) | (secondNibble &0xF);
+        outBufIdx++;
+        binBufIdx = 1;
+    }
+    
+    for(; binBufIdx < size_no_ws; binBufIdx += 2)
+    {
+        firstNibble = convertAsciiHexCharToBin(str[binBufIdx]);
+        secondNibble = convertAsciiHexCharToBin(str[binBufIdx+1]);
+        
+        if((firstNibble == 0xFF) || (secondNibble == 0xFF))
+        {
+            free(out);
+            free(str);
+            return -1;
+        }
+        out[outBufIdx] = ((firstNibble<<4)&0xF0)|(secondNibble&0xF);
+        outBufIdx++;
+    }
+
+/*debugging
+  dump(out, outBufIdx);
+*/
+    memcpy(str_bin, out, outBufIdx);
+    free(out);
+    free(str);
+
+    return outBufIdx;
+
+}
+
+
 char *get_time_as_log()
 {
     static char buffer[40];
