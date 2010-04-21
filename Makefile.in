@@ -39,6 +39,7 @@ distclean dist-clean: clean
 
 release: distclean
 	@echo Making a release tree:
+	@$(RM) -rf /tmp/sfuzz-release
 	@$(MKDIR) /tmp/sfuzz-release
 	@$(CP) -dPar * /tmp/sfuzz-release
 	@$(RM) -rf /tmp/sfuzz-release/CVS
