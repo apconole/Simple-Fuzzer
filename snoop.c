@@ -583,7 +583,16 @@ int main(int argc, char *argv[])
                     lastarg = strchr(argv[argc],'=');
                     ++lastarg;
                 }
-                
+                if(!strncmp("--help", argv[argc], 6))
+                {
+                    printf("snoop v0.6.2\n");
+                    printf("Copyright (C) 2003-2010, Aaron Conole\n");
+                    printf("=====================================\n");
+                    printf("Valid arguments:\n");
+                    printf("--vlan-id, --eth-src, --eth-dst, --eth-type,\n");
+                    printf("--ip-src, --ip-dst, --ip-proto, --ip-sport, --ip-dport\n");
+                    return 0;
+                }
                 if(!strncmp("--vlan-id", argv[argc], 9) && lastarg != NULL)
                 {
                     FILTER_SET_MASK(filter_mask, ETH_VLAN_FILTER);
