@@ -341,7 +341,9 @@ char *GetEtherType(int eth_type)
     case ETH_P_IP:    return "IPv4";
     case ETH_P_8021Q: return "802.1Q";
     case ETH_P_ARP:   return "ARP";
+#ifndef __WIN32__
     case ETH_P_LOOP:  return "EthLoop";
+#endif
     case ETH_P_X25:   return "X.25";
     case ETH_P_RARP:  return "RARP";
     case ETH_P_IPV6:  return "IPv6";
@@ -706,6 +708,7 @@ int main(int argc, char *argv[])
            " sniff.\n");
     printf("> ");
     fflush(stdout);
+    data = rdata;
     fgets(data, 1024, stdin);
 
     memset(&sa, 0, sizeof(sa));
@@ -743,7 +746,7 @@ int main(int argc, char *argv[])
         data += 14;
 #endif
         sl = sizeof(struct sockaddr_in);
-        bytes_read = recvfrom(sd, data, sizeof(data), 0, (struct sockaddr *)&sa, (socklen_t *)&sl);
+        bytes_read = recvfrom(sd, data, sizeof(data), 0, (struct sockaddr *)&sa, &sl);
         
         if ( bytes_read > 0 )
         {
