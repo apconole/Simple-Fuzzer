@@ -139,7 +139,7 @@ fi
 
 echo -n "Checking for $CC_CHECK ..."
 if [ "X" = "X$CC_LOCATION" ]; then
-    echo "                                    ... NOT found"
+    echo "                                         ... NOT found"
     if [ "${CROSS_COMPILE}gcc" != "${CROSS_COMPILE}${CC_CHECK}" ]; then
         echo -n "Checking for gcc ..."
         CC_LOCATION=`$WHICH ${CROSS_COMPILE}gcc 2> /dev/null`

@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -257,7 +257,7 @@ typedef struct _tcpHdr
     uint  dataOffset : 4; // 4 bits
 #elif defined __BIG_ENDIAN__
     uint  dataOffset : 4; // 4 bits
-    uint  reserved   : 4; // 4 bits    
+    uint  reserved   : 4; // 4 bits
 #else
 #error "Set Big/Little endianness"
 #endif
@@ -283,6 +283,16 @@ struct eth_8021q_packet {
     uint  vlan_id: 12;
     uint  ether_type;
 };
+
+struct tcp_pseudo /*the tcp pseudo header*/
+{
+    unsigned int src_addr;
+    unsigned int dst_addr;
+    unsigned char zero;
+    unsigned char proto;
+    unsigned short length;
+} pseudohead;
+
 #pragma pack()
 
 void DebugPrint(char *buf){
@@ -292,6 +302,77 @@ void DebugPrint(char *buf){
 }
 
 #include "sfuzz-plugin.h"
+
+long checksum(unsigned short *addr, unsigned int count) {
+    /* Compute Internet Checksum for "count" bytes
+     *         beginning at location "addr".
+     */
+    register long sum = 0;
+
+
+    while( count > 1 )  {
+        /*  This is the inner loop */
+        sum += * addr++;
+        count -= 2;
+    }
+    /*  Add left-over byte, if any */
+    if( count > 0 )
+        sum += * (unsigned char *) addr;
+
+    /*  Fold 32-bit sum to 16 bits */
+    while (sum>>16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    return ~sum;
+}
+
+long get_tcp_checksum(struct ip_packet * myip, tcpHdr * mytcp) 
+{
+    unsigned short total_len = ntohs(myip->packet_len);
+
+    int tcpopt_len = mytcp->dataOffset*4 - 20;
+    int tcpdatalen = total_len - (mytcp->dataOffset*4) - (myip->header_len*4);
+
+    pseudohead.src_addr=((int)(myip->IPv4_src));
+    pseudohead.dst_addr=((int)(myip->IPv4_dst));
+    pseudohead.zero=0;
+    pseudohead.proto=IPPROTO_TCP;
+    pseudohead.length=htons(sizeof(tcpHdr) + tcpopt_len + tcpdatalen);
+
+    int totaltcp_len = sizeof(struct tcp_pseudo) + sizeof(tcpHdr) + tcpopt_len + tcpdatalen;
+    unsigned short * tcp = (unsigned short*)malloc(totaltcp_len);
+
+    memcpy((unsigned char *)tcp,&pseudohead,sizeof(struct tcp_pseudo));
+    memcpy((unsigned char *)tcp+sizeof(struct tcp_pseudo),(unsigned char *)mytcp,sizeof(tcpHdr));
+    memcpy((unsigned char *)tcp+sizeof(struct tcp_pseudo)+sizeof(tcpHdr), (unsigned char *)myip+(myip->header_len*4)+(sizeof(tcpHdr)), tcpopt_len);
+    memcpy((unsigned char *)tcp+sizeof(struct tcp_pseudo)+sizeof(tcpHdr)+tcpopt_len, (unsigned char *)mytcp+(mytcp->dataOffset*4), tcpdatalen);
+
+    return checksum(tcp,totaltcp_len);
+
+}
+
+unsigned short ip_sum_calc(unsigned short len_ip_header, unsigned short buff[])
+{
+    unsigned short word16;
+    unsigned int sum=0;
+    unsigned short i;
+    
+    // make 16 bit words out of every two adjacent 8 bit words in the packet
+    // and add them up
+    for (i=0;i<len_ip_header;i=i+2){
+        word16 =((buff[i]<<8)&0xFF00)+(buff[i+1]&0xFF);
+        sum = sum + (unsigned int) word16;
+    }
+    
+    // take only 16 bits out of the 32 bit sum and add up the carries
+    while (sum>>16)
+        sum = (sum & 0xFFFF)+(sum >> 16);
+
+    // one's complement the result
+    sum = ~sum;
+    
+    return ((unsigned short) sum);
+}
 
 plugin_provisor *g_plugin;
 
@@ -543,6 +624,44 @@ void DumpPacket(char *buffer, int len)
             printf("checksum=%d, ", ntohs(ip->hdr_chksum));
             PrintAddr("source=", ip->IPv4_src, eIP_ADDR);
             PrintAddr(", destination=", ip->IPv4_dst, eIP_ADDR);
+            printf("\n");
+            if(ip->protocol == 0x06)
+            {
+                tcpHdr *tcph = NULL;
+                buffer = buffer + eth_contains_ip(eth_pkt);
+                buffer = buffer + (ip->header_len * 4);
+                tcph = (tcpHdr *)buffer;
+                printf("TCP Flags: ");
+                if(tcph->options.flags.urg)
+                    printf("URG ");
+                if(tcph->options.flags.ack)
+                    printf("ACK ");
+                if(tcph->options.flags.psh)
+                    printf("PSH ");
+                if(tcph->options.flags.rst)
+                    printf("RST ");
+                if(tcph->options.flags.syn)
+                    printf("SYN ");
+                if(tcph->options.flags.fin)
+                    printf("FIN ");
+                printf("\n");
+            }
+#if 0
+            ip->hdr_chksum = 0;
+            ip->hdr_chksum = ip_sum_calc(ip->header_len*4, 
+                                         buffer + eth_contains_ip(eth_pkt));
+            printf("Calculated ip checksum=%d", ntohs(ip->hdr_chksum));
+            if(ip->protocol == 0x06)
+            {
+                tcpHdr *tcph = NULL;
+                buffer = buffer + eth_contains_ip(eth_pkt);
+                buffer = buffer + (ip->header_len * 4);
+                tcph = (tcpHdr *)buffer;
+                printf(", transport layer cksum=%d,calc'd=%d",tcph->cksum,
+                       get_tcp_checksum(ip, tcph));
+            }
+            printf("\n");
+#endif
         }
         printf("\n");
         fflush(stdout);
@@ -746,7 +865,7 @@ int main(int argc, char *argv[])
         data += 14;
 #endif
         sl = sizeof(struct sockaddr_in);
-        bytes_read = recvfrom(sd, data, sizeof(data), 0, (struct sockaddr *)&sa, &sl);
+        bytes_read = recvfrom(sd, data, sizeof(rdata), 0, (struct sockaddr *)&sa, &sl);
         
         if ( bytes_read > 0 )
         {
