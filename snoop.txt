@@ -1,0 +1,45 @@
+Using `snoop' to capture/filter/replay PCAP files
+ 
+I. Introduction
+  snoop is an opensource utility part of the Simple Fuzzer framework. Snoop is meant as a lightweight tcpdump tool for general purpose sniffing and network traffic analysis. Because of it's open source nature, snoop is constantly evolving through bugfixes and feature enhancements.
+ 
+  snoop is included in the Octeon builds of linux in the Sycamore CN product. Tcpdump is NOT included in this system due to size and build constraints (ex: snoop is ~30kb, while tcpdump is ~500+kb).
+ 
+II. Features
+  snoop boasts the following set of features:
+filtering based on:
+Ethernet mac addresses
+Ethernet types
+Ethernet vlan tags
+IP addresses
+IP protocol 
+IP TOS byte 
+TCP/UDP ports 
+Arbitrary 8-bit, 16-bit, and 32-bit fields at offsets 
+Arbitrary 32-bit mask at offset 
+Negative versions of the above
+Interface restricted captures 
+PCAP file output 
+PCAP file input 
+Dumping selected packets on an interface
+III. How to use snoop
+
+   The simplest case for using snoop is to simply run the snoop binary, as '/usr/sbin/sycamore/snoop'. However, depending on the method of connecting to the machine, this may produce undesirable results (ie: connection through telnet will cause undesirable amount of traffic being dumped).
+
+   The filter options will allow a more fine-grained selection of packets for display / dump. As example, suppose we would like to capture only hsdpa UDP packets - the invocation might look like '/usr/sbin/sycamore/snoop --ip-tos 0x28'. This filter will only capture packets whose TOS byte matches 0x28, which should generally only be UDP HSDPA packets. Suppose, next, that we would only like to capture packets with ethernet source 11:22:33:44:55:66, the filter might be invoked as: '/usr/sbin/sycamore/snoop --eth-src 112233445566'.
+
+   All of the filter options in snoop may be specified as either '--option=value' or '--option value', and negative versions may be specified as '--option --not value' or '--option=!value'. Numeric values can be given in either hex, or decimal. snoop only support IPv4 addresses, and IP addresses are given in dot-notation. Ethernet addresses are given in hex notation with no ':' delimiters. 
+
+   One of the more powerful filtering options comes from the 32-bit mask which can be applied to a region. For instance, this could be used to filter on IP address range, or other fields, which could be expressed as matching a particular pattern. As an example, image you would like to filter only on packets with IP source 172.18.64.0/24, you would run snoop as '/usr/sbin/sycamore/snoop --m32 0xac124000:26' or '/usr/sbin/sycamore/snoop --m32 0xac124000:30' for VLAN tagged packets. For dest, add 4 to the offsets.
+
+  Taking the time to get familiar with the filter options available will allow for very fine-tuned capture of traffic.
+
+IV. Configuring input/output of snoop
+
+  snoop has the ability to take an input as either a pcap file, or a local interface, and output to one or both of a pcap file and an interface. As such, one could use snoop to capture INL traffic (filter for --ip-proto 0xb0 to --ip-proto 0xb6 with 7 different instances of snoop) and replay this traffic to possibly simulate the link between a CN and RN. Take note that when writing to an interface, all mac information is preserved, so injected data will act as though it were mirrored.
+
+  Using the pcap input and output will allow splitting out packets based on the snoop filtering mechanisms. As such, you could pull all packets with vlan ID 118 from a pcap capture file (--vlan-id 118) and dump those to, say, 118.capture.pcap. Alternately, if you wanted everything that was not TCP, you might specify a capture as '/usr/sbin/sycamore/snoop --ip-proto --not 0x06 --input somecap.pcap --output no-tcp.pcap'. 
+
+V. Finding snoop
+
+   snoop has been compiled for PowerPC, MIPS, and 64-bit intel. It is located in the bostools clearcase vob, in /vobs/bostools/iq/velox_tc/binaries/debug and under the host directories for each platform (ie, the powerpc version would be in /vobs/bostools/iq/velox_tc/binaries/debug/powerpc/host-ppc/snoop). It is pre-packaged with the octeon image tarballs, and must be copied to the AMC, and base-board processors when desired.

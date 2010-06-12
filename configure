@@ -87,7 +87,7 @@ if [ '!' "X" = "X$*" ]; then
         fi
     fi
     if [ "X" = "X$XLDFLAGS" ]; then
-        LDFLAGS_EXTRA_TMP=`echo "$1"|$SED 's/.*--cflags=//'`
+        LDFLAGS_EXTRA_TMP=`echo "$1"|$SED 's/.*--ldflags=//'`
         if [ "$LDFLAGS_EXTRA_TMP" != "$1" ]; then
             XLDFLAGS=$LDFLAGS_EXTRA_TMP
         fi

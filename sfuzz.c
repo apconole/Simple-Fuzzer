@@ -611,7 +611,7 @@ int execute_fuzz(option_block *opts)
                 break;
             }
             
-            if(opts->mseql && ((tsze + reqsize) > opts->mseql))
+            if(opts->mseql && ((tsze + reqsize) > opts->mseql + 8192))
             {
                 /*ohnoes overflow*/
                 fprintf(stderr, "[%s] error: overflow[%d:%d].\n", 
@@ -623,8 +623,6 @@ int execute_fuzz(option_block *opts)
             memcpy(req+reqsize, line, tsze);
             reqsize += tsze-1;
 
-//            *(req+reqsize+tsze-1)='\n';
-//            *(req+reqsize+tsze) = 0;
             if(opts->line_terminator_size)
             {
                 memcpy(req+reqsize, opts->line_term, 
