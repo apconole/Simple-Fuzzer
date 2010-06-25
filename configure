@@ -14,6 +14,7 @@ if [ "$1" = "-h" -o "$1" = "--help" ]; then
   echo "  --enable-snoop             turn on snoop compilation"
   echo "  --enable-plugin-samples    compile plugin samples as well"
   echo "  --disable-plugins          compile without plugin support"
+  echo "  --force-symbols            compile sfuzz plugins with extra symbols"
   echo "  --help                     this message"
   exit 0
 fi
@@ -57,6 +58,7 @@ XLDFLAGS=""
 XSHARED_LIBS=""
 XSHARED_OPTS=""
 XSHARED_INC=""
+FORCE_SYMBOLS="N"
 HAS_INSTALL=`$WHICH install 2> /dev/null`
 
 if [ '!' "X" = "X$*" ]; then
@@ -109,6 +111,12 @@ if [ '!' "X" = "X$*" ]; then
         if [ -z $PLUGIN_SUPPORT_TMP ]; then
             PLUGIN_SUPPORT="disable"
             SSL_PLUGIN_SUPPORT="disable"
+        fi
+    fi
+    if [ "XN" = "X$FORCE_SYMBOLS" ]; then
+        FORCE_TMP=`echo "$1"|$SED 's/.*--force-symbols//'`
+        if [ -z $FORCE_TMP ]; then
+            FORCE_SYMBOLS="Y"
         fi
     fi
     shift
@@ -245,6 +253,9 @@ if [ -n $HAVE_LIBDL ]; then
     elif [ "Linux" = "$OS_SYSTEM" ]; then
         XCFLAGS="$XCFLAGS -D__LINUX__ -rdynamic"
         XSHARED_OPTS="$XSHARED_OPTS -shared -rdynamic"
+    fi
+    if [ "$FORCE_SYMBOLS" = "Y" ]; then
+        XSHARED_INC=" os-abs.o "
     fi
 fi
 if [ "X" = "X$HAVE_LIBDL" ]; then

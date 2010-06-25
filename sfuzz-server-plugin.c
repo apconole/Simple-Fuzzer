@@ -64,6 +64,9 @@ typedef char * caddr_t;
 #include <unistd.h>
 #include "sfuzz-plugin.h"
 
+extern int mssleep(unsigned long int);
+extern char *process_error();
+
 char *srv_plugin_name()
 {
     return "Simple Fuzzer server-side plugin";

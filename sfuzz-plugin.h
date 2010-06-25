@@ -84,10 +84,13 @@ plugin_provisor *g_plugin; /* needed for win32 issue */
 #include <sys/types.h>
 #include <unistd.h>
 
+extern void dump_paths();
+
 static inline void file_error(char *msg, option_block *opts)
 {
     fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",
             "---", opts->pFilename, opts->lno, msg);
+    dump_paths();
     exit(-1);
 }
 

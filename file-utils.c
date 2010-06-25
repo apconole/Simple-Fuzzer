@@ -180,6 +180,12 @@ FILE *sfuzz_fopen(const char *filename, const char *perms)
     fp = fopen(nameBuff, perms);
     if(fp != NULL)
     {
+        if(strchr(nameBuff, '/'))
+        {
+            char bigpath[4096] = {0};
+            memcpy(bigpath, nameBuff, rindex(nameBuff, '/') - nameBuff);
+            sfuzz_searchpath_prepend(nameBuff);
+        }
         return fp;
     }
 
@@ -265,11 +271,37 @@ FILE *sfuzz_dlopen(const char *filename, int flag)
                 if('\\' == *cp) *cp = '/';
             }
             fp = dlopen(nameBuff, flag);
-            if(fp != NULL) return fp;
+            if(fp != NULL){
+                return fp;
+            } else
+            {
+        if(strstr(dlerror(), "undefined "))
+        {
+            fprintf
+                (stderr,
+ "ERROR: The plugin you're attempting to load has some undefined symbols\n");
+            fprintf(stderr,
+                    "Likely, you'll need to reconfigure sfuzz with the --force-symbols option\n");
+        }
+
+            }
         }
     }
 
     return NULL;
+}
+
+void dump_paths()
+{
+    const char *cp, *tp;
+    int pathLen, ii;
+    char **pathStr;
+
+    for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
+    {
+        fprintf(stderr, "Path [%d]: [%s]\n", ii, *pathStr);
+    }
+    
 }
 
 #ifndef NOPLUGIN
@@ -376,9 +408,7 @@ void plugin_load(char *filename, option_block *opts)
     plugin_handle = sfuzz_dlopen(fileline, RTLD_NOW);
     if(plugin_handle == NULL)
     {
-        fprintf(stderr, "[%s: %s] plugin\n", fileline, dlerror());
-        file_error("unable to open plugin specified", opts);
-
+        file_error("Unable to open plugin (check the search path?).", opts);
         return;
     }
     
