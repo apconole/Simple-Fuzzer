@@ -2,19 +2,19 @@
 
 sfuzz sfuzz.exe: $(SF_OBJS)
 	@echo "[LINK] $@"
-	@$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
+	@$(CCPATH)/$(CC) -o $@ $(SF_OBJS) $(LDFLAGS) $(LIBS)
 
 snoop snoop.exe: $(SNOOP_OBJS)
 	@echo "[LINK] $@"
-	@$(CC) -o $@ $(SNOOP_OBJS) $(LDFLAGS) $(LIBS)
+	@$(CCPATH)/$(CC) -o $@ $(SNOOP_OBJS) $(LDFLAGS) $(LIBS)
 
 %.so: %.c $(SHARED_INC)
 	@echo "[LINK] $@"
-	@$(CC) $(CFLAGS) -D__PLUGIN_BUILD__ -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
+	@$(CCPATH)/$(CC) $(CFLAGS) -D__PLUGIN_BUILD__ -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
 
 %.o: %.c
 	@echo "[CC] $@"
-	@$(CC) -c -o $@ $(CFLAGS) $<
+	@$(CCPATH)/$(CC) -c -o $@ $(CFLAGS) $<
 
 install: all
 	@echo "Installing to: $(PREFIX)"
