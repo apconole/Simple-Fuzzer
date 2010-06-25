@@ -11,7 +11,7 @@ echo # Manual edits will not be saved if you run configure again >> Makefile
 echo # you have been warned. >> Makefile
 echo ### Variables for building >> Makefile
 echo CCPATH=C:\MinGW\bin>> Makefile
-echo CC=$(CCPATH)\gcc >> Makefile
+echo CC=gcc >> Makefile
 echo INSTALL=copy>> Makefile
 echo TARGET_PLAT=win>> Makefile
 echo CP=copy>> Makefile

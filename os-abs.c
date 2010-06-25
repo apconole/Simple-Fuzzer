@@ -715,6 +715,18 @@ void dump(void* b, int len, FILE *dump){
 
 #ifdef __WIN32__
 
+char *rindex(const char *s, char c)
+{
+    size_t size = strlen(s);
+    char *str = ((char *)s)+size;
+    while(size--)
+    {
+        if(*str == c)
+            return str;
+        --str;
+    }
+}
+
 /*this is a "workaround" for the fact that windows isn't 'compliant' and
   has it's own dynamic loading functions. basically, we'll just wrap them
   here.
