@@ -3,3 +3,6 @@
 - REGEX for data return
 - Fix the make system's installer under windows.
 - Fix the server to be a bit more intelligent
+- Add support for multi-fuzz options (ie: multiple different fuzz fields)
+- Add named test-case support
+- Add a better message building system
