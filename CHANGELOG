@@ -1,5 +1,10 @@
 v 0.6.2
-  
+  Updated snoop to a point where it will now function as a psuedo-tcpdump under
+          linux
+  Fixed some plugin related bugs
+  Added a config option --force-symbols for forcing the system to load extra
+          symbol information
+  Fixed a logic error regarding mseql and seqsize
 
 v 0.6.1
   Fixed a UDP Crash
