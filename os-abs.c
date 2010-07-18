@@ -613,14 +613,6 @@ void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
     return NULL;
 }
 
-int isws(char c)
-{
-    /*comment out the following for only replacing stuff with no whitespace*/
-    return 1;
-    return ((c == ' ') || (c == '\n') || (c == '\r') || (c == '\t') ||
-            (c == '\b'));
-}
-
 int strrepl(char *buf, size_t buflen, char *old, char *new)
 {
     char *f;
@@ -636,11 +628,6 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
 
     while((f = strstr(str, old)) != NULL)
     {
-        if(!isws(*(f+oldl)))
-        {
-            str = f + oldl;
-            continue;
-        }
         ++repls;
 
         origl -= oldl;

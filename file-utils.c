@@ -489,6 +489,7 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     memset(pSym->sym_val, 0, 8192);
     memcpy(pSym->sym_name, sym_name, sym_len);
     memcpy(pSym->sym_val,  sym_val,  sym_val_len);
+    pSym->is_len = 0;
     if(i == 1)
         pSym->is_len = 1;
 }
@@ -602,11 +603,14 @@ int readLine(option_block *opts, char *line, int len, int ign_cr)
     while((!feof(opts->fp)) && (len--))
     {
         size += fread(&c, 1, 1, opts->fp);
-        *(line+(size - 1)) = c;
+        if(size)
+            *(line+(size - 1)) = c;
         if((c == '\n') || ((c == '\r') && (!ign_cr)))
             break;
     }
-    line[size-1] = 0;
+    if(size)
+        line[size-1] = 0;
+
     return size;
 }
 

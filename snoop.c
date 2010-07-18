@@ -34,8 +34,9 @@
 # include "windows.h"
 # include "winsock2.h"
 
+/* if we don't have mstcpip "special" codes */
 # ifndef SIO_RCVALL
-#  define SIO_RCVALL  0x98000001
+#  define SIO_RCVALL  _WSAIOW(IOC_VENDOR,1)
 # endif /* SIO_RCVALL */
 
 # define ERROR_PRINT _PANIC_
@@ -164,10 +165,12 @@ int debug = 0;
 #define ARBITRARY_U32_FILTER 0x00000800
 #define ARBITRARY_MSK_FILTER 0x00001000
 #define IP_TOS_BYTE_FILTER   0x00002000
+#define STRING_FILTER        0x00004000
 
 typedef unsigned char uchar;
 
 uint  filter_mask = 0;
+
 uchar eth_src_is_mac_filter[ETH_ALEN];
 uchar eth_src_not = 0;
 
@@ -214,6 +217,9 @@ uchar arbitrary_msk_not = 0;
 
 uchar ip_tos_byte_filter;
 uchar ip_tos_byte_filter_not = 0;
+
+uchar string_filter[1024] = {0};
+uchar string_filter_not   = 0;
 
 typedef enum { eETH_ADDR, eIP_ADDR } EAddress;
 
@@ -515,6 +521,7 @@ char *GetProtocol(uint value){
 
 char *GetEtherType(int eth_type)
 {
+    static char protohex[7] = {0};
     switch(eth_type)
     {
     case ETH_P_IP:    return "IPv4";
@@ -527,7 +534,9 @@ char *GetEtherType(int eth_type)
     case ETH_P_RARP:  return "RARP";
     case ETH_P_IPV6:  return "IPv6";
     case ETH_P_TIPC:  return "TIPC";
-    default: return "???";
+    default:
+        snprintf(protohex, 5, "0x%04x", eth_type);
+        return protohex;
     }
 }
 
@@ -766,10 +775,27 @@ void PrintExtraEtherInfo(struct eth_packet *eth_pkt)
 #define FILTER_CHK_MASK(a,b) (((uint)a&(uint)b) == (uint)b)
 #define FILTER_SET_MASK(a,b) (!FILTER_CHK_MASK(a,b)?a |= b : a)
 
+void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl);
+
 char DumpPacket(char *buffer, int len, int quiet)
 {
     struct eth_packet *eth_pkt=(void *)(buffer);
     struct ip_packet *ip = NULL;
+
+    if(FILTER_CHK_MASK(filter_mask, STRING_FILTER))
+    {
+        void *truth;
+        truth = __internal_memmem(buffer, len, string_filter,
+                                  strlen(string_filter));
+
+        if(truth != NULL)
+        {
+            if(string_filter_not)
+                return -1;
+        }else if(truth == NULL)
+            return -1;
+        
+    }
 
     if(FILTER_CHK_MASK(filter_mask, ARBITRARY_MSK_FILTER))
     {
@@ -1140,6 +1166,8 @@ int main(int argc, char *argv[])
     char infomercial[15]={0};
     char pcap_input = 0;
     char pcap_byteswap  = 0;
+    unsigned long int pkts_rx = 0;
+    unsigned long int pkts_pass = 0;
     char *lastarg = NULL;
     char *iface = NULL;
     char *oface = NULL;
@@ -1152,6 +1180,8 @@ int main(int argc, char *argv[])
     uint sl;
 
 #ifdef __WIN32__
+    struct in_addr inaddr;
+    struct hostent h;
     int ON = 1;
     WSADATA wsaData;
 
@@ -1202,7 +1232,7 @@ int main(int argc, char *argv[])
 
                 if(!strncmp("--help", argv[argc], 6))
                 {
-                    printf("snoop v0.6.2\n");
+                    printf("snoop v0.6.3\n");
                     printf("Copyright (C) 2003-2010, Aaron Conole\n");
                     printf("=====================================\n");
                     printf("Valid arguments:\n");
@@ -1210,6 +1240,7 @@ int main(int argc, char *argv[])
                     printf("To suppress output: --quiet\n");
                     printf("To specify a negative filter use --not, or ! after the filter type.\n");
                     printf("  ex: --ip-src --not 192.168.1.1\n");
+                    printf("--string,\n");
                     printf("--vlan-id, --eth-src, --eth-dst, --eth-type,\n");
                     printf("--ip-src, --ip-dst, --ip-proto, --ip-tos, --ip-sport, --ip-dport,\n");
                     printf
@@ -1259,7 +1290,7 @@ int main(int argc, char *argv[])
                 }
                 else if(!strncmp("--output", argv[argc], 8) && lastarg != NULL)
                 {
-                    printf("snoop v0.6.2 pcap starting...\n");
+                    printf("snoop v0.6.3 pcap starting...\n");
                     pcap_dump_file = fopen(lastarg, "w+");
                     if(pcap_dump_file == NULL)
                     {
@@ -1277,6 +1308,15 @@ int main(int argc, char *argv[])
                     fwrite((void *)&pcap_header, sizeof(pcap_header), 1,
                            pcap_dump_file);
                     fflush(pcap_dump_file);
+                    notflag = 0;
+                }
+                else if(!strncmp("--string", argv[argc], 8) &&
+                        lastarg != NULL)
+                {
+                    FILTER_SET_MASK(filter_mask, STRING_FILTER);
+                    strncpy(string_filter, lastarg, 1024);
+                    string_filter[1023] = 0;
+                    if(notflag) string_filter_not = 1;
                     notflag = 0;
                 }
                 else if(!strncmp("--vlan-id", argv[argc], 9) &&
@@ -1426,8 +1466,26 @@ int main(int argc, char *argv[])
            "    not see anything at all. Even if you are, you might not see them\n");
     printf("2 - Due to a wacky way in which WINSOCK works, you need to enter\n"
            "    the IP address of your local interface on which you'd like to\n"
-           "    sniff.\n");
-    printf("> ");
+           "    sniff.\n\n");
+
+    data = rdata;
+    if(gethostname(data, 1024) == SOCKET_ERROR)
+    {
+        PANIC("gethostname");
+    }
+
+    h = gethostbyname(data);
+    if(!h)
+    {
+        PANIC("gethostbyname");
+    }
+
+    for(argc = 0; h->h_addr_list[argc] != 0; ++argc)
+    {
+        printf("Interface IP [%s]\n", inet_ntoa(h->h_addr_list[argc]));
+    }
+    
+    printf("IP> ");
     fflush(stdout);
     data = rdata;
     fgets(data, 1024, stdin);
@@ -1613,7 +1671,7 @@ int main(int argc, char *argv[])
             bytes_read = select(sd+1, &readfd, NULL, NULL, &tv);
             
             if(bytes_read > 0)
-                bytes_read = recvfrom(sd, data, sizeof(rdata), 0, (struct sockaddr *)&sa, &sl);
+                bytes_read = recvfrom(sd, data, 65535, 0, (struct sockaddr *)&sa, &sl);
             else
             {
                 bytes_read = 1;
@@ -1649,6 +1707,8 @@ int main(int argc, char *argv[])
         if ( bytes_read > 0 )
         {
             res = DumpPacket(data, bytes_read, display);
+            if(res == 1)
+                ++pkts_pass;
             if(pcap_dump_file && res == 1)
             {
                 pcaprec_hdr_t pcap_hdr;
@@ -1686,12 +1746,18 @@ int main(int argc, char *argv[])
         else if(bytes_read == -1)
             PANIC("Snooper read");
 
+        ++pkts_rx;
+
     } while (run && bytes_read > 0 );
 
     printf("terminating...\n");
 
     if(pcap_dump_file)
         fclose(pcap_dump_file);
+
+    printf("Packets captured: %lu\n", pkts_rx);
+    if(pkts_pass != pkts_rx)
+        printf("Packets matching: %lu\n", pkts_pass);
 
     return 0;
 }

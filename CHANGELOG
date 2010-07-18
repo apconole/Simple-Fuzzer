@@ -1,3 +1,10 @@
+v 0.6.3
+  Fixed a sniffer error when using optimizing compilers
+  Added a string match support to snoop
+  Fixed the configure script to allow plugin disabling
+  Addressed a buffer overflow in the sfuzz framework (note: it's not exactly "future proof" yet)
+  Addressed an invalid write condition
+  
 v 0.6.2
   Updated snoop to a point where it will now function as a psuedo-tcpdump under
           linux

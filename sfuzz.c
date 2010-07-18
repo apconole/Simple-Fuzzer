@@ -402,7 +402,8 @@ int main(int argc, char *argv[])
     free(options.seq_lens);
 
     /*this might be the better way of doing things =)*/
-    free(options.syms_array);
+    if(options.sym_count)
+        free(options.syms_array);
     
     return 0;
 }
@@ -450,23 +451,23 @@ void fuzz(option_block *opts, char *req, int len)
                 THIS creates a problem - our length field substitution
                 depends on having lengths before non-lengths. The answer
                 of course, is to just have 2 loops, apply the lenghts first*/
-        for(i = opts->s_syms_count - 1; i >= 0; --i)
+        for(i = 0; i < opts->s_syms_count ; ++i)
         {
-            pSym = &(opts->s_syms[i]);
+            pSym = &(opts->s_syms[ opts->s_syms_count - (i+1) ]);
             len = smemrepl(req, len, pSym->sym_name, pSym->sym_val, 
                                pSym->s_len);
         }
         
-        for(i = opts->sym_count - 1; i >= 0; --i)
+        for(i = 0; i < opts->sym_count; ++i)
         {
-            pSym = &(opts->syms_array[i]);
+            pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(pSym->is_len)
                 len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
         }
         
-        for(i = opts->sym_count - 1; i >= 0; --i)
+        for(i = 0; i < opts->sym_count; ++i)
         {
-            pSym = &(opts->syms_array[i]);
+            pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(!pSym->is_len)
                 len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
         }
@@ -574,12 +575,12 @@ void fuzz(option_block *opts, char *req, int len)
 
 int execute_fuzz(option_block *opts)
 {
-    char *line = malloc(8192);
-    char *req  = malloc(opts->mseql + 8192);
-    char *req2 = malloc(opts->mseql + 8192);
-    char *preq = malloc(opts->mseql + 8192);
-    char *p, *j;
-    char c,f,b;
+    volatile char *line = malloc(8192);
+    volatile char *req  = malloc(opts->mseql + 16384);
+    volatile char *req2 = malloc(opts->mseql + 16384);
+    volatile char *preq = malloc(opts->mseql + 16384);
+    volatile char *p, *j;
+    volatile char c,f,b;
 
     int tsze    = 0;
     int reqsize = 0;
@@ -587,6 +588,10 @@ int execute_fuzz(option_block *opts)
     int i       = 0;
     int k       = 0;
     unsigned int seq4b = 0;
+
+    memset(req, 0, opts->mseql + 16384);
+    memset(req2, 0, opts->mseql + 16384);
+    memset(preq, 0, opts->mseql + 16384);
 
     if(opts->state != FUZZ)
     {
@@ -633,6 +638,7 @@ int execute_fuzz(option_block *opts)
 
             *(req+reqsize) = 0;
         }
+
         if(feof(opts->fp)) break;
         
         if(!strcasecmp(line, "c-"))
@@ -701,7 +707,7 @@ int execute_fuzz(option_block *opts)
                         i = strrepl(req2, reqsize, "FUZZ", opts->litr[tsze]);
                     else
                     {
-                        char blit[8192] = {0};
+                        char *blit = malloc(8192);
                         int blit_len = 0;
                         strcpy(blit,opts->litr[tsze]+
                                strspn(opts->litr[tsze]," "));
@@ -711,6 +717,7 @@ int execute_fuzz(option_block *opts)
 
                         blit_len = ascii_to_bin(blit);
                         i = smemrepl(req2, reqsize, "FUZZ",blit, blit_len );
+                        free( blit );
                     }
                     
                     if(opts->send_initial_nonfuzz_again)
@@ -768,8 +775,10 @@ int execute_fuzz(option_block *opts)
             }
         }
     }
+
     free( line );
     free( req  );
     free( req2 );
+
     return 0;
 }

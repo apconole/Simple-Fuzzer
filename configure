@@ -47,7 +47,7 @@ SSL_IPATH=""
 CRYPTO_PATH=""
 SSL_PLUGIN_SUPPORT=""
 CROSS_COMPILE=""
-PLUGIN_SUPPORT="enable"
+PLUGIN_SUPPORT=""
 SNOOP_SUPPORT=""
 CC_CHECK=""
 LIBDIRS=`$CAT /etc/ld.so.conf 2> /dev/null`
@@ -109,6 +109,7 @@ if [ '!' "X" = "X$*" ]; then
     if [ "X" = "X$PLUGIN_SUPPORT" ]; then
         PLUGIN_SUPPORT_TMP=`echo "$1"|$SED 's/.*--disable-plugins//'`
         if [ -z $PLUGIN_SUPPORT_TMP ]; then
+            echo "ahahaha"
             PLUGIN_SUPPORT="disable"
             SSL_PLUGIN_SUPPORT="disable"
         fi
@@ -129,6 +130,10 @@ fi
 
 if [ "X" = "X$CC_CHECK" ]; then
     CC_CHECK="gcc"
+fi
+
+if [ "X" = "X$PLUGIN_SUPPORT" ]; then
+    PLUGIN_SUPPORT="enable"
 fi
 
 CC_LOCATION=`$WHICH ${CROSS_COMPILE}${CC_CHECK} 2> /dev/null`
@@ -260,6 +265,10 @@ if [ -n $HAVE_LIBDL ]; then
 fi
 if [ "X" = "X$HAVE_LIBDL" ]; then
     echo "                                    ... NOT found, support disabled"
+fi
+
+if [ $PLUGIN_SUPPORT = "disable" ]; then
+    XCFLAGS_EXTRA="-DNOPLUGIN"
 fi
 
 echo "Done configuring ... writing Makefile"

@@ -39,7 +39,3 @@ IV. Configuring input/output of snoop
   snoop has the ability to take an input as either a pcap file, or a local interface, and output to one or both of a pcap file and an interface. As such, one could use snoop to capture INL traffic (filter for --ip-proto 0xb0 to --ip-proto 0xb6 with 7 different instances of snoop) and replay this traffic to possibly simulate the link between a CN and RN. Take note that when writing to an interface, all mac information is preserved, so injected data will act as though it were mirrored.
 
   Using the pcap input and output will allow splitting out packets based on the snoop filtering mechanisms. As such, you could pull all packets with vlan ID 118 from a pcap capture file (--vlan-id 118) and dump those to, say, 118.capture.pcap. Alternately, if you wanted everything that was not TCP, you might specify a capture as '/usr/sbin/sycamore/snoop --ip-proto --not 0x06 --input somecap.pcap --output no-tcp.pcap'. 
-
-V. Finding snoop
-
-   snoop has been compiled for PowerPC, MIPS, and 64-bit intel. It is located in the bostools clearcase vob, in /vobs/bostools/iq/velox_tc/binaries/debug and under the host directories for each platform (ie, the powerpc version would be in /vobs/bostools/iq/velox_tc/binaries/debug/powerpc/host-ppc/snoop). It is pre-packaged with the octeon image tarballs, and must be copied to the AMC, and base-board processors when desired.
