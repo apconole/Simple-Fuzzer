@@ -575,12 +575,12 @@ void fuzz(option_block *opts, char *req, int len)
 
 int execute_fuzz(option_block *opts)
 {
-    volatile char *line = malloc(8192);
-    volatile char *req  = malloc(opts->mseql + 16384);
-    volatile char *req2 = malloc(opts->mseql + 16384);
-    volatile char *preq = malloc(opts->mseql + 16384);
-    volatile char *p, *j;
-    volatile char c,f,b;
+    char *line = malloc(8192);
+    char *req  = malloc(opts->mseql + 16384);
+    char *req2 = malloc(opts->mseql + 16384);
+    char *preq = malloc(opts->mseql + 16384);
+    char *p, *j;
+    char c,f,b;
 
     int tsze    = 0;
     int reqsize = 0;

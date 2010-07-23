@@ -491,7 +491,7 @@ void PrintAddr(char* msg, unsigned char *addr, EAddress is_ip)
 {
     char buf[8192] = {0};
     WriteAddr(buf, 8192, msg, addr, is_ip);
-    printf(buf);
+    printf("%s",buf);
 }
 
 char *GetProtocol(uint value){
@@ -785,8 +785,9 @@ char DumpPacket(char *buffer, int len, int quiet)
     if(FILTER_CHK_MASK(filter_mask, STRING_FILTER))
     {
         void *truth;
-        truth = __internal_memmem(buffer, len, string_filter,
-                                  strlen(string_filter));
+        size_t ndl = strlen((const char *)string_filter);
+        size_t mmlen = (size_t) len;
+        truth = __internal_memmem(buffer, mmlen, string_filter, ndl);
 
         if(truth != NULL)
         {

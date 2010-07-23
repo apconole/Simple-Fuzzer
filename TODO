@@ -1,8 +1,8 @@
 - Remove ascii string dependancies (? - need to flush them all out)
-- Fix Vista & XP SP2 snoop
 - REGEX for data return
 - Fix the make system's installer under windows.
 - Fix the server to be a bit more intelligent
 - Add support for multi-fuzz options (ie: multiple different fuzz fields)
 - Add named test-case support
 - Add a better message building system
+- Add an oracle as defined by Justin Seitz in GHP (basically, a process which monitors the health of the target under fuzz)

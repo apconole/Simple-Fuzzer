@@ -293,8 +293,7 @@ FILE *sfuzz_dlopen(const char *filename, int flag)
 
 void dump_paths()
 {
-    const char *cp, *tp;
-    int pathLen, ii;
+    int ii;
     char **pathStr;
 
     for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
