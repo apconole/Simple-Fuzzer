@@ -410,9 +410,10 @@ int main(int argc, char *argv[])
 
 int fuzznum = 0;
 
-void fuzz(option_block *opts, char *req, int len)
+int fuzz(option_block *opts, char *req, int len)
 {
     int i = 0;
+    int res = 0;
     FILE *log = stdout;
     char *r2, *tmp = 0;
     char *p1, *tmp2 = 0;
@@ -520,25 +521,26 @@ void fuzz(option_block *opts, char *req, int len)
        ((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) == 
         PLUGIN_PROVIDES_TRANSPORT_TYPE))
     {
-        g_plugin->trans(opts, req, len);
+      res = g_plugin->trans(opts, req, len);
     }
     else 
 #endif
     if(fuzz_this_time && opts->tcp_flag)
     {
-        os_send_tcp(opts, req, len);
+      res = os_send_tcp(opts, req, len);
     }
     else if(fuzz_this_time && opts->udp_flag)
     {
-        os_send_udp(opts, req, len);
+      res = os_send_udp(opts, req, len);
     }
 #ifndef NOPLUGIN
-    else if(fuzz_this_time && (g_plugin != NULL) &&
-	    ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
-	     PLUGIN_PROVIDES_POST_FUZZ))
-    {
-        g_plugin->post_fuzz(opts, req, len);
-    }
+    
+    if(fuzz_this_time && (g_plugin != NULL) &&
+       ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+	PLUGIN_PROVIDES_POST_FUZZ))
+      {
+	g_plugin->post_fuzz(opts, req, len);
+      }
     
 
     if(fuzz_this_time && g_plugin != NULL && 
@@ -570,7 +572,12 @@ void fuzz(option_block *opts, char *req, int len)
         strncat(opts->pLogFilename, z_buf, MAX_FILENAME_SIZE);
         opts->fp_log = fopen(opts->pLogFilename, "w");
     }
-    
+
+    if(res < 0 && opts->stop_on_fail)
+      return -1;
+
+    return 0;
+      
 }
 
 int execute_fuzz(option_block *opts)
@@ -662,7 +669,10 @@ int execute_fuzz(option_block *opts)
         
         if(!p)
         {
-            fuzz(opts, req, reqsize);
+	  if(fuzz(opts, req, reqsize) < 0)
+	    {
+	      goto done;
+	    }
             memcpy(preq, req, reqsize);
             preqsize = reqsize;
         }
@@ -721,9 +731,11 @@ int execute_fuzz(option_block *opts)
                     }
                     
                     if(opts->send_initial_nonfuzz_again)
-                        fuzz(opts, preq, preqsize);
+		      if(fuzz(opts, preq, preqsize) < 0)
+			goto done;
                     
-                    fuzz(opts, req2, i);
+                    if(fuzz(opts, req2, i)<0)
+		      goto done;
                 }
             }
             
@@ -768,14 +780,17 @@ int execute_fuzz(option_block *opts)
                         req2 = j;
                         
                         if(opts->send_initial_nonfuzz_again)
-                            fuzz(opts, preq, preqsize);
-                        fuzz(opts, req2, strlen(req2));
+			  if(fuzz(opts, preq, preqsize) < 0)
+			    goto done;
+                        if(fuzz(opts, req2, strlen(req2))<0)
+			  goto done;
                     }
                 }
             }
         }
     }
 
+ done:
     free( line );
     free( req  );
     free( req2 );
