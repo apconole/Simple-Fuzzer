@@ -318,7 +318,7 @@ int os_send_tcp(option_block *opts, char *str, int len)
             return -1;
         }
         
-        for(p = servinfo; p!= NULL && sockfd == -1; p = p->ai_next)
+        for(p = servinfo; p!= NULL; p = p->ai_next)
         {
             sockfd = socket(p->ai_family, p->ai_socktype,
                             p->ai_protocol);
@@ -326,20 +326,6 @@ int os_send_tcp(option_block *opts, char *str, int len)
                 continue;
 
             opts->sockfd = sockfd;
-            
-            if(p == NULL)
-            {
-                fprintf(stderr,"[%s] error: unable to acquire socket.\n",
-                        get_time_as_log());
-                
-                fprintf(log,"[%s] error: unable to acquire socket.\n",
-                        get_time_as_log());
-                freeaddrinfo(servinfo);
-#ifdef __WIN32__
-                WSACleanup();
-#endif
-                return -1;
-            }
             
             if(connect(sockfd, 
                        p->ai_addr, p->ai_addrlen) < 0)
@@ -349,9 +335,10 @@ int os_send_tcp(option_block *opts, char *str, int len)
 #else
                 close(sockfd);
 #endif
-                sockfd = -1;
+                opts->sockfd = sockfd = -1;
                 continue;
             }
+            break; /* faster than setting p = NULL; (I think)*/
         }
         freeaddrinfo(servinfo);
     }
@@ -440,8 +427,6 @@ int os_send_tcp(option_block *opts, char *str, int len)
                 g_plugin->post_fuzz(opts, buf, r_len);
             }
 #endif
-
-            
         }
     }
     
@@ -494,7 +479,7 @@ int os_send_udp(option_block *opts, char *str, int len)
     memset(&hints, 0, sizeof(hints));
     
     hints.ai_family   = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = SOCK_DGRAM;
     
     if(getaddrinfo(opts->host_spec, opts->port_spec, &hints, &servinfo) != 0)
     {
@@ -507,30 +492,30 @@ int os_send_udp(option_block *opts, char *str, int len)
 #endif
         return -1;
     }
-    
+
     for(p = servinfo; p!= NULL; p = p->ai_next)
     {
-        
         sockfd = socket(p->ai_family, p->ai_socktype,
                         p->ai_protocol);
         if(sockfd < 0)
             continue;
 
-        if(p == NULL)
-        {
-            fprintf(stderr,"[%s] error: unable to acquire socket.\n",
-                    get_time_as_log());
-            
-            fprintf(log,"[%s] error: unable to acquire socket.\n",
-                    get_time_as_log());
-            freeaddrinfo(servinfo);
-#ifdef __WIN32__
-            WSACleanup();
-#endif
-            return -1;
-        }
         opts->sockfd = sockfd;
-        break;
+        break; /* p won't be equal to NULL in this case */
+    }
+
+    if(p == NULL)
+    {
+        fprintf(stderr,"[%s] error: unable to acquire socket.\n",
+                get_time_as_log());
+        
+        fprintf(log,"[%s] error: unable to acquire socket.\n",
+                get_time_as_log());
+        freeaddrinfo(servinfo);
+#ifdef __WIN32__
+        WSACleanup();
+#endif
+        return -1;
     }
     
     ret = sendto(sockfd, str, len, 0,

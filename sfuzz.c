@@ -429,7 +429,6 @@ int fuzz(option_block *opts, char *req, int len)
     if( fuzz_this_time && opts->verbosity != QUIET )
         fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
                 fuzznum);
-
 #ifndef NOPLUGIN
     if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
@@ -443,7 +442,6 @@ int fuzz(option_block *opts, char *req, int len)
         len = p1_len;
     }
 #endif
-    
     if(fuzz_this_time && ((opts->sym_count) || (opts->s_syms_count)))
     {
         /*xxx : enhancement - loop backwards allowing people to define
@@ -525,6 +523,7 @@ int fuzz(option_block *opts, char *req, int len)
     }
     else 
 #endif
+
     if(fuzz_this_time && opts->tcp_flag)
     {
       res = os_send_tcp(opts, req, len);
@@ -533,8 +532,9 @@ int fuzz(option_block *opts, char *req, int len)
     {
       res = os_send_udp(opts, req, len);
     }
+
 #ifndef NOPLUGIN
-    
+
     if(fuzz_this_time && (g_plugin != NULL) &&
        ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
 	PLUGIN_PROVIDES_POST_FUZZ))
@@ -542,7 +542,6 @@ int fuzz(option_block *opts, char *req, int len)
 	g_plugin->post_fuzz(opts, req, len);
       }
     
-
     if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
         PLUGIN_PROVIDES_FUZZ_MODIFICATION))
