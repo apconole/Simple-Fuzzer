@@ -87,7 +87,14 @@
 # define INCREMENT_CAP   0
 # define SOCK_FAM_TYPE   AF_INET
 # define SOCK_PROTO_TYPE IPPROTO_RAW
-  typedef unsigned int uint;
+
+typedef unsigned int uint;
+typedef unsigned short ushort;
+
+struct timespec {
+    long tv_sec;
+    long tv_nsec;
+};
 
 #else /* ! __WIN32__ */
 
@@ -563,8 +570,9 @@ int ethmask_cmp(uchar *retr_addr, uchar *filter_addr)
 {
     int i =0 ;
     if(debug)
-        printf("EtherAddrFilter: in[%06X],flt[%06X]\n", retr_addr,
-               filter_addr);
+        printf("EtherAddrFilter: in[%06X],flt[%06X]\n", 
+               (unsigned int)retr_addr,
+               (unsigned int)filter_addr);
 
     for(;i<ETH_ALEN;++i)
     {
@@ -1071,7 +1079,7 @@ void _PANIC_(char *msg)
         printf("invalid protocol option\n");
         break;
     case WSAENOTSOCK:
-        printf("not a socket.\m");
+        printf("not a socket.\n");
         break;
     case WSAEINPROGRESS:
         printf("function is in progress.\n");
@@ -1122,6 +1130,21 @@ void terminate_hnd(int sig)
 {
     run = 0;
 }
+
+#ifdef __WIN32__
+int nanosleep(const struct timespec *requested_delay,
+              struct timespec *remainder)
+{
+    struct timeval delay;
+    delay.tv_sec = requested_delay->tv_sec;
+    delay.tv_usec = requested_delay->tv_nsec / 1000;
+    if(select(0, NULL, NULL, NULL, &delay) < 0)
+    {
+        /* handle remainder here */
+    }
+    return 0;
+}
+#endif
 
 int snoop_nano_sleep(const struct timespec *req, struct timespec *remain)
 {
@@ -1182,7 +1205,7 @@ int main(int argc, char *argv[])
 
 #ifdef __WIN32__
     struct in_addr inaddr;
-    struct hostent h;
+    struct hostent *h;
     int ON = 1;
     WSADATA wsaData;
 
@@ -1487,7 +1510,7 @@ int main(int argc, char *argv[])
 
     for(argc = 0; h->h_addr_list[argc] != 0; ++argc)
     {
-        printf("Interface IP [%s]\n", inet_ntoa(h->h_addr_list[argc]));
+        printf("Interface IP [%s]\n", inet_ntoa(*(struct in_addr *)h->h_addr_list[argc]));
     }
     
     printf("IP> ");
@@ -1510,7 +1533,11 @@ int main(int argc, char *argv[])
     else
     {
         pcap_hdr_t in_pcap_header;
-        sd = open(pcap_fname, O_RDONLY | O_NOCTTY);
+        sd = open(pcap_fname, O_RDONLY
+#ifndef __WIN32__
+                  | O_NOCTTY
+#endif
+            );
         if(sd < 1)
             PANIC("open");
         if(read(sd, &in_pcap_header, sizeof(in_pcap_header)) < 0)
