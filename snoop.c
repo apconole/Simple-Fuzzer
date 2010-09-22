@@ -951,7 +951,7 @@ char DumpPacket(char *buffer, int len, int quiet)
         
         if(FILTER_CHK_MASK(filter_mask, UDP_TCP_DPORT_FILTER))
         {
-            if(!udptcp_sport_cmp(ip, udp_tcp_dport_is_filter))
+            if(udptcp_dport_cmp(ip, udp_tcp_dport_is_filter))
             {
                 if(udp_tcp_dport_not)
                     return -1;
@@ -1467,8 +1467,12 @@ int main(int argc, char *argv[])
            "    not see anything at all. Even if you are, you might not see them\n");
     printf("2 - Due to a wacky way in which WINSOCK works, you need to enter\n"
            "    the IP address of your local interface on which you'd like to\n"
-           "    sniff.\n\n");
-
+           "    sniff.\n");
+    printf("3 - Even IF you're an admin, have a valid interface, and packets are flowing\n"
+           "    you may not see those packets anyway - XP (sp0/sp1) is the best windows\n"
+           "    OS to be using.\n");
+    
+    printf("\n");
     data = rdata;
     if(gethostname(data, 1024) == SOCKET_ERROR)
     {
