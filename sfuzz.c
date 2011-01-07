@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
     g_plugin = NULL;
     sfuzz_setsearchpath(
 #ifndef __WIN32__
-        "./:"PREFIX"/sfuzz-db"
+        "./:"PREFIX"/share/sfuzz-db"
 #else
         "./"
 #endif
