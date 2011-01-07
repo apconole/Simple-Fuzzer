@@ -733,7 +733,7 @@ int execute_fuzz(option_block *opts)
                     {
                         size_t bsizeval = strlen(opts->litr[tsze]);
                         char sizeval[80] = {0};
-                        snprintf(sizeval, 80, "%d", bsizeval);
+                        snprintf(sizeval, 80, "%zu", bsizeval);
                         i = smemrepl(req2, reqsize, "%%FUZZ", (char *)
                                      &bsizeval, sizeof bsizeval);
                         i = smemrepl(req2, i, "%FUZZ", sizeval,
@@ -810,7 +810,7 @@ int execute_fuzz(option_block *opts)
 
                         bsizeval = strlen(sequence_hold);
 
-                        snprintf(sizeval, 80, "%d", bsizeval);
+                        snprintf(sizeval, 80, "%zu", bsizeval);
 
                         reqsize = smemrepl(req2, reqsize, "%%FUZZ", 
                                      (char *)&bsizeval, sizeof bsizeval);
