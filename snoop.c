@@ -29,6 +29,7 @@
  */
 
 #include <stdio.h>
+# include <fcntl.h>
 
 #ifdef __WIN32__
 # include "windows.h"
@@ -112,7 +113,6 @@ struct timespec {
 # include <netinet/tcp.h>
 # include <netinet/ip.h>
 # include <unistd.h>
-# include <fcntl.h>
 # include <sys/select.h>
 # include <sys/time.h>
 
@@ -1778,8 +1778,8 @@ int main(int argc, char *argv[])
         else if(bytes_read == -1)
             PANIC("Snooper read");
 
-        ++pkts_rx;
-
+        if(bytes_read) ++pkts_rx;
+        
     } while (run && bytes_read > 0 );
 
     printf("terminating...\n");
