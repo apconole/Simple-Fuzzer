@@ -728,11 +728,23 @@ int execute_fuzz(option_block *opts)
                             litr_is_bin = 1;
 
                     if(!litr_is_bin)
-                        i = strrepl(req2, reqsize, "FUZZ", opts->litr[tsze]);
+                    {
+                        size_t bsizeval = strlen(opts->litr[tsze]);
+                        char sizeval[80] = {0};
+                        snprintf(sizeval, 80, "%d", bsizeval);
+                        i = smemrepl(req2, reqsize, "%%FUZZ", (char *)
+                                     &bsizeval, sizeof bsizeval);
+                        i = smemrepl(req2, i, "%FUZZ", sizeval,
+                                     strlen(sizeval));
+                        i = smemrepl(req2, i, "FUZZ", opts->litr[tsze],
+                                     strlen(opts->litr[tsze]));
+                    }
                     else
                     {
                         char *blit = malloc(8192);
                         int blit_len = 0;
+                        char sizeval[80] = {0};
+
                         strcpy(blit,opts->litr[tsze]+
                                strspn(opts->litr[tsze]," "));
 
@@ -740,7 +752,12 @@ int execute_fuzz(option_block *opts)
                         strrepl(blit, strlen(blit), "\\x", " ");
 
                         blit_len = ascii_to_bin(blit);
-                        i = smemrepl(req2, reqsize, "FUZZ",blit, blit_len );
+                        snprintf(sizeval, 80, "%d", blit_len);
+                        i = smemrepl(req2, reqsize, "%%FUZZ",
+                                     (char *)&blit_len, sizeof blit_len);
+                        i = smemrepl(req2, i, "%FUZZ", sizeval, 
+                                     strlen(sizeval));
+                        i = smemrepl(req2, i, "FUZZ", blit, blit_len );
                         free( blit );
                     }
                     
@@ -758,6 +775,8 @@ int execute_fuzz(option_block *opts)
                 /*do the sequences*/
                 for(tsze = 0; tsze < opts->num_seq; ++tsze)
                 {
+                    size_t bsizeval = 0;
+                    char sizeval[80] = {0};
                     char seq_buf[5] = {0};
                     char *sequence_hold = NULL;
                     /*at this point, we do sequences. Sequencing will be done*/
@@ -787,9 +806,20 @@ int execute_fuzz(option_block *opts)
                                 *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
                         }
 
-                        reqsize =
-                            strrepl(req2, reqsize, "FUZZ", sequence_hold);
+                        bsizeval = strlen(sequence_hold);
+
+                        snprintf(sizeval, 80, "%d", bsizeval);
+
+                        reqsize = smemrepl(req2, reqsize, "%%FUZZ", 
+                                     (char *)&bsizeval, sizeof bsizeval);
+
+                        reqsize = smemrepl(req2, reqsize, "%FUZZ", sizeval,
+                                           strlen(sizeval));
                         
+                        reqsize = smemrepl(req2, reqsize, "FUZZ",
+                                           sequence_hold,
+                                           strlen(sequence_hold));
+
                         seq4b++;
                         
                         if(strstr(req2, "__SEQUENCE_NUM_ASCII__"))
