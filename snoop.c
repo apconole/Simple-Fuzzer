@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2011, Aaron Conole <apconole@yahoo.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
  */
 
 #include <stdio.h>
-# include <fcntl.h>
+#include <fcntl.h>
 
 #ifdef __WIN32__
 # include "windows.h"
@@ -1257,7 +1257,7 @@ int main(int argc, char *argv[])
                 if(!strncmp("--help", argv[argc], 6))
                 {
                     printf("snoop v0.6.3\n");
-                    printf("Copyright (C) 2003-2010, Aaron Conole\n");
+                    printf("Copyright (C) 2003-2011, Aaron Conole\n");
                     printf("=====================================\n");
                     printf("Valid arguments:\n");
                     printf("To save a .pcap file: --output\n");

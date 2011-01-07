@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2011, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -476,14 +476,16 @@ int fuzz(option_block *opts, char *req, int len)
         {
             pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(pSym->is_len)
-                len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+                len = smemrepl(req, len, pSym->sym_name, pSym->sym_val,
+                               strlen(pSym->sym_val));
         }
         
         for(i = 0; i < opts->sym_count; ++i)
         {
             pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(!pSym->is_len)
-                len = strrepl(req, len, pSym->sym_name, pSym->sym_val);
+                len = smemrepl(req, len, pSym->sym_name, pSym->sym_val,
+                               strlen(pSym->sym_val));
         }
 
     }
@@ -684,11 +686,11 @@ int execute_fuzz(option_block *opts)
         if(!p)
         {
 	  if(fuzz(opts, req, reqsize) < 0)
-	    {
+          {
 	      goto done;
-	    }
-            memcpy(preq, req, reqsize);
-            preqsize = reqsize;
+          }
+          memcpy(preq, req, reqsize);
+          preqsize = reqsize;
         }
         else /* we have to FUZZ for reals*/
         {
@@ -762,11 +764,11 @@ int execute_fuzz(option_block *opts)
                     }
                     
                     if(opts->send_initial_nonfuzz_again)
-		      if(fuzz(opts, preq, preqsize) < 0)
-			goto done;
+                        if(fuzz(opts, preq, preqsize) < 0)
+                            goto done;
                     
                     if(fuzz(opts, req2, i)<0)
-		      goto done;
+                        goto done;
                 }
             }
             
