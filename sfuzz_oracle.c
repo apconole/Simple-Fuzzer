@@ -1,18 +1,14 @@
 /**
  * SFUZZ oracle
+ * this file implements the API side of the oracle.
+ * sfuzz_oracle_daemon.c holds the implementation of the oracle daemon
+ * sfuzz_oracle_client.c holds the implementation of a generic querying 
+ *                       client
  */
 
-/***
+/**
+ * IMPORTANT NOTE:
  * We need to use ptrace() on unix-y systems
  * and the mswin debug facilities on windows
  */
 
-struct sfuzz_oracle_request
-{
-  unsigned char req_id;
-  unsigned int  req_flags;
-  unsigned int  req_length
-  unsigned char *data
-};
-
-typedef struct sfuzz_oracle_request sfuzz_oracle_request_t;
