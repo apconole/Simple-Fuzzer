@@ -3,7 +3,7 @@ by: aaron conole <apconole@yahoo.com>
 
 synopsis
   simple fuzz is exactly what it sounds like - a simple fuzzer. don't mistake 
-simple with a lack of sophistication. this fuzzer has two network modes of 
+simple with a lack of fuzz capability. this fuzzer has two network modes of 
 operation, an output mode for developing command line fuzzing scripts, as well
 as taking fuzzing strings from literals and building strings from sequences.
   simple fuzz is built to fill a need - the need for a quickly configurable
@@ -178,11 +178,18 @@ ___________________________________________________________________________
 +++++++++++++++++++ a test. indicates that the system should keep the existing
 +++++++++++++++++++ connection alive.
 +++++++++++++++++++--------------------------------------------------------
-| FUZZ            | used in test blocks to insert a fuzzy string. only the
-+++++++++++++++++++ FIRST occurance of FUZZ will be replaced. however, the test
+| FUZZ            | used in test blocks to insert a fuzzy string. the test
 +++++++++++++++++++ will be executed for each possible fuzz string that could
 +++++++++++++++++++ be inserted. this means for every literal and sequence, you
-+++++++++++++++++++ will get a copy of the test with FUZZ replaced.
++++++++++++++++++++ will get a copy of the test with all instances of FUZZ
++++++++++++++++++++ replaced.
++++++++++++++++++++--------------------------------------------------------
+| %FUZZ           | used in test blocks to insert the length of the fuzz string
++++++++++++++++++++ in ascii form. IE: if the fuzz length is 4, the system will
++++++++++++++++++++ insert the ascii character "4".
++++++++++++++++++++--------------------------------------------------------
+| %%FUZZ          | as above, except inserts the binary length. currently, this
++++++++++++++++++++ is done as 4byte value (or sizeof(size_t) on your platform)
 +++++++++++++++++++--------------------------------------------------------
 | |X=[off:len:def]| Indicates a variable whose contents derive from the 
 +++++++++++++++++++ preceding packets' data. off is the offset into the 

@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2011, Aaron Conole <apconole@yahoo.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,7 @@
  */
 
 #include <stdio.h>
+#include <fcntl.h>
 
 #ifdef __WIN32__
 # include "windows.h"
@@ -87,7 +88,14 @@
 # define INCREMENT_CAP   0
 # define SOCK_FAM_TYPE   AF_INET
 # define SOCK_PROTO_TYPE IPPROTO_RAW
-  typedef unsigned int uint;
+
+typedef unsigned int uint;
+typedef unsigned short ushort;
+
+struct timespec {
+    long tv_sec;
+    long tv_nsec;
+};
 
 #else /* ! __WIN32__ */
 
@@ -105,7 +113,6 @@
 # include <netinet/tcp.h>
 # include <netinet/ip.h>
 # include <unistd.h>
-# include <fcntl.h>
 # include <sys/select.h>
 # include <sys/time.h>
 
@@ -563,8 +570,9 @@ int ethmask_cmp(uchar *retr_addr, uchar *filter_addr)
 {
     int i =0 ;
     if(debug)
-        printf("EtherAddrFilter: in[%06X],flt[%06X]\n", retr_addr,
-               filter_addr);
+        printf("EtherAddrFilter: in[%06X],flt[%06X]\n", 
+               (unsigned int)retr_addr,
+               (unsigned int)filter_addr);
 
     for(;i<ETH_ALEN;++i)
     {
@@ -951,7 +959,7 @@ char DumpPacket(char *buffer, int len, int quiet)
         
         if(FILTER_CHK_MASK(filter_mask, UDP_TCP_DPORT_FILTER))
         {
-            if(!udptcp_sport_cmp(ip, udp_tcp_dport_is_filter))
+            if(udptcp_dport_cmp(ip, udp_tcp_dport_is_filter))
             {
                 if(udp_tcp_dport_not)
                     return -1;
@@ -1071,7 +1079,7 @@ void _PANIC_(char *msg)
         printf("invalid protocol option\n");
         break;
     case WSAENOTSOCK:
-        printf("not a socket.\m");
+        printf("not a socket.\n");
         break;
     case WSAEINPROGRESS:
         printf("function is in progress.\n");
@@ -1122,6 +1130,21 @@ void terminate_hnd(int sig)
 {
     run = 0;
 }
+
+#ifdef __WIN32__
+int nanosleep(const struct timespec *requested_delay,
+              struct timespec *remainder)
+{
+    struct timeval delay;
+    delay.tv_sec = requested_delay->tv_sec;
+    delay.tv_usec = requested_delay->tv_nsec / 1000;
+    if(select(0, NULL, NULL, NULL, &delay) < 0)
+    {
+        /* handle remainder here */
+    }
+    return 0;
+}
+#endif
 
 int snoop_nano_sleep(const struct timespec *req, struct timespec *remain)
 {
@@ -1182,7 +1205,7 @@ int main(int argc, char *argv[])
 
 #ifdef __WIN32__
     struct in_addr inaddr;
-    struct hostent h;
+    struct hostent *h;
     int ON = 1;
     WSADATA wsaData;
 
@@ -1234,7 +1257,7 @@ int main(int argc, char *argv[])
                 if(!strncmp("--help", argv[argc], 6))
                 {
                     printf("snoop v0.6.3\n");
-                    printf("Copyright (C) 2003-2010, Aaron Conole\n");
+                    printf("Copyright (C) 2003-2011, Aaron Conole\n");
                     printf("=====================================\n");
                     printf("Valid arguments:\n");
                     printf("To save a .pcap file: --output\n");
@@ -1467,8 +1490,12 @@ int main(int argc, char *argv[])
            "    not see anything at all. Even if you are, you might not see them\n");
     printf("2 - Due to a wacky way in which WINSOCK works, you need to enter\n"
            "    the IP address of your local interface on which you'd like to\n"
-           "    sniff.\n\n");
-
+           "    sniff.\n");
+    printf("3 - Even IF you're an admin, have a valid interface, and packets are flowing\n"
+           "    you may not see those packets anyway - XP (sp0/sp1) is the best windows\n"
+           "    OS to be using.\n");
+    
+    printf("\n");
     data = rdata;
     if(gethostname(data, 1024) == SOCKET_ERROR)
     {
@@ -1483,7 +1510,7 @@ int main(int argc, char *argv[])
 
     for(argc = 0; h->h_addr_list[argc] != 0; ++argc)
     {
-        printf("Interface IP [%s]\n", inet_ntoa(h->h_addr_list[argc]));
+        printf("Interface IP [%s]\n", inet_ntoa(*(struct in_addr *)h->h_addr_list[argc]));
     }
     
     printf("IP> ");
@@ -1506,7 +1533,11 @@ int main(int argc, char *argv[])
     else
     {
         pcap_hdr_t in_pcap_header;
-        sd = open(pcap_fname, O_RDONLY | O_NOCTTY);
+        sd = open(pcap_fname, O_RDONLY
+#ifndef __WIN32__
+                  | O_NOCTTY
+#endif
+            );
         if(sd < 1)
             PANIC("open");
         if(read(sd, &in_pcap_header, sizeof(in_pcap_header)) < 0)
@@ -1747,8 +1778,8 @@ int main(int argc, char *argv[])
         else if(bytes_read == -1)
             PANIC("Snooper read");
 
-        ++pkts_rx;
-
+        if(bytes_read) ++pkts_rx;
+        
     } while (run && bytes_read > 0 );
 
     printf("terminating...\n");

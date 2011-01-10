@@ -1,3 +1,10 @@
+v 0.6.4
+  Fixed a long plagueing bug where -D can't be used like a compiler's -D
+  Added a fuzz string feature whereby all instances of the word FUZZ are
+          modified
+  Added a fuzz string feature to include fuzzing length through the %FUZZ and
+          %%FUZZ keywords
+
 v 0.6.3
   Fixed a sniffer error when using optimizing compilers
   Added a string match support to snoop
