@@ -27,25 +27,48 @@ int spawn_monitored(char *argv[])
 {
     int exit = 0;
     pid_t child;
+    static int fdi = -1, fdo = -1, fde = -1;
     const struct rlimit inf = {
         RLIM_INFINITY, RLIM_INFINITY };
+
+    static FILE *c_stdin = NULL, *c_stdout = NULL, *c_stderr = NULL;
 
     printf("[] Attempting to spawn a monitored task.\n");
     
     setrlimit(RLIMIT_CORE, &inf);
+    if(fdi < 0)
+    {
+        fdi = open("/dev/null", O_RDONLY);
+        if(fdi) c_stdin = fdopen(fdi, "r");
+    }
+
+    if(fdo < 0)
+    {
+        fdo = open("monitored.stdout", O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
+        if(fdo) c_stdout = fdopen(fdo, "w");
+    }
+
+    if(fde < 0)
+    {
+        fde = open("monitored.stderr", O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
+        if(fde) c_stderr = fdopen(fde, "w");
+    }
 
     switch(child = fork())
     {
     case 0:
         /*CHILD*/
         close(0); close(1); close(2);
-        
-        open("/dev/null", O_RDONLY);
-        open("monitored.stdout", O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
-        open("monitored.stderr", O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
-        
-        setlinebuf(stdout);
-        setlinebuf(stderr);
+
+        if(c_stdout) setlinebuf(c_stdout);
+        if(c_stderr) setlinebuf(c_stderr);
+
+        if(fdi > 0 && fdi != 0)
+            dup2(fdi, 0);
+        if(fdo > 0 && fdo != 1)
+            dup2(fdo, 1);
+        if(fde > 0 && fde != 2)
+            dup2(fde, 2);
 
         /* force core dumping */
         setrlimit(RLIMIT_CORE, &inf);
@@ -72,7 +95,7 @@ int spawn_monitored(char *argv[])
                      "to kill\n");
                 kill(child, SIGTERM); /* send sigterm */
                 return -1;
-            } else
+            } else if(status != 0)
             {
                 if (WIFEXITED(istatus))
                 {
