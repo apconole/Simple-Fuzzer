@@ -34,6 +34,7 @@ void dump(void* b, int len){
     printf("%02X ", buf[cnt++]);
   }
   printf("  %*s\n\n", 16+(16-len%16)*2, str);
+  fflush(stdout);
 }
 
 main(int argc, char **argv)
@@ -98,6 +99,7 @@ main(int argc, char **argv)
         printf("Client disconnected\n");
         
         close(new);
+        fflush(stdout);
         
     }
 
