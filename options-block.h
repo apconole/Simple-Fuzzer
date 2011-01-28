@@ -44,6 +44,15 @@ typedef struct
 
 typedef struct
 {
+    char   array_name[8192];
+    sym_t *value_array;
+    int    value_length;
+    int    value_ctr;
+    int    array_max_val;
+} array_t;
+
+typedef struct
+{
     FILE *fp;
     char *pFilename;
 
@@ -65,6 +74,14 @@ typedef struct
     int   *seq_lens;
     int    num_seq;
 
+    /* string symbol arrays */
+    array_t *str_arrays;
+    int      num_str_arrays;
+
+    /* binary symbol arrays */
+    array_t *bin_arrays;
+    int      num_bin_arrays;
+    
     /*delay in req xmission - in MS*/
     int reqw_inms;
 

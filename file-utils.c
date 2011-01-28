@@ -28,6 +28,8 @@
  *
  */
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -444,10 +446,25 @@ void plugin_load(char *filename, option_block *opts)
 
 extern unsigned int ascii_to_bin(char *str_bin);
 
+void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
+                   option_block *opts, int i)
+{
+    sym_name[sym_len] = 0;
+    sym_val[sym_val_len] = 0;
+    printf("STR Array! %s, %s\n", sym_name, sym_val);
+}
+void add_bin_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
+                   option_block *opts, int i)
+{
+    sym_name[sym_len] = 0;
+    sym_val[sym_val_len] = 0;
+    printf("BIN Array! %s, %s\n", sym_name, sym_val);
+}
+
 void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                 option_block *opts, int i)
 {
-    sym_t *pSym;
+    sym_t *pSym; char *tmp;
     char buf[8192]= {0};
     char buf2[8192] = {0};
 
@@ -455,6 +472,18 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
        (sym_val_len >= 8192))
     {
         file_error("too large symbol!", opts);
+    }
+
+    if(tmp = memmem(sym_name, sym_len, "[", 1))
+    {
+        if(!memmem(sym_name+(tmp - sym_name), sym_len - (tmp-sym_name),
+                   "]", 1))
+        {
+            file_error("array subscript not terminated!", opts);
+            /* exit after this point ... */
+        }
+        add_str_array(sym_name, sym_len, sym_val, sym_val_len, opts, 0);
+        return;
     }
 
     opts->syms_array = realloc(opts->syms_array, 
@@ -496,12 +525,24 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
 void add_b_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                   option_block *opts)
 {
-    sym_t *pSym;
+    sym_t *pSym; char *tmp;
 
     if((sym_len >= 8192) ||
        (sym_val_len >= 8192))
     {
         file_error("too large symbol!", opts);
+    }
+
+    if(tmp = memmem(sym_name, sym_len, "[", 1))
+    {
+        if(!memmem(sym_name+(tmp - sym_name), sym_len - (tmp-sym_name),
+                   "]", 1))
+        {
+            file_error("array subscript not terminated!", opts);
+            /* exit after this point ... */
+        }
+        add_bin_array(sym_name, sym_len, sym_val, sym_val_len, opts, 0);
+        return;
     }
 
     opts->b_syms_array = realloc(opts->b_syms_array, 
