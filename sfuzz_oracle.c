@@ -25,50 +25,49 @@
 
 int spawn_monitored(char *argv[])
 {
-    int exit = 0;
+    int exit_status = 0;
     pid_t child;
-    static int fdi = -1, fdo = -1, fde = -1;
+    int pipeForStdOut[2], pipeForStdErr[2];
     const struct rlimit inf = {
         RLIM_INFINITY, RLIM_INFINITY };
-
-    static FILE *c_stdin = NULL, *c_stdout = NULL, *c_stderr = NULL;
 
     printf("[] Attempting to spawn a monitored task.\n");
     
     setrlimit(RLIMIT_CORE, &inf);
-    if(fdi < 0)
+
+    if(pipe(pipeForStdOut) != 0)
     {
-        fdi = open("/dev/null", O_RDONLY);
-        if(fdi) c_stdin = fdopen(fdi, "r");
+        printf("[] stdout-pipe: Abort!\n");
+        exit(-1);
     }
 
-    if(fdo < 0)
+    if(pipe(pipeForStdErr) != 0)
     {
-        fdo = open("monitored.stdout", O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
-        if(fdo) c_stdout = fdopen(fdo, "w");
-    }
-
-    if(fde < 0)
-    {
-        fde = open("monitored.stderr", O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
-        if(fde) c_stderr = fdopen(fde, "w");
+        printf("[] stderr-pipe: Abort!\n");
+        exit(-1);
     }
 
     switch(child = fork())
     {
     case 0:
         /*CHILD*/
+
+        /*take care of output / input*/
         close(0); close(1); close(2);
+        if(open("/dev/null", O_RDONLY) != 0)
+            exit(-1);
 
-        if(c_stdout) setlinebuf(c_stdout);
-        if(c_stderr) setlinebuf(c_stderr);
+        close(pipeForStdOut[0]); /* don't leave this dangling */
+        if(dup2(pipeForStdOut[1], 1) < 0)
+        {
+            exit(-1); /* maybe we can log or something ? */
+        }
 
-        if(fdi > 0 && fdi != 0)
-            dup2(fdi, 0);
-        if(fdo > 0 && fdo != 1)
-            dup2(fdo, 1);
-        if(fde > 0 && fde != 2)
-            dup2(fde, 2);
+        close(pipeForStdErr[0]);
+        if(dup2(pipeForStdErr[1], 2) < 0)
+        {
+            exit(-1); /* see above .. */
+        }
 
         /* force core dumping */
         setrlimit(RLIMIT_CORE, &inf);
@@ -81,27 +80,27 @@ int spawn_monitored(char *argv[])
                 "child.\n");
         fprintf(stderr,
                 "Debugging not available!\n");
-        return -1;
+        exit(-1);
 
     default:
         do
         {
             int istatus;
-            pid_t status = waitpid(-1, &istatus, 0);
-            if(status == -1) { exit = 1; 
+            pid_t status = waitpid(-1, &istatus, WNOHANG);
+            if(status == -1) { exit_status = 1; 
                 fprintf
                     (stderr,
                      "[SFUZZ-ORACLE] Unable to obtain status. Attempting "
                      "to kill\n");
                 kill(child, SIGTERM); /* send sigterm */
-                return -1;
+                goto endit;
             } else if(status != 0)
             {
                 if (WIFEXITED(istatus))
                 {
                     printf("[%u] Exited (possibly normal), status[%d]\n",
                            status, WEXITSTATUS(istatus));
-                    exit = 1;
+                    exit_status = 1;
                 }
                 if (WIFSIGNALED(istatus))
                 {
@@ -119,7 +118,7 @@ int spawn_monitored(char *argv[])
                            "Unable to check for core status");
 #endif /* !defined WCOREDUMP */
 
-                    exit = 1;
+                    exit_status = 1;
                 }
                 
                 if (WIFSTOPPED(istatus))
@@ -131,10 +130,37 @@ int spawn_monitored(char *argv[])
                 {
                     printf("[%u] Continued\n", status);
                 }
+            } 
+            else
+            {
+                char buf[1024] = {0};
+                ssize_t buf_read = 0;
+                struct timeval tv;
+                tv.tv_sec = 0;
+                tv.tv_usec = 100000; /* 100MS do a read / write */
+                select(0, NULL, NULL, NULL, &tv);
+                if((buf_read = read(pipeForStdOut[0], buf, sizeof(buf) - 1))
+                   > 0)
+                {
+                    printf("-- %s --\n", buf);
+                }
+
+                if((buf_read = read(pipeForStdErr[0], buf, sizeof(buf) - 1))
+                   > 0)
+                {
+                    printf("-- %s --\n", buf);
+                }
+                
             }
-        } while(!exit);
+        } while(!exit_status);
     }
+endit:
+    close(pipeForStdOut[0]); close(pipeForStdErr[0]);
+    close(pipeForStdOut[0]); close(pipeForStdErr[1]);
+
+    return -1;
 }
+
 
 int main(int argc, char *argv[])
 {
