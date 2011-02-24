@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009,2011 Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -283,7 +283,7 @@ FILE *sfuzz_dlopen(const char *filename, int flag)
                 (stderr,
  "ERROR: The plugin you're attempting to load has some undefined symbols\n");
             fprintf(stderr,
-                    "Likely, you'll need to reconfigure sfuzz with the --force-symbols option\n");
+ "Likely, you'll need to reconfigure sfuzz with the --force-symbols option\n");
         }
 
             }

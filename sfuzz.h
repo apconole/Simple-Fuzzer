@@ -35,4 +35,7 @@
 
 extern char *get_time_as_log();
 
+#define PACKED_ATTRIBUTE(a) \
+    a __attribute__((packed))
+
 #endif
