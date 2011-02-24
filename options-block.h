@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2011, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,7 @@ typedef struct
     int    value_length;
     int    value_ctr;
     int    array_max_val;
+    int    array_isbin;
 } array_t;
 
 typedef struct
@@ -75,13 +76,9 @@ typedef struct
     int    num_seq;
 
     /* string symbol arrays */
-    array_t *str_arrays;
-    int      num_str_arrays;
+    array_t **arrays;
+    int       num_arrays;
 
-    /* binary symbol arrays */
-    array_t *bin_arrays;
-    int      num_bin_arrays;
-    
     /*delay in req xmission - in MS*/
     int reqw_inms;
 

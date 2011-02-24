@@ -596,7 +596,50 @@ int fuzz(option_block *opts, char *req, int len)
       
 }
 
+int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx);
+int in_array_execute_fuzz(option_block *opts);
+
 int execute_fuzz(option_block *opts)
+{
+    if(!opts->num_arrays)
+    {
+        array_execute_fuzz(opts, NULL, 0);
+    }
+    else
+    {
+        array_execute_fuzz(opts, opts->arrays[0], 0);
+    }
+}
+
+int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
+{
+    int i;
+    long offset = ftell(opts->fp);
+    if(!cur_array)
+    {
+        i = in_array_execute_fuzz(opts);
+        fseek(opts->fp, offset, SEEK_SET);
+        return i;
+    }
+    ++idx;
+    printf("entering replacement for [%s:%d]\n", cur_array->array_name,
+           cur_array->array_max_val);
+    cur_array->value_ctr = 0; /* reset after we're done */
+    
+    for(i = 0; i < cur_array->array_max_val; ++i)
+    {
+        cur_array->value_ctr = i;
+        if(idx < opts->num_arrays) 
+            array_execute_fuzz(opts, opts->arrays[idx], idx);
+        else
+            array_execute_fuzz(opts, NULL, 0);
+        fseek(opts->fp, offset, SEEK_SET);
+    }
+    cur_array->value_ctr = 0; /* reset after we're done */
+    return i;
+}
+
+int in_array_execute_fuzz(option_block *opts)
 {
     char *line = malloc(8192);
     char *req  = malloc(opts->mseql + 16384);
@@ -679,10 +722,50 @@ int execute_fuzz(option_block *opts)
         {
             opts->seqstep = opts->mseql;
         }
-        
+
+        /* first, resolve all array types once */
+        for(tsze = opts->num_arrays - 1; tsze >= 0; --tsze)
+        {
+            unsigned int ilen = reqsize;
+            array_t *current_array = opts->arrays[tsze];
+
+            printf("rplce [%s] with [%s]\n",
+                   current_array->array_name,
+                   current_array->value_array[current_array->value_ctr].sym_val
+                );
+
+            if(!current_array->array_isbin)
+            {
+                size_t bsizeval = strlen
+                    (current_array->value_array
+                     [current_array->value_ctr].sym_val);
+                char sizeval[80] = {0};
+                char sizerepl[80] = {0};
+                char ssizerepl[80] = {0};
+                snprintf(sizeval, 80, "%zu", bsizeval);
+                snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
+                snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
+                //ilen = smemrepl(req, reqsize, sizerepl, (char *)
+                //&bsizeval, sizeof bsizeval);
+                //ilen = smemrepl(req, ilen, ssizerepl, sizeval,
+                //strlen(sizeval));
+                ilen = smemrepl(req, ilen, current_array->array_name, 
+                                current_array->
+                                value_array[current_array->value_ctr].sym_val,
+                             strlen
+                             (current_array->
+                              value_array[current_array->value_ctr].sym_val));
+            }
+            else
+            {
+                printf("--- TODO ---\n");
+            }
+            reqsize = ilen;
+        }
+
         /*loaded a request.*/
-        p = strstr(req, "FUZZ");
-        
+        p = memmem(req, reqsize, "FUZZ", 4);
+
         if(!p)
         {
 	  if(fuzz(opts, req, reqsize) < 0)

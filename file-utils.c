@@ -449,16 +449,75 @@ extern unsigned int ascii_to_bin(char *str_bin);
 void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                    option_block *opts, int i)
 {
+    int l = 0;
+    array_t *pArray;
+    char *tm;
+    int isbin = i;
     sym_name[sym_len] = 0;
     sym_val[sym_val_len] = 0;
-    printf("STR Array! %s, %s\n", sym_name, sym_val);
-}
-void add_bin_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
-                   option_block *opts, int i)
-{
-    sym_name[sym_len] = 0;
-    sym_val[sym_val_len] = 0;
-    printf("BIN Array! %s, %s\n", sym_name, sym_val);
+
+    l = rindex(sym_name, '[') - sym_name;
+    if(rindex(sym_name, ']') - sym_name < l)
+    {
+        file_error("array subscript delimiter not found", opts);
+    }
+
+    for(i = 0; i < opts->num_arrays; ++i)
+    {
+        pArray = opts->arrays[i];
+        if(!strncmp(pArray->array_name, sym_name, l))
+        {
+            printf("reuse array [%s]\n", sym_name);
+                    
+            break;
+        }
+    }
+
+    if(i == opts->num_arrays ||  (i < opts->num_arrays && 
+                                  strncmp(pArray->array_name, sym_name,l)))
+    {
+        pArray = (array_t *)malloc(sizeof (array_t));
+        if(!pArray)
+        {
+            file_error("OOM Adding new array element", opts);
+        }
+        printf("creating new array [%s]\n", sym_name);
+        strncpy(pArray->array_name, sym_name, l <= 8192 ? l : 8192);
+        pArray->array_name[8191] = 0;
+
+        pArray->value_array = pArray->value_length = pArray->value_ctr =
+            pArray->array_max_val = 0;
+        
+        opts->arrays = realloc(opts->arrays, 1 +(i * sizeof(array_t)));
+        if(!opts->arrays) file_error("OOM Adding new array element", opts);
+        ++opts->num_arrays;
+        opts->arrays[i] = pArray;
+        pArray->array_isbin = isbin;
+    }
+    
+    tm = sym_name+l+1;
+    *(sym_name+l) = 0;
+    
+    i = atoi(tm); /* atoi will stop when it gets to a non-number character */
+    //i += 1; /* 0 = 1, 1 = 2, etc. */
+    if(i >= pArray->array_max_val)
+    {
+        pArray->array_max_val = i+1;
+        pArray->value_array = realloc(pArray->value_array, 
+                                      (1+i)*sizeof(sym_t));
+        if(!pArray->value_array)
+            file_error("OOM Adding array symbol element", opts);
+        pArray->value_length ++;
+    }
+
+    printf("copying [%s] to [%s] value ctr [%d]\n",
+           sym_val, pArray->array_name, i);
+    strncpy(pArray->value_array[i].sym_val, sym_val, 
+            sym_val_len <= 8192 ? sym_val_len : 8192);
+
+    pArray->value_array[i].sym_val[8192] = 0;
+    printf("Array [%s] had index [%d] populated with value [%s]\n",
+           pArray->array_name, i, pArray->value_array[i].sym_val);
 }
 
 void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
@@ -541,7 +600,7 @@ void add_b_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
             file_error("array subscript not terminated!", opts);
             /* exit after this point ... */
         }
-        add_bin_array(sym_name, sym_len, sym_val, sym_val_len, opts, 0);
+        add_str_array(sym_name, sym_len, sym_val, sym_val_len, opts, 1);
         return;
     }
 
