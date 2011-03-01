@@ -1,0 +1,41 @@
+$HTTP_VERS[0]=HTTP/1.0
+$HTTP_VERS[1]=HTTP/1.1
+$HTTP_VERS[2]=HTTP/FUZZ
+$HTTP_VERS[3]=FUZZ/1.0
+$HTTP_VERS[4]=FUZZ/1.1
+$HTTP_VERS[5]=FUZZ
+
+$HTTP_METHOD[0]=GET
+$HTTP_METHOD[1]=POST
+$HTTP_METHOD[2]=HEAD
+$HTTP_METHOD[3]=OPTIONS
+$HTTP_METHOD[4]=TRACE
+$HTTP_METHOD[5]=FUZZ
+
+$URI[0]=/
+$URI[1]=/FUZZ
+$URI[2]=FUZZ
+
+$HOSTNAME[0]= 
+$HOSTNAME[1]=Host: $hostname
+$HOSTNAME[2]=Host: FUZZ
+$HOSTNAME[3]=FUZZ: $hostname
+$HOSTNAME[4]=FUZZ
+
+$COOKIE[0]=Cookie: 1234=5678
+
+include basic-fuzz-strings.list
+include http-etc-enumeration.list
+
+#This is the amount of time to wait between network requests. It has no bearing
+#on 'output' mode, since that wouldn't make much sense. Time is in MILLIseconds
+reqwait=200
+
+#Max size of a subchar sequence to transmit
+maxseqlen=10024
+
+endcfg
+HTTP_METHOD URI HTTP_VERS
+HOSTNAME
+
+--

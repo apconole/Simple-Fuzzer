@@ -450,7 +450,7 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                    option_block *opts, int i)
 {
     int l = 0;
-    array_t *pArray;
+    array_t *pArray = NULL;
     char *tm;
     int isbin = i;
     sym_name[sym_len] = 0;
@@ -467,8 +467,6 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         pArray = opts->arrays[i];
         if(!strncmp(pArray->array_name, sym_name, l))
         {
-            printf("reuse array [%s]\n", sym_name);
-                    
             break;
         }
     }
@@ -482,13 +480,14 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
             file_error("OOM Adding new array element", opts);
         }
         printf("creating new array [%s]\n", sym_name);
+        memset(pArray->array_name, 0, 8192);
         strncpy(pArray->array_name, sym_name, l <= 8192 ? l : 8192);
         pArray->array_name[8191] = 0;
 
         pArray->value_array = pArray->value_length = pArray->value_ctr =
             pArray->array_max_val = 0;
         
-        opts->arrays = realloc(opts->arrays, 1 +(i * sizeof(array_t)));
+        opts->arrays = realloc(opts->arrays, (1 + i) * sizeof(array_t));
         if(!opts->arrays) file_error("OOM Adding new array element", opts);
         ++opts->num_arrays;
         opts->arrays[i] = pArray;
@@ -956,7 +955,7 @@ int processFileLine(option_block *opts, char *line, int line_len)
             file_error("include is null!", opts);
         
         t = opts->fp;
-        f = malloc(strlen(opts->pFilename));
+        f = malloc(strlen(opts->pFilename)+1);
         if(f == NULL)
         {
             file_error("unable to include file - out of memory.", opts);

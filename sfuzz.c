@@ -514,7 +514,7 @@ int fuzz(option_block *opts, char *req, int len)
         }
         else
         {
-            fwrite(req, len, 1, log);
+            fwrite(req, len - 1, 1, log);
             fwrite("\n", 1, 1, log);
         }
     }
@@ -745,10 +745,10 @@ int in_array_execute_fuzz(option_block *opts)
                 snprintf(sizeval, 80, "%zu", bsizeval);
                 snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
                 snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
-                //ilen = smemrepl(req, reqsize, sizerepl, (char *)
-                //&bsizeval, sizeof bsizeval);
-                //ilen = smemrepl(req, ilen, ssizerepl, sizeval,
-                //strlen(sizeval));
+                ilen = smemrepl(req, reqsize, sizerepl, (char *)
+                                &bsizeval, sizeof bsizeval);
+                ilen = smemrepl(req, ilen, ssizerepl, sizeval,
+                                strlen(sizeval));
                 ilen = smemrepl(req, ilen, current_array->array_name, 
                                 current_array->
                                 value_array[current_array->value_ctr].sym_val,
@@ -871,7 +871,8 @@ int in_array_execute_fuzz(option_block *opts)
                     
                     for(k = opts->seqstep; k <= opts->mseql; k+= opts->seqstep)
                     {
-                        strcpy(req2, req);
+                        memset(req2, 0,   opts->mseql + 16384 );
+                        memcpy(req2, req, strlen(req));
                         
                         seq4b = 0;
 
@@ -903,7 +904,7 @@ int in_array_execute_fuzz(option_block *opts)
                         
                         reqsize = smemrepl(req2, reqsize, "FUZZ",
                                            sequence_hold,
-                                           strlen(sequence_hold));
+                                           bsizeval);
 
                         seq4b++;
                         
@@ -931,6 +932,7 @@ int in_array_execute_fuzz(option_block *opts)
     free( line );
     free( req  );
     free( req2 );
+    free( preq );
 
     return 0;
 }
