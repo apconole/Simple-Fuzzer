@@ -339,6 +339,8 @@ int main(int argc, char *argv[])
     options.repl_pol = 2; /* once ! for always, choose 1. */
     memset(options.pFilename, 0, MAX_FILENAME_SIZE-1);
     memset(options.pLogFilename, 0, MAX_FILENAME_SIZE-1);
+    memset(options.host_spec, 0, MAX_HOSTSPEC_SIZE - 1);
+    memset(options.port_spec, 0, MAX_PORTSPEC_SIZE - 1);
 
     /*default line terminator*/
     options.line_term[0]         = '\n';
@@ -603,11 +605,11 @@ int execute_fuzz(option_block *opts)
 {
     if(!opts->num_arrays)
     {
-        array_execute_fuzz(opts, NULL, 0);
+        return array_execute_fuzz(opts, NULL, 0);
     }
     else
     {
-        array_execute_fuzz(opts, opts->arrays[0], 0);
+        return array_execute_fuzz(opts, opts->arrays[0], 0);
     }
 }
 
@@ -622,8 +624,7 @@ int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
         return i;
     }
     ++idx;
-    printf("entering replacement for [%s:%d]\n", cur_array->array_name,
-           cur_array->array_max_val);
+
     cur_array->value_ctr = 0; /* reset after we're done */
     
     for(i = 0; i < cur_array->array_max_val; ++i)
@@ -728,11 +729,6 @@ int in_array_execute_fuzz(option_block *opts)
         {
             unsigned int ilen = reqsize;
             array_t *current_array = opts->arrays[tsze];
-
-            printf("rplce [%s] with [%s]\n",
-                   current_array->array_name,
-                   current_array->value_array[current_array->value_ctr].sym_val
-                );
 
             if(!current_array->array_isbin)
             {
@@ -858,12 +854,12 @@ int in_array_execute_fuzz(option_block *opts)
             if(opts->no_sequence_fuzz == 0)
             {
                 /*do the sequences*/
+                char *sequence_hold = NULL;
                 for(tsze = 0; tsze < opts->num_seq; ++tsze)
                 {
                     size_t bsizeval = 0;
                     char sizeval[80] = {0};
                     char seq_buf[5] = {0};
-                    char *sequence_hold = NULL;
                     /*at this point, we do sequences. Sequencing will be done*/
                     /*by filling to maxseqlen, in increments of seqstep*/
 
@@ -924,6 +920,7 @@ int in_array_execute_fuzz(option_block *opts)
                             goto done;
                     }
                 }
+                if( sequence_hold ) free( sequence_hold );
             }
         }
     }

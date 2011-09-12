@@ -256,7 +256,7 @@ if [ -n $HAVE_LIBDL ]; then
         XCFLAGS="$XCFLAGS -D__LINUX__"
         XSHARED_OPTS="-dynamiclib -undefined dynamic_lookup -single_module"
     elif [ "Linux" = "$OS_SYSTEM" ]; then
-        XCFLAGS="$XCFLAGS -D__LINUX__ -rdynamic"
+        XCFLAGS="$XCFLAGS -D_GNU_SOURCE -D__LINUX__ -rdynamic"
         XSHARED_OPTS="$XSHARED_OPTS -shared -rdynamic"
     fi
     if [ "$FORCE_SYMBOLS" = "Y" ]; then

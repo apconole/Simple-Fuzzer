@@ -647,10 +647,20 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
     {
         ++repls;
 
+        if( ( (f+newl) < buf) || ( (f+newl) > (buf + buflen) ) )
+            return origl;
+        else if ( (((f+oldl) < buf)) || ( (f+oldl) > (buf+buflen)) )
+            return origl;
+        else if ( origl - (f - buf ) > buflen ) return origl;
+
         if(origl - oldl < 0)
+        {
             origl = 0;
+            return 0;
+        }
 
         memmove(f+newl, f+oldl, origl - (f - buf));
+
         memcpy(f, new, newl);
 
         str = f + newl;

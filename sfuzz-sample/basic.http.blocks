@@ -23,6 +23,8 @@ $HOSTNAME[3]=FUZZ: $hostname
 $HOSTNAME[4]=FUZZ
 
 $COOKIE[0]=Cookie: 1234=5678
+$COOKIE[1]= 
+
 
 include basic-fuzz-strings.list
 include http-etc-enumeration.list
@@ -37,5 +39,6 @@ maxseqlen=10024
 endcfg
 HTTP_METHOD URI HTTP_VERS
 HOSTNAME
+COOKIE
 
 --

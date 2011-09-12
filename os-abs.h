@@ -32,6 +32,7 @@
 #define __OS_ABSTRACTION_H__
 
 #include <stdio.h>
+#include <string.h>
 #include "options-block.h"
 
 extern int  os_send_tcp(option_block *opts, char *req, int len);
@@ -44,6 +45,7 @@ extern int  mssleep(unsigned long int);
 extern char *process_error();
 #ifdef __WIN32__
 #define RTLD_NOW 0
+extern void *memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
 extern void *dlopen(const char *, int);
 extern void *dlsym(void *, const char *);
 extern char *dlerror();

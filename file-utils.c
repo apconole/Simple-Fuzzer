@@ -28,8 +28,6 @@
  *
  */
 
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -484,7 +482,8 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         strncpy(pArray->array_name, sym_name, l <= 8192 ? l : 8192);
         pArray->array_name[8191] = 0;
 
-        pArray->value_array = pArray->value_length = pArray->value_ctr =
+        pArray->value_array = NULL;
+        pArray->value_length = pArray->value_ctr =
             pArray->array_max_val = 0;
         
         opts->arrays = realloc(opts->arrays, (1 + i) * sizeof(array_t));
@@ -511,10 +510,12 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
 
     printf("copying [%s] to [%s] value ctr [%d]\n",
            sym_val, pArray->array_name, i);
-    strncpy(pArray->value_array[i].sym_val, sym_val, 
-            sym_val_len <= 8192 ? sym_val_len : 8192);
 
-    pArray->value_array[i].sym_val[8192] = 0;
+    memset(pArray->value_array[i].sym_val, 0, 8192);
+
+    strncpy(pArray->value_array[i].sym_val, sym_val, 
+            sym_val_len < 8192 ? sym_val_len : 8191);
+
     printf("Array [%s] had index [%d] populated with value [%s]\n",
            pArray->array_name, i, pArray->value_array[i].sym_val);
 }
@@ -525,6 +526,7 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     sym_t *pSym; char *tmp;
     char buf[8192]= {0};
     char buf2[8192] = {0};
+    unsigned int tmpl;
 
     if((sym_len >= 8192) ||
        (sym_val_len >= 8192))
@@ -532,10 +534,11 @@ void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         file_error("too large symbol!", opts);
     }
 
-    if(tmp = memmem(sym_name, sym_len, "[", 1))
+    tmp = memmem(sym_name, sym_len, "[", 1);
+    if(tmp)
     {
-        if(!memmem(sym_name+(tmp - sym_name), sym_len - (tmp-sym_name),
-                   "]", 1))
+        tmpl = tmp - sym_name;
+        if(! memmem(sym_name+tmpl, sym_len - tmpl, "]", 1))
         {
             file_error("array subscript not terminated!", opts);
             /* exit after this point ... */
@@ -591,7 +594,7 @@ void add_b_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         file_error("too large symbol!", opts);
     }
 
-    if(tmp = memmem(sym_name, sym_len, "[", 1))
+    if((tmp = memmem(sym_name, sym_len, "[", 1)))
     {
         if(!memmem(sym_name+(tmp - sym_name), sym_len - (tmp-sym_name),
                    "]", 1))
