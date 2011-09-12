@@ -1,3 +1,8 @@
+v 0.7.0
+  Fixed a long standing bug in the memory block replacement code.
+  Added the ability to fuzz via blocks (ala spike/sulley fuzz frameworks)
+  Added the ability to trap crashes via a harness program
+
 v 0.6.4
   Fixed a long plagueing bug where -D can't be used like a compiler's -D
   Added a fuzz string feature whereby all instances of the word FUZZ are

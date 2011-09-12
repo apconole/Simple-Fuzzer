@@ -8,6 +8,10 @@ snoop snoop.exe: $(SNOOP_OBJS)
 	@echo "[LINK] $@"
 	@$(CCPATH)/$(CC) -o $@ $(SNOOP_OBJS) $(LDFLAGS) $(LIBS)
 
+sfo sfo.exe: $(SFO_OBJS)
+	@echo "[LINK] $@"
+	@$(CCPATH)/$(CC) -o $@ $(SFO_OBJS) $(LDFLAGS) $(LIBS)
+
 %.so: %.c $(SHARED_INC)
 	@echo "[LINK] $@"
 	@$(CCPATH)/$(CC) $(CFLAGS) -D__PLUGIN_BUILD__ -o $@ $< $(SHARED_INC) $(SHARED_OPTS)
@@ -19,6 +23,7 @@ snoop snoop.exe: $(SNOOP_OBJS)
 install: all
 	@echo "Installing to: $(PREFIX)"
 	@$(INSTALL) sfuzz $(BIN_DIR)
+	@$(INSTALL) sfo   $(BIN_DIR)
 	@$(MKDIR) $(SHARE_DIR)sfuzz-db
 	@$(CP) $(SFUZZ_SAMPLE)* $(SHARE_DIR)sfuzz-db
 	@$(CP) *.so $(SHARE_DIR)sfuzz-db
@@ -27,11 +32,13 @@ install: all
 uninstall:
 	@$(RM) -rf $(SHARE_DIR)sfuzz-db
 	@$(RM) -f  $(BIN_DIR)sfuzz
+	@$(RM) -f  $(BIN_DIR)sfo
+	@$(RM) -f  $(BIN_DIR)sfo.exe
 	@$(RM) -f  $(BIN_DIR)sfuzz.exe
 	@echo "Uninstalled."
 
 clean:
-	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe *.so
+	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so
 
 distclean dist-clean: clean
 	@$(RM) -f Makefile Makefile.old

@@ -202,11 +202,20 @@ ___________________________________________________________________________
 +++++++++++++++++++ ex: FUZZ X would become FUZZ y, and FUZZ %X would become
 +++++++++++++++++++     FUZZ 1 (since y is 1 character).
 +++++++++++++++++++--------------------------------------------------------
+| $X[N]=y         | used to create an array (or block) of symbols. N represents
++++++++++++++++++++ an index into the array. This replacement happens prior to
++++++++++++++++++++ the FUZZ replacement, and will cause replacement N times
++++++++++++++++++++ for each array. This array will be ascii/text based.
++++++++++++++++++++--------------------------------------------------------
 | !X=deadbeef     | Used to create a binary subsitution symbol. The first
 +++++++++++++++++++ occurance of X within the fuzz payload will become the
 +++++++++++++++++++ binary bytes defined by deadbeef. Valid formats for 
 +++++++++++++++++++ specifying binary data:
 +++++++++++++++++++ !X=de ad 0xbe Efca \xfe BADCab
++++++++++++++++++++--------------------------------------------------------
+| !X[N]=deadbeef  | Used to create an array (or block) of binary symbols. N
++++++++++++++++++++ represents an index into the array. This array will be
++++++++++++++++++++ binary based.
 +++++++++++++++++++--------------------------------------------------------
 | ++X             | Special flag for binary symbols that will attempt to
 +++++++++++++++++++ increment the start value after every fuzz case. NOTE:

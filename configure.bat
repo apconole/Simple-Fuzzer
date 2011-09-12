@@ -22,7 +22,7 @@ echo PREFIX=C:\sfuzz>> Makefile
 echo RM=del>> Makefile
 echo MKDIR=md>> Makefile
 echo ###>> Makefile
-echo CFLAGS=-g -O2 -I. -Wall -D__WIN32__ -DPREFIX="$(PREFIX)" -DWINVER=0x0501>> Makefile
+echo CFLAGS=-g -O2 -I. -Wall -D_GNU_SOURCE -D__WIN32__ -DPREFIX="$(PREFIX)" -DWINVER=0x0501>> Makefile
 echo SHARED_INC=file-utils.o os-abs.o>> Makefile
 echo SHARED_OPTS=-shared -lws2_32>> Makefile
 echo LIBS=-lws2_32>> Makefile

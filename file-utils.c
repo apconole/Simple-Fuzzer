@@ -444,6 +444,12 @@ void plugin_load(char *filename, option_block *opts)
 
 extern unsigned int ascii_to_bin(char *str_bin);
 
+void add_bin_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
+                   option_block *opts, int i)
+{
+    
+}
+
 void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                    option_block *opts, int i)
 {
