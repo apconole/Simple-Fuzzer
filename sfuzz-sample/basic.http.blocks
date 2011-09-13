@@ -21,6 +21,8 @@ $HOSTNAME[1]=Host: $hostname
 $HOSTNAME[2]=Host: FUZZ
 $HOSTNAME[3]=FUZZ: $hostname
 $HOSTNAME[4]=FUZZ
+!HOSTNAME[5]=\x41 \x42 \x43
+
 
 $COOKIE[0]=Cookie: 1234=5678
 $COOKIE[1]= 

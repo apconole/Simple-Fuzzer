@@ -442,13 +442,7 @@ void plugin_load(char *filename, option_block *opts)
 }
 #endif
 
-extern unsigned int ascii_to_bin(char *str_bin);
-
-void add_bin_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
-                   option_block *opts, int i)
-{
-    
-}
+extern unsigned int ascii_to_bin(unsigned char *str_bin);
 
 void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
                    option_block *opts, int i)
@@ -496,7 +490,6 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         if(!opts->arrays) file_error("OOM Adding new array element", opts);
         ++opts->num_arrays;
         opts->arrays[i] = pArray;
-        pArray->array_isbin = isbin;
     }
     
     tm = sym_name+l+1;
@@ -514,16 +507,16 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         pArray->value_length ++;
     }
 
-    printf("copying [%s] to [%s] value ctr [%d]\n",
-           sym_val, pArray->array_name, i);
-
     memset(pArray->value_array[i].sym_val, 0, 8192);
-
-    strncpy(pArray->value_array[i].sym_val, sym_val, 
-            sym_val_len < 8192 ? sym_val_len : 8191);
-
-    printf("Array [%s] had index [%d] populated with value [%s]\n",
-           pArray->array_name, i, pArray->value_array[i].sym_val);
+    
+    if(isbin)
+        memcpy(pArray->value_array[i].sym_val,  sym_val,  sym_val_len);
+    else
+        strncpy(pArray->value_array[i].sym_val, sym_val, 
+                sym_val_len < 8192 ? sym_val_len : 8191);
+    
+    pArray->value_array[i].bin = isbin;
+    pArray->value_array[i].is_len = sym_val_len;
 }
 
 void add_symbol(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
@@ -919,7 +912,7 @@ int processFileLine(option_block *opts, char *line, int line_len)
                (line[state] == '0'))
             {
                 if(line[state] == 'x')
-                    sze = ascii_to_bin(line+state);
+                    sze = ascii_to_bin((unsigned char *)(line+state));
             }
             memcpy(opts->line_term, line+state, sze);
         }
@@ -1019,7 +1012,7 @@ int processFileLine(option_block *opts, char *line, int line_len)
         {
             file_error("binary symbol is null!", opts);
         }
-        sze = ascii_to_bin(delim+1);
+        sze = ascii_to_bin((unsigned char *)(delim+1));
         if(sze < 0)
         {
             file_error("binary text is invalid!", opts);

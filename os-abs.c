@@ -77,16 +77,16 @@ unsigned char convertAsciiHexCharToBin(char asciiHexChar)
 }
 
 
-unsigned int ascii_to_bin(char *str_bin)
+unsigned int ascii_to_bin(unsigned char *str_bin)
 {
     /*converts an ascii string to binary*/
-    char *out = malloc(8192);
-    char *str = malloc(8192);
+    unsigned char *out = malloc(8192);
+    unsigned char *str = malloc(8192);
     int size_no_ws = 0;
     int outBufIdx = 0;
     int binBufIdx = 0;
 
-    int rewind = strlen(str_bin);
+    int rewind = strlen((const char *)str_bin);
 
     unsigned char firstNibble;
     unsigned char secondNibble;

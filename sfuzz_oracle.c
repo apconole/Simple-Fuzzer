@@ -16,6 +16,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "sfuzz_oracle.h"
+
 /**
  * IMPORTANT NOTE:
  * We need to use ptrace() on unix-y systems

@@ -40,6 +40,7 @@ typedef struct
     int  s_len;
     int  offset;
     char increment;
+    char bin;
 } sym_t;
 
 typedef struct
@@ -49,7 +50,6 @@ typedef struct
     int    value_length;
     int    value_ctr;
     int    array_max_val;
-    int    array_isbin;
 } array_t;
 
 typedef struct

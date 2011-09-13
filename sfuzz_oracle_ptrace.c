@@ -179,7 +179,8 @@ int32_t monitored_signal(uint32_t sign, uint8_t status, int32_t pid)
             //yes, system call is bad, etc..
             snprintf( dest_buf, 1024, "mv core %s_%d.core",
                       globname, pid );
-            system(dest_buf);
+            if(system(dest_buf) < 0) 
+                abort();
             
         }
         return 0;

@@ -205,7 +205,7 @@ ___________________________________________________________________________
 | $X[N]=y         | used to create an array (or block) of symbols. N represents
 +++++++++++++++++++ an index into the array. This replacement happens prior to
 +++++++++++++++++++ the FUZZ replacement, and will cause replacement N times
-+++++++++++++++++++ for each array. This array will be ascii/text based.
++++++++++++++++++++ for each array. 
 +++++++++++++++++++--------------------------------------------------------
 | !X=deadbeef     | Used to create a binary subsitution symbol. The first
 +++++++++++++++++++ occurance of X within the fuzz payload will become the
@@ -214,8 +214,8 @@ ___________________________________________________________________________
 +++++++++++++++++++ !X=de ad 0xbe Efca \xfe BADCab
 +++++++++++++++++++--------------------------------------------------------
 | !X[N]=deadbeef  | Used to create an array (or block) of binary symbols. N
-+++++++++++++++++++ represents an index into the array. This array will be
-+++++++++++++++++++ binary based.
++++++++++++++++++++ represents an index into the array. NOTE: the symbol size
++++++++++++++++++++ could vary here - a length limiting option is in the works
 +++++++++++++++++++--------------------------------------------------------
 | ++X             | Special flag for binary symbols that will attempt to
 +++++++++++++++++++ increment the start value after every fuzz case. NOTE:

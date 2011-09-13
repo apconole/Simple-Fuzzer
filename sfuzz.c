@@ -50,7 +50,7 @@ plugin_provisor *g_plugin;
 extern int readLine(option_block *opts, char *line, int len, int ign_cr);
 extern void read_config(option_block *opts);
 int execute_fuzz(option_block *opts);
-extern unsigned int ascii_to_bin(char *str_bin);
+extern unsigned int ascii_to_bin(unsigned char *str_bin);
 void dump_options(option_block *opts)
 {
     int i;
@@ -730,7 +730,7 @@ int in_array_execute_fuzz(option_block *opts)
             unsigned int ilen = reqsize;
             array_t *current_array = opts->arrays[tsze];
 
-            if(!current_array->array_isbin)
+            if(!current_array->value_array[current_array->value_ctr].bin)
             {
                 size_t bsizeval = strlen
                     (current_array->value_array
@@ -748,13 +748,30 @@ int in_array_execute_fuzz(option_block *opts)
                 ilen = smemrepl(req, ilen, current_array->array_name, 
                                 current_array->
                                 value_array[current_array->value_ctr].sym_val,
-                             strlen
-                             (current_array->
-                              value_array[current_array->value_ctr].sym_val));
+                                current_array->
+                                value_array[current_array->value_ctr].is_len);
             }
             else
             {
-                printf("--- TODO ---\n");
+                char *blit = current_array->value_array[current_array->value_ctr].sym_val;
+                size_t blit_len = current_array->value_array[current_array->value_ctr].is_len;
+                char sizeval[80] = {0};
+                char sizerepl[80] = {0};
+                char ssizerepl[80] = {0};
+                
+                snprintf(sizeval, 80, "%zu", blit_len);
+                snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
+                snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
+
+                ilen = smemrepl(req, reqsize, sizerepl, (char *)
+                                &blit_len, sizeof blit_len);
+
+                ilen = smemrepl(req, ilen, ssizerepl, sizeval,
+                                strlen(sizeval));
+
+                ilen = smemrepl(req, ilen, current_array->array_name, 
+                                blit, blit_len);
+
             }
             reqsize = ilen;
         }
@@ -832,7 +849,7 @@ int in_array_execute_fuzz(option_block *opts)
                         strrepl(blit, strlen(blit), "0x", " ");
                         strrepl(blit, strlen(blit), "\\x", " ");
 
-                        blit_len = ascii_to_bin(blit);
+                        blit_len = ascii_to_bin((unsigned char *)blit);
                         snprintf(sizeval, 80, "%d", blit_len);
                         i = smemrepl(req2, reqsize, "%%FUZZ",
                                      (char *)&blit_len, sizeof blit_len);
