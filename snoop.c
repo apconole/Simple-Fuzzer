@@ -28,6 +28,8 @@
  *
  */
 
+#define DEBUG_MODE 0
+
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -130,7 +132,7 @@ struct timespec {
 #  endif /* __BYTE_ORDER */
 # endif
 
-# ifdef __LINUX__
+# ifdef __linux__
 //#  include <netpacket/packet.h>
 #  include <features.h>
 #  include <linux/if.h>
@@ -148,7 +150,6 @@ struct timespec {
 
 #endif /* !__WIN32__ */
 
-int debug = 0;
 
 #include "os-abs.h"
 
@@ -197,6 +198,8 @@ uchar ip_src_not = 0;
 uint  ip_dst_is_filter;
 uchar ip_dst_not = 0;
 
+uchar ip_addr_or = 0;
+
 uint  ipproto_is_filter;
 uchar ipproto_not = 0;
 
@@ -230,6 +233,17 @@ uchar string_filter_not   = 0;
 
 typedef enum { eETH_ADDR, eIP_ADDR } EAddress;
 
+struct histogram_row
+{
+    uint  pkt_size;
+    uint  pkt_count;
+    uint32_t time_slice;
+};
+
+#define MAX_NUM_ROWS 1522
+
+struct histogram_row histogram[MAX_NUM_ROWS+1];
+struct histogram_row burst_hist[65535];
 
 /*--------------------------------------------------------------------*/
 /* This structure defines the fields within the ip frame. Since this  */
@@ -391,7 +405,7 @@ inline unsigned short endian_swap_16(unsigned short x)
 }
 
 void DebugPrint(char *buf){
-#ifdef DEBUG
+#if DEBUG_MODE
     printf("DEBUG - %s\n", buf);
 #endif /* DEBUG */
 }
@@ -550,18 +564,34 @@ char *GetEtherType(int eth_type)
 int eth_contains_ip(struct eth_packet *eth_pkt)
 {
     if(ntohs(eth_pkt->eth_type) == ETH_P_8021Q)
-        return 18;
+    {
+        int lctr = 1;
+        struct eth_8021q_packet *eth_vlan_pkt = 
+            (struct eth_8021q_packet *)eth_pkt;
+        while(ntohs(eth_vlan_pkt->ether_type) == ETH_P_8021Q)
+        {
+            ++lctr;
+            char *cur_ptr = (char *)eth_vlan_pkt;
+            cur_ptr += 4;
+            eth_vlan_pkt = (struct eth_8021q_packet *)cur_ptr;
+        }
+        if(ntohs(eth_vlan_pkt->ether_type) != ETH_P_IP)
+            return 0;
+        
+        return 14 + (lctr * 4);
+    }
     else if (ntohs(eth_pkt->eth_type) == ETH_P_IP)
         return 14;
-
+    
     return 0;
 }
 
 int ipcmp(uchar *ipstruct_addr, int addr)
 {
     int ipstr_addr = *((int*)ipstruct_addr);
-    if(debug)
+#if DEBUG_MODE
         printf("IPAddrFilter: in[%X],flt[%X]\n", addr, ipstr_addr);
+#endif
 
     return (addr) ? ((addr == ipstr_addr) ? 1 : 0) : 1;
 }
@@ -569,10 +599,11 @@ int ipcmp(uchar *ipstruct_addr, int addr)
 int ethmask_cmp(uchar *retr_addr, uchar *filter_addr)
 {
     int i =0 ;
-    if(debug)
+#if DEBUG_MODE
         printf("EtherAddrFilter: in[%06X],flt[%06X]\n", 
                (unsigned int)retr_addr,
                (unsigned int)filter_addr);
+#endif
 
     for(;i<ETH_ALEN;++i)
     {
@@ -905,19 +936,23 @@ char DumpPacket(char *buffer, int len, int quiet)
 
     if(eth_contains_ip(eth_pkt))
     {
-        ip = (void *)(buffer + eth_contains_ip(eth_pkt));
+        char skip_dest_addr = 0;
 
+        ip = (void *)(buffer + eth_contains_ip(eth_pkt));
+        
         if(FILTER_CHK_MASK(filter_mask, IP_SRC_FILTER))
         {
             if(ipcmp(ip->ip_src.IPv4_src, ip_src_is_filter))
             {
                 if(ip_src_not)
                     return -1;
-            }else if(!ip_src_not)
+                // matched the source, skip dest addr
+                if(ip_addr_or) skip_dest_addr = 1;
+            }else if(!ip_src_not && !ip_addr_or)
                 return -1;
         }
-
-        if(FILTER_CHK_MASK(filter_mask, IP_DST_FILTER))
+        
+        if(!skip_dest_addr && FILTER_CHK_MASK(filter_mask, IP_DST_FILTER))
         {
             if(ipcmp(ip->ip_dst.IPv4_dst, ip_dst_is_filter))
             {
@@ -926,7 +961,7 @@ char DumpPacket(char *buffer, int len, int quiet)
             }else if(!ip_dst_not)
                 return -1;
         }
-
+        
         if(FILTER_CHK_MASK(filter_mask, IP_TOS_BYTE_FILTER))
         {
             if(ip->serve_type == ip_tos_byte_filter)
@@ -1157,6 +1192,28 @@ int snoop_nano_sleep(const struct timespec *req, struct timespec *remain)
     return 0;
 }
 
+void emit_delta(struct timeval *pPacketCurrent, struct timeval *pPacketLast,
+                uint32_t bursty)
+{
+    uint64_t burstr = 0;
+    struct timeval tRemainder = {0,0};
+    tRemainder.tv_sec = pPacketCurrent->tv_sec - pPacketLast->tv_sec;
+    tRemainder.tv_usec = pPacketCurrent->tv_usec - pPacketLast->tv_usec;
+    if(tRemainder.tv_sec < 0) tRemainder.tv_sec = 0;
+    if(tRemainder.tv_usec < 0) tRemainder.tv_usec = 0;
+    if(bursty != 0)
+    {
+        burstr = tRemainder.tv_sec * 1000000;
+        burstr += tRemainder.tv_usec;
+        
+        //if(burstr > bursty){ return; }
+        if(burstr < 65535)
+            burst_hist[burstr].pkt_count ++;
+        
+    }
+    //printf("%u:%u\n", tRemainder.tv_sec, tRemainder.tv_usec);
+}
+
 void pcap_pkt_sleep(struct timeval *pPacketCurrent,
                     struct timeval *pPacketLast)
 {
@@ -1182,14 +1239,15 @@ int main(int argc, char *argv[])
     FILE *pcap_dump_file = NULL;
     pcap_hdr_t pcap_header;
     int sd=-1, od=-1, bytes_read;
-    int display = 1, out_phy;
+    int display = 1, out_phy = 0;
     char res = 0;
     char *rdata;
     char *data;
     char rt = 0;
     char infomercial[15]={0};
-    char pcap_input = 0;
+    char pcap_input = 0, bursty = 0;
     char pcap_byteswap  = 0;
+    uint print_hist     = 0;
     unsigned long int pkts_rx = 0;
     unsigned long int pkts_pass = 0;
     char *lastarg = NULL;
@@ -1199,7 +1257,7 @@ int main(int argc, char *argv[])
     struct timeval lasttime = {0};
     struct timeval curtime = {0};
     int promisc = 0;
-    uchar notflag = 0;
+    uchar notflag = 0, pcap_sleep = 0;
     struct sockaddr_in sa;
     uint sl;
 
@@ -1256,7 +1314,7 @@ int main(int argc, char *argv[])
 
                 if(!strncmp("--help", argv[argc], 6))
                 {
-                    printf("snoop v0.6.3\n");
+                    printf("snoop v0.7.0\n");
                     printf("Copyright (C) 2003-2011, Aaron Conole\n");
                     printf("=====================================\n");
                     printf("Valid arguments:\n");
@@ -1271,7 +1329,7 @@ int main(int argc, char *argv[])
                         ("--u8, --u16, --u32 => format is <value>:<offset>\n");
                     printf("--m32 => format is <mask>:<offset>\n");
                     printf("--input => specify a pcap file as the input\n");
-#ifdef __LINUX__
+#ifdef __linux__
                     printf("--interface, --outerface, --promisc\n");
                     printf("To specify realtime mode: --rt\n");
 #endif
@@ -1281,7 +1339,7 @@ int main(int argc, char *argv[])
                 {
                     display=0;
                 }
-#ifdef __LINUX__
+#ifdef __linux__
                 else if(!strncmp("--interface", argv[argc], 11) &&
                         lastarg != NULL)
                 {
@@ -1306,6 +1364,27 @@ int main(int argc, char *argv[])
                     pcap_input = 1;
                     pcap_fname = lastarg;
                     notflag = 0;
+                }
+                else if(!strncmp("--histogram", argv[argc], 11))
+                {
+                    int cnt;
+                    print_hist = 1;
+
+                    if(lastarg != NULL)
+                        print_hist = atoi(lastarg);
+
+                    if(!print_hist) print_hist = 1;
+
+                    cnt = MAX_NUM_ROWS / print_hist;
+                    
+                    for(--cnt; cnt>=0; cnt--)
+                    {
+                        histogram[cnt].pkt_size = 64 + (print_hist * cnt);
+                        histogram[cnt].pkt_count = 0;
+                    }
+
+                    histogram[MAX_NUM_ROWS].pkt_size  = 65535;
+                    histogram[MAX_NUM_ROWS].pkt_count = 0;
                 }
                 else if(!strncmp("--not", argv[argc], 5) && lastarg != NULL)
                 {
@@ -1338,7 +1417,7 @@ int main(int argc, char *argv[])
                         lastarg != NULL)
                 {
                     FILTER_SET_MASK(filter_mask, STRING_FILTER);
-                    strncpy(string_filter, lastarg, 1024);
+                    strncpy((char *)string_filter, lastarg, 1024);
                     string_filter[1023] = 0;
                     if(notflag) string_filter_not = 1;
                     notflag = 0;
@@ -1407,6 +1486,21 @@ int main(int argc, char *argv[])
                     ipproto_is_filter = strtol(lastarg, NULL, 0);
                     if(notflag) ipproto_not = 1;
                     notflag = 0;
+                } else if(!strncmp("--or-addr", argv[argc], 9))
+                {
+                    ip_addr_or = 1;
+                } else if(!strncmp("--bursty", argv[argc], 8))
+                {
+                    int k = 0;
+                    bursty = 1;
+                    if(lastarg != NULL) bursty = atoi(lastarg);
+                    if(!bursty) bursty = 1;
+
+                    for(;k < 65535; ++k)
+                    {
+                        burst_hist[k].pkt_count = 0;
+                    }
+
                 } else if(!strncmp("--ip-sport", argv[argc], 10) &&
                           lastarg != NULL)
                 {
@@ -1423,6 +1517,9 @@ int main(int argc, char *argv[])
                     udp_tcp_dport_is_filter = strtol(lastarg, NULL, 0);
                     if(notflag) udp_tcp_dport_not = 1;
                     notflag = 0;
+                } else if(!strncmp("--pcap-sleep", argv[argc], 12))
+                {
+                    pcap_sleep = 1;
                 } else if(!strncmp("--u8", argv[argc], 10) &&
                           lastarg != NULL)
                 {
@@ -1592,7 +1689,7 @@ int main(int argc, char *argv[])
                in_pcap_header.version_minor);
     }
 #ifndef __WIN32__
-# ifdef __LINUX__
+# ifdef __linux__
     if(rt)
     {
         struct sched_param sp;
@@ -1663,7 +1760,7 @@ int main(int argc, char *argv[])
             }
         }
     }
-# endif /* __LINUX__ */
+# endif /* __linux__ */
 #endif /* !__WIN32__ */
 
     do {
@@ -1725,14 +1822,15 @@ int main(int argc, char *argv[])
                 pcap_rec.incl_len = endian_swap_32(pcap_rec.incl_len);
                 pcap_rec.orig_len = endian_swap_32(pcap_rec.orig_len);
             }
-            
-            memcpy(&lasttime, &curtime, sizeof(lasttime));
-            
-            curtime.tv_sec = pcap_rec.ts_sec;
-            curtime.tv_usec = pcap_rec.ts_usec;
-            
-            pcap_pkt_sleep(&curtime, &lasttime);
-            
+            if(pcap_sleep || bursty)
+            {
+                memcpy(&lasttime, &curtime, sizeof(lasttime));
+                curtime.tv_sec = pcap_rec.ts_sec;
+                curtime.tv_usec = pcap_rec.ts_usec;
+                
+                if(pcap_sleep)pcap_pkt_sleep(&curtime, &lasttime);
+                if(bursty)    emit_delta(&curtime, &lasttime, bursty);
+            }
             bytes_read = read(sd, data, pcap_rec.incl_len);
         }
 
@@ -1740,7 +1838,23 @@ int main(int argc, char *argv[])
         {
             res = DumpPacket(data, bytes_read, display);
             if(res == 1)
+            {
                 ++pkts_pass;
+
+                if(print_hist)
+                {
+                    for(sl = 0; sl < MAX_NUM_ROWS; ++sl)
+                    {
+                        if(bytes_read <= histogram[sl].pkt_size)
+                        {
+                            histogram[sl].pkt_count++;
+                            break;
+                        }
+                    }
+                    // done
+                }
+
+            }
             if(pcap_dump_file && res == 1)
             {
                 pcaprec_hdr_t pcap_hdr;
@@ -1757,8 +1871,9 @@ int main(int argc, char *argv[])
                 fwrite((void *)&pcap_hdr, sizeof(pcap_hdr), 1, pcap_dump_file);
                 fwrite((void *)data, 1, bytes_read, pcap_dump_file);
                 fflush(pcap_dump_file);
+
             }
-#ifdef __LINUX__
+#ifdef __linux__
             if(oface && od && res == 1)
             {
                 struct sockaddr_ll peerAddr;
@@ -1791,5 +1906,25 @@ int main(int argc, char *argv[])
     if(pkts_pass != pkts_rx)
         printf("Packets matching: %lu\n", pkts_pass);
 
+    if(print_hist)
+    {
+        for(sl = 0; sl <= MAX_NUM_ROWS; ++sl)
+        {
+            if(histogram[sl].pkt_count)
+                printf("H[%6d] = { %9u }\n",
+                       histogram[sl].pkt_size, histogram[sl].pkt_count);
+        }
+    }
+
+    if(bursty)
+    {
+        for(sl = 0; sl < 65535; ++sl)
+        {
+            if(burst_hist[sl].pkt_count)
+                printf("B[%6d] = { %9u }\n",
+                       sl, burst_hist[sl].pkt_count);
+        }
+    }
+    
     return 0;
 }

@@ -152,6 +152,8 @@ typedef struct
     sym_t *s_syms;
     unsigned int s_syms_count;
 
+    /* file descriptor for transmission */
+    int link_oracle;
 } option_block;
 
 #define MAX_FILENAME_SIZE  1024

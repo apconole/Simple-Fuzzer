@@ -52,7 +52,7 @@ SNOOP_SUPPORT=""
 CC_CHECK=""
 LIBDIRS=`$CAT /etc/ld.so.conf 2> /dev/null`
 OS_SYSTEM=`$UNAME -s 2> /dev/null`
-XCFLAGS="-g -O2 -Wall -I."
+XCFLAGS="-g -O2 -Wall -Werror -I."
 XCFLAGS_EXTRA=""
 XLDFLAGS=""
 XSHARED_LIBS=""
@@ -253,12 +253,12 @@ if [ -n $HAVE_LIBDL ]; then
     XSHARED_LIBS="$XSHARED_LIBS -ldl"
     LIBS="$XSHARED_LIBS"
     if [ "Darwin" = "$OS_SYSTEM" ]; then
-        XCFLAGS="$XCFLAGS -D__LINUX__"
+        XCFLAGS="$XCFLAGS "
         XSHARED_OPTS="-dynamiclib -undefined dynamic_lookup -single_module"
         SFO_PLATFORM=" sfuzz_oracle_null.o"
     elif [ "Linux" = "$OS_SYSTEM" ]; then
         SFO_PLATFORM=" sfuzz_oracle_ptrace.o"
-        XCFLAGS="$XCFLAGS -D_GNU_SOURCE -D__LINUX__ -rdynamic"
+        XCFLAGS="$XCFLAGS -D_GNU_SOURCE -rdynamic"
         XSHARED_OPTS="$XSHARED_OPTS -shared -rdynamic"
     fi
     if [ "$FORCE_SYMBOLS" = "Y" ]; then
@@ -301,7 +301,7 @@ MKDIR=$MKDIR
 SHARED_INC=$XSHARED_INC
 SHARED_OPTS=$XSHARED_OPTS
 
-SF_OBJS=file-utils.o sfuzz.o os-abs.o
+SF_OBJS=file-utils.o sfuzz.o os-abs.o sfo_interface.o
 SNOOP_OBJS=snoop.o os-abs.o
 SFO_OBJS=sfuzz_oracle.o $SFO_PLATFORM
 PLUGIN_EXAMPLE_OBJS=sfuzz-plugin-example.o sfuzz-plugin-ssl-transport.o sfuzz-server-plugin.o

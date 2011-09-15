@@ -22,13 +22,13 @@ echo PREFIX=C:\sfuzz>> Makefile
 echo RM=del>> Makefile
 echo MKDIR=md>> Makefile
 echo ###>> Makefile
-echo CFLAGS=-g -O2 -I. -Wall -D_GNU_SOURCE -D__WIN32__ -DPREFIX="$(PREFIX)" -DWINVER=0x0501>> Makefile
+echo CFLAGS=-g -O2 -I. -Wall -Werror -D_GNU_SOURCE -D__WIN32__ -DPREFIX="$(PREFIX)" -DWINVER=0x0501>> Makefile
 echo SHARED_INC=file-utils.o os-abs.o>> Makefile
 echo SHARED_OPTS=-shared -lws2_32>> Makefile
 echo LIBS=-lws2_32>> Makefile
 echo ###>> Makefile
-echo SF_OBJS=file-utils.o sfuzz.o os-abs.o>> Makefile
-echo SNOOP_OBJS=snoop.o os-abs.o>> Makefile
+echo SF_OBJS=file-utils.o sfuzz.o os-abs.o sfo_interface.o>> Makefile
+echo SNOOP_OBJS=snoop.o os-abs.o >> Makefile
 echo PLUGIN_EXAMPLE_OBJS=sfuzz-plugin-example.o sfuzz-plugin-ssl-transport.o sfuzz-server-plugin.o>> Makefile
 echo ###>> Makefile
 echo BIN_DIR=$(PREFIX)\bin\>> Makefile

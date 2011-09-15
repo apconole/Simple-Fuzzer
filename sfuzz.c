@@ -45,6 +45,8 @@
 #include <string.h>
 #endif
 
+#include "sfo_interface.h"
+
 plugin_provisor *g_plugin;
 
 extern int readLine(option_block *opts, char *line, int len, int ign_cr);
@@ -352,6 +354,8 @@ int main(int argc, char *argv[])
     options.state     = INIT_READ;
     read_config(&options);
 
+    options.link_oracle = -1;
+
     if(options.pLogFilename[0] != 0)
     {
         if(options.new_logfile)
@@ -520,6 +524,11 @@ int fuzz(option_block *opts, char *req, int len)
             fwrite("\n", 1, 1, log);
         }
     }
+
+    if(fuzz_this_time && opts->link_oracle != -1)
+    {
+        oracle_pre_fuzz(opts, req, len);
+    }
     
 #ifndef NOPLUGIN
     if(fuzz_this_time && g_plugin != NULL && 
@@ -550,6 +559,12 @@ int fuzz(option_block *opts, char *req, int len)
     else if(fuzz_this_time && opts->udp_flag)
     {
       res = os_send_udp(opts, req, len);
+    }
+
+
+    if(fuzz_this_time && opts->link_oracle != -1)
+    {
+        oracle_post_fuzz(opts, req, len);
     }
 
 #ifndef NOPLUGIN
