@@ -21,6 +21,48 @@
 
 char *globname;
 
+int32_t monitored_signal(uint32_t sign, uint8_t status, int32_t pid)
+{
+    int corefd;
+    switch(status)
+    {
+    case MONITORED_STATUS_STOPPED:
+        if( sign == SIGTRAP ) sign = 0;
+        ptrace(PT_CONTINUE, pid, 0, sign);
+        return 0;
+    case MONITORED_STATUS_KILLED:
+        // here we should do something ...
+        // like find the corefile
+        if( (corefd = open("core", O_RDONLY)) != -1 )
+        {
+            char dest_buf[1024];
+            close(corefd);
+            //yes, system call is bad, etc..
+            snprintf( dest_buf, 1024, "mv core %s_%d.core",
+                      globname, pid );
+            if(system(dest_buf) < 0) 
+                abort();
+            
+        }
+        return 0;
+    case MONITORED_STATUS_CONT :
+    default:
+        return 0;
+    }
+
+    return 0;
+}
+
+int32_t monitored_exit  (int32_t  exit)
+{
+    return 0;
+}
+
+int32_t term_monitored( int32_t i )
+{
+    return kill ( i, SIGTERM );
+}
+
 int32_t spawn_monitored(char *outfile, char *errfile, uint32_t id,char *argv[])
 {
     int exit_status = 0;
@@ -160,44 +202,3 @@ endit:
 }
 
 
-int32_t monitored_signal(uint32_t sign, uint8_t status, int32_t pid)
-{
-    int corefd;
-    switch(status)
-    {
-    case MONITORED_STATUS_STOPPED:
-        if( sign == SIGTRAP ) sign = 0;
-        ptrace(PT_CONTINUE, pid, 0, sign);
-        return 0;
-    case MONITORED_STATUS_KILLED:
-        // here we should do something ...
-        // like find the corefile
-        if( (corefd = open("core", O_RDONLY)) != -1 )
-        {
-            char dest_buf[1024];
-            close(corefd);
-            //yes, system call is bad, etc..
-            snprintf( dest_buf, 1024, "mv core %s_%d.core",
-                      globname, pid );
-            if(system(dest_buf) < 0) 
-                abort();
-            
-        }
-        return 0;
-    case MONITORED_STATUS_CONT :
-    default:
-        return 0;
-    }
-
-    return 0;
-}
-
-int32_t monitored_exit  (int32_t  exit)
-{
-    return 0;
-}
-
-int32_t term_monitored( int32_t i )
-{
-    return kill ( i, SIGTERM );
-}

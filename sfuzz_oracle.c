@@ -6,6 +6,10 @@
  *                       client
  */
 
+#ifndef FAKE_ORACLE
+#define FAKE_ORACLE 1
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,15 +22,75 @@
 
 #include "sfuzz_oracle.h"
 
+void cleanup( struct sfuzz_oracle_debugger *d)
+{
+
+}
+
+#if FAKE_ORACLE
+extern int32_t spawn_monitored(char *outfile, char *errfile, uint32_t id,char *argv[]);
+#endif
+
 /**
- * IMPORTANT NOTE:
- * We need to use ptrace() on unix-y systems
- * and the mswin debug facilities on windows
+ *
  */
+
+int32_t run_debugger(struct sfuzz_oracle_debugger *debug)
+{
+#if FAKE_ORACLE
+    return spawn_monitored( debug-> outfile_name, debug -> errfile_name, 
+                            debug -> reboot_ctr, debug -> args );
+#else
+
+    if(! debug ) return -1;
+
+    if( debug -> state != SFO_DEBUG_READY )
+        return -1;
+
+    /* start the debuged app */
+    spawn_debug_app( debug );
+
+    if( debug -> state != SFO_DEBUG_LOADED )
+        return -1;
+
+    /* application is spawned ( but not in debuggable state yet )*/
+
+    establish_contact(); // this gets us sync'd with sfuzz
+
+    start_debug( debug );
+
+    if( debug -> state != SFO_DEBUG_ATTACHED )
+    {
+        indicate_test_error();
+        return -1;
+    }
+
+    do
+    {
+        event_pend( debug );
+    } while ( debug -> state == SFO_DEBUG_ATTACHED );
+
+    /* we're in an ended state */
+    if( debug -> state == SFO_DEBUG_CRASHED )
+    {
+        handle_crash( debug );
+    }
+    
+    if( debug -> state == SFO_DEBUG_END )
+    {
+        return -1;
+    }
+
+    debug -> state = SFO_DEBUG_READY;
+
+    return 0;
+#endif
+}
 
 int main(int argc, char *argv[])
 {
-    char outfile[1024], errfile[1024];
+    
+    struct sfuzz_oracle_debugger sfuzz_debugger;
     
     if ( argc < 2 )
     {
@@ -35,15 +99,32 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    sfuzz_debugger.state = SFO_DEBUG_EMPTY;
+    sfuzz_debugger.path_to_exe = argv[1];
+
+#if FAKE_ORACLE
+    sfuzz_debugger.args  = &argv[1];
+#else
+    if( argc > 2 )
+        sfuzz_debugger.args        = &argv[2];
+#endif
     //wait for sfuzz connection ... 
-    int ctr_respawn = 0;
+    sfuzz_debugger.reboot_ctr = 0;
     do
     {
         printf(" [%s] === spawning!\n", argv[0]);
-        snprintf(outfile, 1024, "%s_%d.stdout", argv[1], ctr_respawn);
-        snprintf(errfile, 1024, "%s_%d.stderr", argv[1], ctr_respawn);
-        ++ctr_respawn;
-    }while(-1 == spawn_monitored(outfile, errfile, ctr_respawn-1, &argv[1]));
+
+        ++(sfuzz_debugger.reboot_ctr);
+
+        snprintf(sfuzz_debugger.outfile_name, 1024, "%s_%d.stdout",
+                 argv[1], sfuzz_debugger.reboot_ctr);
+        snprintf(sfuzz_debugger.errfile_name, 1024, "%s_%d.stderr", 
+                 argv[1], sfuzz_debugger.reboot_ctr);
+
+        
+    }while(-1 == run_debugger(&sfuzz_debugger));
+
+    cleanup( &sfuzz_debugger );
 
     return 0;
 }

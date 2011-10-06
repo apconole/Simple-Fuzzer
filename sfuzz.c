@@ -125,6 +125,15 @@ void print_help()
     printf("\t-s\t Only perform sequence fuzzing\n");
 }
 
+/**
+ * \brief Sanity checks the option block to ensure that the state and 
+ * configuration are in agreement
+ *
+ * It could be possible due to bugs / misconfiguration / my idiocy for the
+ * internal states to become corrupted. The idea behind this function is to
+ * do basic sanity checking to ensure that we are in a minimally good state
+ * to function.
+ */
 void sanity(option_block *opts)
 {
     if(opts == NULL)
@@ -161,9 +170,14 @@ void sanity(option_block *opts)
         exit(-1);
     }
 }
+
+
 extern void add_symbol(char *sym_name, int sym_len, char *sym_val, 
                        int sym_val_len, option_block *opts, int i);
 
+/**
+ * \brief Processes an option from the commandline.
+ */
 void process_opt_str(char *line, char *lastarg, option_block *opts)
 {
     char *delim;
@@ -282,6 +296,9 @@ XRSTUOLVD
     }
 }
 
+/**
+ * \brief Processes all options on the command line.
+ */
 void process_opts(int argc, char *argv[], option_block *opts)
 {
     char *lastarg = 0;
@@ -314,6 +331,9 @@ void process_opts(int argc, char *argv[], option_block *opts)
 }
 extern void sfuzz_setsearchpath(const char *path);
 
+/**
+ * \brief main... duh.
+ */
 int main(int argc, char *argv[])
 {
     FILE *log = stdout;
@@ -431,6 +451,16 @@ int main(int argc, char *argv[])
 
 int fuzznum = 0;
 
+/**
+ * \brief Perform an actual fuzz. Take care of replacing the fixed symbols here
+ * (the arrays are processed elsewhere).
+ *
+ * This function invokes plugin routines if they are present. Also, it does
+ * lots of crazy magic w.r.t. string replacement. All fixed-definition symbols
+ * are replaced here - meaning you cannot use a fixed symbol which will be
+ * defined by fuzz (however, if you want the text "FUZZ" to appear, you can
+ * do that here)
+ */
 int fuzz(option_block *opts, char *req, int len)
 {
     int i = 0;
@@ -616,6 +646,12 @@ int fuzz(option_block *opts, char *req, int len)
 int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx);
 int in_array_execute_fuzz(option_block *opts);
 
+/**
+ * \brief Sets up the fuzz for execution. Called from main.
+ *
+ * This function figures out the array iterations for the array_execute_fuzz
+ * function.
+ */
 int execute_fuzz(option_block *opts)
 {
     if(!opts->num_arrays)
@@ -628,6 +664,15 @@ int execute_fuzz(option_block *opts)
     }
 }
 
+/**
+ * \brief Does an array iteration for array based fuzzing.
+ * 
+ * This function recursively executes with progressively increasing array
+ * indexes. The idea is that it will loop through the test cases over and over
+ * modifying the array fetch values. This allows the in_array_execute_fuzz to
+ * do all the 'dynamic' replacement (ie: arrays, literals, and strings) and
+ * lets "fuzz" do all the static replacement.
+ */
 int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
 {
     int i;
@@ -655,6 +700,12 @@ int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
     return i;
 }
 
+/**
+ * \brief Does all the dynamic string replacement, and calls 'fuzz'
+ *
+ * Constructs blocks of strings to send to the remote side. NOTE: a test case
+ * here has a fixed size of ~16384 bytes - we need to fix that magic number.
+ */
 int in_array_execute_fuzz(option_block *opts)
 {
     char *line = malloc(8192);

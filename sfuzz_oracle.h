@@ -5,6 +5,48 @@
 
 #include "sfuzz.h"
 
+#if defined(__WIN32__)
+typedef unsigned long PID;
+typedef unsigned long TID;
+#elif defined(__linux__)
+#include <sys/types.h>
+#include <unistd.h>
+typedef pid_t PID;
+typedef pid_t TID;
+#else
+#error Define a system type
+#endif
+
+enum sfo_DebugState {
+    SFO_DEBUG_EMPTY,
+    SFO_DEBUG_READY,
+    SFO_DEBUG_LOADED,
+    SFO_DEBUG_ATTACHED,
+    SFO_DEBUG_CRASHED,
+    SFO_DEBUG_END
+};
+
+typedef uint32_t (*debug_event)(uint32_t eventid);
+
+struct sfuzz_oracle_debugger
+{
+    debug_event debug_hook;
+
+    char *      path_to_exe;
+    char **     args;
+
+    PID         pid;
+
+    TID         threadIdList[1024];
+
+    enum sfo_DebugState state;
+
+    char        outfile_name[1024];
+    char        errfile_name[1024];
+
+    uint32_t    reboot_ctr;
+};
+
 // Ensure that the sfuzz_oracle_message type is sufficient for network 
 // transmission
 
@@ -76,10 +118,5 @@ extern int32_t sfuzz_oracle_encode_reply_error_generic(
 #define MONITORED_STATUS_STOPPED 1
 #define MONITORED_STATUS_KILLED  2
 #define MONITORED_STATUS_CONT    3
-
-extern int32_t spawn_monitored(char *outfile, char *errfile, uint32_t, char *argv[]);
-extern int32_t monitored_signal(uint32_t signal, uint8_t status, int32_t pid);
-extern int32_t monitored_exit  (int32_t  exit);
-extern int32_t term_monitored ( int32_t id );
 
 #endif
