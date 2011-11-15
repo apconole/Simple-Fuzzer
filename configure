@@ -247,7 +247,7 @@ do
     fi
 done
 LIBS=""
-if [ -n $HAVE_LIBDL ]; then
+if [ "X$HAVE_LIBDL" != "X" ]; then
     echo "                                    ... found"
     XCFLAGS="$XCFLAGS -fPIC"
     XSHARED_LIBS="$XSHARED_LIBS -ldl"

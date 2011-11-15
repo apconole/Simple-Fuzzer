@@ -18,7 +18,6 @@ sfo sfo.exe: $(SFO_OBJS)
 
 -include $(SF_OBJS:.o=.d)
 -include $(SNOOP_OBJS:.o=.d)
--include $(SFUZZ_OBJS:.o=.d)
 
 %.o: %.c
 	@echo "[CC] $@"
