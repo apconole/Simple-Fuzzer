@@ -26,11 +26,12 @@ sfo sfo.exe: $(SFO_OBJS)
 
 install: all
 	@echo "Installing to: $(DESTDIR)$(PREFIX)"
+	@$(INSTALL_DIR) $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfuzz $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfo   $(DESTDIR)$(BIN_DIR)
-	@$(MKDIR) -p $(DESTDIR)$(SHARE_DIR)sfuzz-db
-	@$(CP) $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
-	@$(CP) *.so $(DESTDIR)$(SHARE_DIR)sfuzz-db
+	@$(INSTALL_DIR) $(DESTDIR)$(SHARE_DIR)sfuzz-db
+	@$(INSTALL) $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
+	@$(INSTALL) *.so $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@echo Installed.
 
 uninstall:
