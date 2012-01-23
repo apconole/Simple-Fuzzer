@@ -34,6 +34,7 @@ GREP=`$WHICH grep 2> /dev/null`
 RM=`$WHICH rm 2> /dev/null`
 MKDIR=`$WHICH mkdir 2> /dev/null`
 MV=`$WHICH mv 2> /dev/null`
+MKTEMP=`$WHICH mktemp 2> /dev/null`
 
 if [ -e Makefile ]; then
     echo "WARNING: You have a previous makefile. I'm moving it to Makefile.old"
@@ -237,16 +238,48 @@ if [ "X" = "X$SSL_PATH" ]; then
     fi
 fi
 
-echo -n "Checking for libdl.so ..."
-for i in  $LIBDIRS /lib /usr/lib /usr/local/lib
-do
-    if [ "X" = "X$HAVE_LIBDL" ]; then
-        if [ -f "$i/libdl.so" ]; then
-            HAVE_LIBDL="yes"
-        fi
-    fi
-done
+echo -n "Checking for libdl support ..."
+TESTC=`${MKTEMP} -d`
+if [ -e "$TESTC" ]; then
+cat > ${TESTC}/dltest.c <<EOF
+#include <stdio.h>
+#include <dlfcn.h>
+
+int main()
+{
+    void *foo = dlopen("/var/log/asdf.so", 0);
+    if( foo )
+        printf("Found!!\n");
+    return 0;   
+}
+
+EOF
+
+$CC_CHECK -o ${TESTC}/test ${TESTC}/dltest.c -ldl
+
+if [ $? -eq 0 ]; then
+   HAVE_LIBDL="YES"
+fi
+${RM} -rf ${TESTC}
+
+else
+HAVE_LIBDL=""
+fi
+
 LIBS=""
+
+#####
+# First do generic platform stuff...
+#####
+if [ "Darwin" = "$OS_SYSTEM" ]; then
+    XCFLAGS="$XCFLAGS "
+    SFO_PLATFORM=" sfuzz_oracle_null.o"
+elif [ "Linux" = "$OS_SYSTEM" ]; then
+    SFO_PLATFORM=" sfuzz_oracle_ptrace.o"
+    XCFLAGS="$XCFLAGS -D_GNU_SOURCE"
+        XSHARED_OPTS="$XSHARED_OPTS"
+fi
+
 if [ "X$HAVE_LIBDL" != "X" ]; then
     echo "                                    ... found"
     XCFLAGS="$XCFLAGS -fPIC"
@@ -254,11 +287,9 @@ if [ "X$HAVE_LIBDL" != "X" ]; then
     LIBS="$XSHARED_LIBS"
     if [ "Darwin" = "$OS_SYSTEM" ]; then
         XCFLAGS="$XCFLAGS "
-        XSHARED_OPTS="-dynamiclib -undefined dynamic_lookup -single_module"
-        SFO_PLATFORM=" sfuzz_oracle_null.o"
+        XSHARED_OPTS="$XSHARED_OPTS -dynamiclib -undefined dynamic_lookup -single_module"
     elif [ "Linux" = "$OS_SYSTEM" ]; then
-        SFO_PLATFORM=" sfuzz_oracle_ptrace.o"
-        XCFLAGS="$XCFLAGS -D_GNU_SOURCE -rdynamic"
+        XCFLAGS="$XCFLAGS -rdynamic"
         XSHARED_OPTS="$XSHARED_OPTS -shared -rdynamic"
     fi
     if [ "$FORCE_SYMBOLS" = "Y" ]; then
