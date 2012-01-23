@@ -3,5 +3,7 @@
 *.d
 *.so
 *.exe
+sfo
+sfuzz
 Makefile
 Makefile.old
