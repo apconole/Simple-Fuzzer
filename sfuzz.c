@@ -478,8 +478,8 @@ int fuzz(option_block *opts, char *req, int len)
         log = opts->fp_log;
 
     if( fuzz_this_time && opts->verbosity != QUIET )
-        fprintf(log, "[%s] attempting fuzz - %d.\n", get_time_as_log(),
-                fuzznum);
+        fprintf(log, "[%s] attempting fuzz - %d (len: %d).\n", get_time_as_log(),
+                fuzznum, len);
 #ifndef NOPLUGIN
     if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
@@ -504,7 +504,7 @@ int fuzz(option_block *opts, char *req, int len)
         for(i = 0; i < opts->s_syms_count ; ++i)
         {
             pSym = &(opts->s_syms[ opts->s_syms_count - (i+1) ]);
-            len = smemrepl(req, len, pSym->sym_name, pSym->sym_val, 
+            len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
                                pSym->s_len);
         }
         
@@ -512,7 +512,7 @@ int fuzz(option_block *opts, char *req, int len)
         {
             pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(pSym->is_len)
-                len = smemrepl(req, len, pSym->sym_name, pSym->sym_val,
+                len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
                                strlen(pSym->sym_val));
         }
         
@@ -520,7 +520,7 @@ int fuzz(option_block *opts, char *req, int len)
         {
             pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(!pSym->is_len)
-                len = smemrepl(req, len, pSym->sym_name, pSym->sym_val,
+                len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
                                strlen(pSym->sym_val));
         }
 
@@ -532,7 +532,7 @@ int fuzz(option_block *opts, char *req, int len)
         for(i = 0; i < opts->b_sym_count; ++i)
         {
             pSym = &(opts->b_syms_array[i]);
-            len = smemrepl(req, len, pSym->sym_name, pSym->sym_val, 
+            len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
                            pSym->is_len);
 	    if(pSym->increment)
             {
@@ -807,11 +807,11 @@ int in_array_execute_fuzz(option_block *opts)
                 snprintf(sizeval, 80, "%zu", bsizeval);
                 snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
                 snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
-                ilen = smemrepl(req, reqsize, sizerepl, (char *)
+                ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl, (char *)
                                 &bsizeval, sizeof bsizeval);
-                ilen = smemrepl(req, ilen, ssizerepl, sizeval,
+                ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl, sizeval,
                                 strlen(sizeval));
-                ilen = smemrepl(req, ilen, current_array->array_name, 
+                ilen = smemrepl(req, ilen, opts->mseql + 16384, current_array->array_name,
                                 current_array->
                                 value_array[current_array->value_ctr].sym_val,
                                 current_array->
@@ -829,13 +829,13 @@ int in_array_execute_fuzz(option_block *opts)
                 snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
                 snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
 
-                ilen = smemrepl(req, reqsize, sizerepl, (char *)
+                ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl, (char *)
                                 &blit_len, sizeof blit_len);
 
-                ilen = smemrepl(req, ilen, ssizerepl, sizeval,
+                ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl, sizeval,
                                 strlen(sizeval));
 
-                ilen = smemrepl(req, ilen, current_array->array_name, 
+                ilen = smemrepl(req, ilen, opts->mseql + 16384, current_array->array_name,
                                 blit, blit_len);
 
             }
@@ -896,11 +896,11 @@ int in_array_execute_fuzz(option_block *opts)
                         size_t bsizeval = strlen(opts->litr[tsze]);
                         char sizeval[80] = {0};
                         snprintf(sizeval, 80, "%zu", bsizeval);
-                        i = smemrepl(req2, reqsize, "%%FUZZ", (char *)
+                        i = smemrepl(req2, reqsize, opts->mseql + 16384, "%%FUZZ", (char *)
                                      &bsizeval, sizeof bsizeval);
-                        i = smemrepl(req2, i, "%FUZZ", sizeval,
+                        i = smemrepl(req2, i, opts->mseql + 16384, "%FUZZ", sizeval,
                                      strlen(sizeval));
-                        i = smemrepl(req2, i, "FUZZ", opts->litr[tsze],
+                        i = smemrepl(req2, i, opts->mseql + 16384, "FUZZ", opts->litr[tsze],
                                      strlen(opts->litr[tsze]));
                     }
                     else
@@ -917,11 +917,11 @@ int in_array_execute_fuzz(option_block *opts)
 
                         blit_len = ascii_to_bin((unsigned char *)blit);
                         snprintf(sizeval, 80, "%d", blit_len);
-                        i = smemrepl(req2, reqsize, "%%FUZZ",
+                        i = smemrepl(req2, reqsize, opts->mseql + 16384, "%%FUZZ",
                                      (char *)&blit_len, sizeof blit_len);
-                        i = smemrepl(req2, i, "%FUZZ", sizeval, 
+                        i = smemrepl(req2, i, opts->mseql + 16384, "%FUZZ", sizeval,
                                      strlen(sizeval));
-                        i = smemrepl(req2, i, "FUZZ", blit, blit_len );
+                        i = smemrepl(req2, i, opts->mseql + 16384, "FUZZ", blit, blit_len );
                         free( blit );
                     }
                     
@@ -956,7 +956,7 @@ int in_array_execute_fuzz(option_block *opts)
                         seq4b = 0;
 
                         if(sequence_hold) free(sequence_hold);
-                        sequence_hold = malloc(k+1);
+                        sequence_hold = malloc(k+4);
                         if(!sequence_hold)
                         {
                             fprintf(stderr, "error: sequence too large? OOM\n");
@@ -975,13 +975,13 @@ int in_array_execute_fuzz(option_block *opts)
 
                         snprintf(sizeval, 80, "%zu", bsizeval);
 
-                        reqsize = smemrepl(req2, reqsize, "%%FUZZ", 
+                        i = smemrepl(req2, reqsize, opts->mseql + 16384, "%%FUZZ",
                                      (char *)&bsizeval, sizeof bsizeval);
 
-                        reqsize = smemrepl(req2, reqsize, "%FUZZ", sizeval,
+                        i = smemrepl(req2, i, opts->mseql + 16384, "%FUZZ", sizeval,
                                            strlen(sizeval));
                         
-                        reqsize = smemrepl(req2, reqsize, "FUZZ",
+                        i = smemrepl(req2, i, opts->mseql + 16384, "FUZZ",
                                            sequence_hold,
                                            bsizeval);
 
@@ -990,8 +990,8 @@ int in_array_execute_fuzz(option_block *opts)
                         if(strstr(req2, "__SEQUENCE_NUM_ASCII__"))
                         {
                             snprintf(seq_buf, 5, "%04d", seq4b);
-                            reqsize =
-                                strrepl(req2, reqsize, "__SEQUENCE_NUM_ASCII__",
+                            i =
+                                strrepl(req2, i, "__SEQUENCE_NUM_ASCII__",
                                         seq_buf);
                         }
                         
@@ -999,7 +999,7 @@ int in_array_execute_fuzz(option_block *opts)
                             if(fuzz(opts, preq, preqsize) < 0)
                                 goto done;
                         
-                        if(fuzz(opts, req2, reqsize)<0)
+                        if(fuzz(opts, req2, i)<0)
                             goto done;
                     }
                 }

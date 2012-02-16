@@ -630,7 +630,7 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
     return origl;
 }
 
-int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
+int smemrepl(char *buf, size_t buflen, size_t maxlen, char *old, char *new, int newl)
 {
     char *f;
     char *str = buf;
@@ -647,11 +647,11 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
     {
         ++repls;
 
-        if( ( (f+newl) < buf) || ( (f+newl) > (buf + buflen) ) )
+        if( ( (f+newl) < buf) || ( (f+newl) > (buf + maxlen) ) )
             return origl;
-        else if ( (((f+oldl) < buf)) || ( (f+oldl) > (buf+buflen)) )
+        else if ( (((f+oldl) < buf)) || ( (f+oldl) > (buf+maxlen)) )
             return origl;
-        else if ( origl - (f - buf ) > buflen ) return origl;
+        else if ( origl - (f - buf ) > maxlen ) return origl;
 
         if(origl - oldl < 0)
         {
@@ -659,7 +659,7 @@ int smemrepl(char *buf, size_t buflen, char *old, char *new, int newl)
             return 0;
         }
 
-        memmove(f+newl, f+oldl, origl - (f - buf));
+        memmove(f+newl, f+oldl, (buf + origl) - (f+oldl) );
 
         memcpy(f, new, newl);
 
