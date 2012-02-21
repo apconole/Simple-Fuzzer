@@ -33,7 +33,10 @@
 
 /* this provides a finite state machine for regular expression processing */
 
-/* returns >0 if there's a wildcard; 0 otherwise */
+/**
+ * \brief Says that there are wildcards.
+ * \return returns >0 if there's a wildcard; 0 otherwise 
+ */
 extern int wildcards(char *pattern);
 extern int compiles(char *pattern); /* returns < 0 if there's an error */
 extern void pfsmerror(); /* prints the last known error from an fsm call */

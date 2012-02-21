@@ -33,6 +33,10 @@
 
 #include "options-block.h"
 
+/**
+ * \brief Get the localtime formatted in a suitable format for logging
+ * \return A string which represents the local time as a loggable string.
+ */
 extern char *get_time_as_log();
 
 #define PACKED_ATTRIBUTE(a) \

@@ -58,6 +58,18 @@ typedef void (*post_fuzz_mod)(option_block *opts, void *rbuf, int rblen);
 typedef char *(*plugin_name)();
 typedef char *(*plugin_version)();
 
+/**
+ * \brief A _pprovisor struct is the basic form of plugin interface.
+ *
+ * The plugin call flow looks like:
+ *  - capex(), name(), version() are all called when the plugin is loaded.
+ *  - config() is called during config file parsing, if there is a new syntax
+ *    detected.
+ *  - trans() is called to setup the transport layer
+ *  - payload_trans() is called before any substitution happens
+ *  - fuzz_trans() is called after all replacement has happened
+ *  - post_fuzz() is called after the data has been sent
+ */
 typedef struct _pprovisor
 {
     plugin_capex             capex;
@@ -84,8 +96,17 @@ plugin_provisor *g_plugin; /* needed for win32 issue */
 #include <sys/types.h>
 #include <unistd.h>
 
+/**
+ * \brief Display the sfuzz search paths (for debug only)
+ */
 extern void dump_paths();
 
+/**
+ * \brief The basic sfuzz error message when parsing a config file.
+ *
+ * \param msg A message to display.
+ * \param opts The options block (which holds state).
+ */
 static inline void file_error(char *msg, option_block *opts)
 {
     fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",

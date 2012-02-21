@@ -31,6 +31,9 @@
 #ifndef __OPTIONS_BLOCK_H__
 #define __OPTIONS_BLOCK_H__
 
+/**
+ * \brief the format of a fuzz 'symbol'
+ */
 typedef struct
 {
     char sym_name[8192];
@@ -43,6 +46,9 @@ typedef struct
     char bin;
 } sym_t;
 
+/**
+ * \brief The format of a fuzz 'array'
+ */
 typedef struct
 {
     char   array_name[8192];
@@ -52,6 +58,14 @@ typedef struct
     int    array_max_val;
 } array_t;
 
+/**
+ * \brief All of the options and states associated with a fuzzing effort.
+ *
+ * This probably could have been a bunch of globals, but a future roadmap
+ * effort could be to rewrite sfuzz to distribute over a number of nodes and
+ * run multiple fuzz test cases. Having the opts block in this format makes
+ * that job easier.
+ */
 typedef struct
 {
     FILE *fp;
