@@ -43,7 +43,8 @@ uninstall:
 	@echo "Uninstalled."
 
 clean:
-	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so *.d
+	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so *.d 
+	@$(RM) -rf *.so.dSYM
 
 distclean dist-clean: clean
 	@$(RM) -f Makefile Makefile.old

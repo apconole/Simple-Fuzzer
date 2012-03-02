@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 
 int32_t spawn_monitored(char *outfile, char *errfile, char *argv[]){
@@ -6,7 +7,7 @@ int32_t spawn_monitored(char *outfile, char *errfile, char *argv[]){
     exit(-1);
 }
 
-int32_t monitored_signal(uint32_t signal, uint8_t status, int32_t pid)
+int32_t monitored_signal(uint32_t signals, uint8_t status, int32_t pid)
 {
     return -1;
 }

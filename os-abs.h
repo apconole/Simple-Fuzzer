@@ -115,9 +115,19 @@ extern void dump(void *b, int len, FILE *out);
 extern int  mssleep(unsigned long int);
 
 extern char *process_error();
+
+
+#ifndef HAVE_MEMMEM
+extern void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl);
+
+static inline  void *memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
+{
+    return __internal_memmem(hs, hsl, nd, ndl);
+}
+#endif
+
 #ifdef __WIN32__
 #define RTLD_NOW 0
-extern void *memmem(const void *hs, size_t hsl, const void *nd, size_t ndl);
 extern void *dlopen(const char *, int);
 extern void *dlsym(void *, const char *);
 extern char *dlerror();

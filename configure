@@ -241,10 +241,12 @@ if [ "X" = "X$SSL_PATH" ]; then
     fi
 fi
 
+# to test for features
+TESTC=`${MKTEMP} -d /tmp/sfuzz-feattest.XXXXXX`
+
 echo -n "Checking for libdl support ..."
-TESTC=`${MKTEMP} -d`
 if [ -e "$TESTC" ]; then
-cat > ${TESTC}/dltest.c <<EOF
+$CAT > ${TESTC}/dltest.c <<EOF
 #include <stdio.h>
 #include <dlfcn.h>
 
@@ -258,15 +260,58 @@ int main()
 
 EOF
 
-$CC_CHECK -o ${TESTC}/test ${TESTC}/dltest.c -ldl
+${CROSS_COMPILE}${CC_CHECK} -o ${TESTC}/test ${TESTC}/dltest.c -ldl 2>/dev/null >/dev/null
 
 if [ $? -eq 0 ]; then
-   HAVE_LIBDL="YES"
+    echo "                                    ... found"
+    HAVE_LIBDL="YES"
+else
+    HAVE_LIBDL=""
+    echo "                                    ... NOT found, support disabled"
 fi
+
+
+echo -n "Platform provides memmem..."
+$CAT > ${TESTC}/memmemtest.c <<EOF
+#define _GNU_SOURCE 1
+
+#include <string.h>
+
+int main(int argc, char *argv[])
+{
+   if( argc < 1 )
+     return -1;
+
+   void *p = memmem( argv[0], strlen(argv[0]),
+                     "memmem", strlen("memmem") );
+
+   if( !p )
+     return -2;
+
+   return 0;
+}
+
+EOF
+
+${CROSS_COMPILE}${CC_CHECK} -o ${TESTC}/memmem ${TESTC}/memmemtest.c 2>/dev/null >/dev/null
+
+if [ $? -eq 0 ]; then
+    echo "                                    ... found"
+    HAVE_MEMMEM="YES"
+else
+    echo "                                    ... NOT found, using sfuzz's"
+    HAVE_MEMMEM=""
+fi
+
+###
+# end feature check
+###
 ${RM} -rf ${TESTC}
 
 else
+echo "WARNING: Unable to test for features - assuming the worst"
 HAVE_LIBDL=""
+HAVE_MEMMEM=""
 fi
 
 LIBS=""
@@ -284,7 +329,6 @@ elif [ "Linux" = "$OS_SYSTEM" ]; then
 fi
 
 if [ "X$HAVE_LIBDL" != "X" ]; then
-    echo "                                    ... found"
     XCFLAGS="$XCFLAGS -fPIC"
     XSHARED_LIBS="$XSHARED_LIBS -ldl"
     LIBS="$XSHARED_LIBS"
@@ -299,8 +343,9 @@ if [ "X$HAVE_LIBDL" != "X" ]; then
         XSHARED_INC=" os-abs.o "
     fi
 fi
-if [ "X" = "X$HAVE_LIBDL" ]; then
-    echo "                                    ... NOT found, support disabled"
+
+if [ "X${HAVE_MEMMEM}" != "X" ]; then
+   XCFLAGS="$XCFLAGS -DHAVE_MEMMEM=1 "
 fi
 
 if [ $PLUGIN_SUPPORT = "disable" ]; then

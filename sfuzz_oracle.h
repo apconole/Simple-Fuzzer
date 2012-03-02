@@ -8,7 +8,7 @@
 #if defined(__WIN32__)
 typedef unsigned long PID;
 typedef unsigned long TID;
-#elif defined(unix)
+#elif defined(unix) || defined(__APPLE__)
 #include <sys/types.h>
 #include <unistd.h>
 typedef pid_t PID;
