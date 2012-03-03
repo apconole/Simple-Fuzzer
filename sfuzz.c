@@ -40,6 +40,7 @@
 
 #ifdef __WIN32__
 #include "windows.h"
+#include <sys/time.h>
 #else
 #include <sys/time.h>
 #include <string.h>

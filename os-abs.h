@@ -128,7 +128,7 @@ static inline  void *memmem(const void *hs, size_t hsl, const void *nd, size_t n
 
 #ifdef __WIN32__
 #define RTLD_NOW 0
-extern void *dlopen(const char *, int);
+extern void *dlopen(char *, int);
 extern void *dlsym(void *, const char *);
 extern char *dlerror();
 #endif

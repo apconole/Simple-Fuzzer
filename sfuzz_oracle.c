@@ -18,8 +18,9 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#ifndef __WIN32__
 #include <sys/resource.h>
-
+#endif
 #include "sfuzz_oracle.h"
 
 void cleanup( struct sfuzz_oracle_debugger *d)

@@ -183,7 +183,7 @@ FILE *sfuzz_fopen(const char *filename, const char *perms)
         if(strchr(nameBuff, '/'))
         {
             char bigpath[4096] = {0};
-            memcpy(bigpath, nameBuff, rindex(nameBuff, '/') - nameBuff);
+            memcpy(bigpath, nameBuff, strrchr(nameBuff, '/') - nameBuff);
             sfuzz_searchpath_prepend(nameBuff);
         }
         return fp;
@@ -454,8 +454,8 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
     sym_name[sym_len] = 0;
     sym_val[sym_val_len] = 0;
 
-    l = rindex(sym_name, '[') - sym_name;
-    if(rindex(sym_name, ']') - sym_name < l)
+    l = strrchr(sym_name, '[') - sym_name;
+    if(strrchr(sym_name, ']') - sym_name < l)
     {
         file_error("array subscript delimiter not found", opts);
     }

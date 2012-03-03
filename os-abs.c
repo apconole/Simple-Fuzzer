@@ -35,8 +35,13 @@
 #include "sfuzz-plugin.h"
 
 #ifdef __WIN32__
+#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#ifdef _MSC_VER
+#include <wspiapi.h>
+#endif
+#include <sys/time.h>
 typedef char * caddr_t;
 #else
 #include <stdlib.h>
@@ -697,18 +702,6 @@ void dump(void* b, int len, FILE *dump){
 
 #ifdef __WIN32__
 
-char *rindex(const char *s, char c)
-{
-    size_t size = strlen(s);
-    char *str = ((char *)s)+size;
-    while(size--)
-    {
-        if(*str == c)
-            return str;
-        --str;
-    }
-}
-
 /*this is a "workaround" for the fact that windows isn't 'compliant' and
   has it's own dynamic loading functions. basically, we'll just wrap them
   here.
@@ -717,7 +710,7 @@ char *rindex(const char *s, char c)
 */
 
 /*return a handle to a .dll/.so file*/
-void *dlopen(const char *name, int opts)
+void *dlopen(char *name, int opts)
 {
     HMODULE hModule;
     UINT uMode;
