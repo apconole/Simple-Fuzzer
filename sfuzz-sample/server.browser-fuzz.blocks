@@ -11,6 +11,18 @@ include bad-nums.blocks.inc
 
 include basic-fuzz-strings.list
 
+$PROTO[0]=http
+$PROTO[1]=ftp
+
+sequence=.
+
+$SERVER[0]=FUZZ
+$SERVER[1]=SOMESERVER
+
+$URI[0]=FUZZ
+
+$URLFZ[0]=PROTO://SERVER/URI
+
 # left mangles
 $LEFTS[0]=LEFT
 $LEFTS[1]=ELFT
@@ -57,20 +69,44 @@ $ALIGN_VALUES[3]=FUZZ
 $HR_ATTRS[0]=align="ALIGN_VALUES"
 $HR_ATTRS[1]=NOSHADE
 $HR_ATTRS[2]=SIZE="NUMBERS"
-$HR_ATTRS[3]=WIDTH="NUMBERS"
-$HR_ATTRS[4]=WIDTH="NUMBERS%"
-$HR_ATTRS[5]=CLASS="FUZZ"
-$HR_ATTRS[6]=ID="FUZZ"
-$HR_ATTRS[7]=STYLE="FUZZ"
-$HR_ATTRS[8]=TITLE="FUZZ"
+$HR_ATTRS[3]=SIZE="FUZZ"
+$HR_ATTRS[4]=WIDTH="NUMBERS"
+$HR_ATTRS[5]=WIDTH="NUMBERS%"
+$HR_ATTRS[6]=WIDTH="FUZZ"
+$HR_ATTRS[7]=WIDTH="FUZZ%"
+$HR_ATTRS[8]=CLASS="FUZZ"
+$HR_ATTRS[9]=ID="FUZZ"
+$HR_ATTRS[10]=STYLE="FUZZ"
+$HR_ATTRS[11]=TITLE="FUZZ"
+
+# IMG attributes
+$IMG_ATTRS[0]=ALT="FUZZ"
+$IMG_ATTRS[1]=SRC="URLFZ"
+$IMG_ATTRS[2]=SRC="FUZZ"
+$IMG_ATTRS[3]=align="ALIGN_VALUES"
+$IMG_ATTRS[4]=border="NUMBERS"
+$IMG_ATTRS[5]=border="FUZZ"
+$IMG_ATTRS[6]=height="NUMBERS"
+$IMG_ATTRS[7]=height="NUMBERS%"
+$IMG_ATTRS[8]=height="FUZZ"
+$IMG_ATTRS[9]=hspace="NUMBERS"
+$IMG_ATTRS[10]=hspace="FUZZ"
+$IMG_ATTRS[11]=ismap
+$IMG_ATTRS[12]=longdesc="URLFZ"
+$IMG_ATTRS[13]=vspace="NUMBERS"
+$IMG_ATTRS[14]=vspace="FUZZ"
+$IMG_ATTRS[15]=width="NUMBERS"
+$IMG_ATTRS[16]=width="NUMBERS%"
+$IMG_ATTRS[17]=width="FUZZ"
 
 # Set up the HTML tags to test
 
-$TAG[0]=HR
+$TAG[0]=IMG
+$TAG[1]=HR
 
 # set the max sequence length
 maxseqlen=10240
-seqstep=50
+seqstep=1024
 endcfg
 HTTP/1.0 200 OK
 Content-Type: text/html
