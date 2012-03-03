@@ -65,7 +65,7 @@ deb: all
 	@$(SED) -ire 's@x86_64@amd64@g' sfuzz-deb-temp/control/control
 	@$(SED) -ire 's/MAINTAINER/$(MAINT)/g' sfuzz-deb-temp/control/control
 	@echo "2.0" > sfuzz-deb-temp/debian-binary
-	@$(TAR) --owner=0 --group=0 --strip-components=2 --directory=sfuzz-deb-temp/data -czf sfuzz-deb-temp/data.tar.gz `echo $(PREFIX) | $(SED) 's@^/@$(PREFIX)@g'`
+	@$(TAR) --owner=0 --group=0 --strip-components=2 --directory=sfuzz-deb-temp/data -czf sfuzz-deb-temp/data.tar.gz `echo $(PREFIX) | $(SED) 's@^/@@g'`
 	@$(TAR) --owner=0 --group=0 --directory=sfuzz-deb-temp/control -czf sfuzz-deb-temp/control.tar.gz control md5sums
 	@cd sfuzz-deb-temp && $(AR) rcs ../simple-fuzzer.deb debian-binary control.tar.gz data.tar.gz
 
