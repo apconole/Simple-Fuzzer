@@ -1,0 +1,7 @@
+Package: Simple-Fuzzer
+Version: VERSION
+Architecture: ARCHITECTURE
+Maintainer: MAINTAINER
+Depends: libc6
+Description: A simple fuzz test-case builder
+  Simple-Fuzzer (sfuzz) is a simplistic fuzz test case generator. It is a generation-based fuzzer.

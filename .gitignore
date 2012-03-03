@@ -3,7 +3,9 @@
 *.d
 *.so
 *.exe
+*.deb
 sfo
 sfuzz
 Makefile
 Makefile.old
+sfuzz-deb-temp/

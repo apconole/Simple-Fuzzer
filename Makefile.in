@@ -43,12 +43,31 @@ uninstall:
 	@echo "Uninstalled."
 
 clean:
-	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so *.d 
-	@$(RM) -rf *.so.dSYM
+	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so *.d *.deb
+	@$(RM) -rf *.so.dSYM sfuzz-deb-temp
 
 distclean dist-clean: clean
 	@$(RM) -f Makefile Makefile.old
 	@echo Makefile / configuration removed.
+
+# the following is a semi-portable way of writing a debian dpkg file for
+# the distribution of sfuzz as a .deb file
+deb: all
+	@$(MKDIR) -p -m 0700 sfuzz-deb-temp/data
+	@$(MKDIR) -p -m 0700 sfuzz-deb-temp/control
+	@$(MAKE) DESTDIR=sfuzz-deb-temp/data install
+	@$(CP) debfile sfuzz-deb-temp/control/control
+	@$(FIND) sfuzz-deb-temp/data -type f -print | $(XARGS) $(MD5SUM) > sfuzz-deb-temp/control/md5sums
+	@$(SED) -ire 's@sfuzz-deb-temp/data@@g' sfuzz-deb-temp/control/md5sums
+	@$(SED) -ire 's@\*@@g' sfuzz-deb-temp/control/md5sums
+	@$(SED) -ire 's@VERSION@$(VERSION)@g' sfuzz-deb-temp/control/control
+	@$(SED) -ire 's@ARCHITECTURE@$(ARCH)@g' sfuzz-deb-temp/control/control
+	@$(SED) -ire 's@x86_64@amd64@g' sfuzz-deb-temp/control/control
+	@$(SED) -ire 's/MAINTAINER/$(MAINT)/g' sfuzz-deb-temp/control/control
+	@echo "2.0" > sfuzz-deb-temp/debian-binary
+	@$(TAR) --owner=0 --group=0 --strip-components=2 --directory=sfuzz-deb-temp/data -czf sfuzz-deb-temp/data.tar.gz `echo $(PREFIX) | $(SED) 's@^/@$(PREFIX)@g'`
+	@$(TAR) --owner=0 --group=0 --directory=sfuzz-deb-temp/control -czf sfuzz-deb-temp/control.tar.gz control md5sums
+	@cd sfuzz-deb-temp && $(AR) rcs ../simple-fuzzer.deb debian-binary control.tar.gz data.tar.gz
 
 release: distclean
 	@echo Making a release tree:
@@ -59,3 +78,4 @@ release: distclean
 	@$(RM) -rf /tmp/sfuzz-release/sfuzz-sample/CVS
 	@$(RM) -rf /tmp/sfuzz-release/.git
 	@echo /tmp/sfuzz-release is built.
+

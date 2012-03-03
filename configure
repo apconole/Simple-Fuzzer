@@ -35,6 +35,21 @@ RM=`$WHICH rm 2> /dev/null`
 MKDIR=`$WHICH mkdir 2> /dev/null`
 MV=`$WHICH mv 2> /dev/null`
 MKTEMP=`$WHICH mktemp 2> /dev/null`
+FIND=`$WHICH find 2> /dev/null`
+TAR=`$WHICH tar 2> /dev/null`
+CUT=`$WHICH cut 2> /dev/null`
+XARGS=`$WHICH xargs 2> /dev/null`
+MD5SUM=`$WHICH md5sum 2> /dev/null`
+
+GIT=`$WHICH git 2> /dev/null`
+
+if [ ! -e $GIT ]; then
+   MAINT=unknown
+else
+   MAINT="`$GIT config user.name` <`$GIT config user.email`>"
+fi
+
+ARCH=`$UNAME -m`
 
 if [ -e Makefile ]; then
     echo "WARNING: You have a previous makefile. I'm moving it to Makefile.old"
@@ -180,6 +195,7 @@ echo "                                         ... found"
 
 CC_LOCATION_VAL=`$DIRNAME $CC_LOCATION`
 CC_COMPILER_VAL=`$BASENAME $CC_LOCATION`
+AR_VAL=`$WHICH ${CROSS_COMPILE}ar`
 
 echo -n "Checking for libssl (libssl/ssl.h) ..."
 for i in  $LIBDIRS /lib  /usr/lib /usr/local/lib /opt/local/lib \
@@ -352,6 +368,8 @@ if [ $PLUGIN_SUPPORT = "disable" ]; then
     XCFLAGS_EXTRA="-DNOPLUGIN"
 fi
 
+SFUZZ_VERSION=`$GREP define\ VERSION version.h | $CUT -d" " -f3 | $SED 's/"//g'`
+
 echo "Done configuring ... writing Makefile"
 
 $CAT > Makefile <<__MAKEFILE_EOF__
@@ -360,8 +378,17 @@ $CAT > Makefile <<__MAKEFILE_EOF__
 # you have been warned.
 
 ### Variables for building
+MKTEMP=$MKTEMP
 CCPATH=$CC_LOCATION_VAL
 CC=$CC_COMPILER_VAL
+AR=$AR_VAL
+FIND=$FIND
+TAR=$TAR
+MAINT=$MAINT
+ARCH=$ARCH
+XARGS=$XARGS
+VERSION=$SFUZZ_VERSION
+MD5SUM=$MD5SUM
 INSTALL=$HAS_INSTALL
 INSTALL_DIR=$HAS_INSTALL_DIR
 CFLAGS=$XCFLAGS $XCFLAGS_EXTRA
