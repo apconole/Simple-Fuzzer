@@ -1234,9 +1234,9 @@ void emit_delta(struct timeval *pPacketCurrent, struct timeval *pPacketLast,
         burstr = tRemainder.tv_sec * 1000000;
         burstr += tRemainder.tv_usec;
         
-        //if(burstr > bursty){ return; }
-        if(burstr < 65535)
-            burst_hist[burstr].pkt_count ++;
+        if(burstr > bursty){ return; }
+        
+        burst_hist[burstr % 65535].pkt_count ++;
         
     }
     //printf("%u:%u\n", tRemainder.tv_sec, tRemainder.tv_usec);
@@ -1822,6 +1822,8 @@ int main(int argc, char *argv[])
 
         data += 14;
 #endif
+        struct timeval rcvtime;
+
         if(!pcap_input)
         {
             sl = sizeof(struct sockaddr_in);
@@ -1829,7 +1831,17 @@ int main(int argc, char *argv[])
             bytes_read = select(sd+1, &readfd, NULL, NULL, &tv);
             
             if(bytes_read > 0)
+            {
                 bytes_read = recvfrom(sd, data, 65535, 0, (struct sockaddr *)&sa, &sl);
+                rcvtime.tv_sec = time(NULL); // we do this because on some 
+                // platforms, notably embedded, 
+                // gettimeofday can "forget" to 
+                // populate tv_sec.
+                rcvtime.tv_usec = 0;
+                
+                gettimeofday(&rcvtime, NULL);
+
+            }
             else
             {
                 bytes_read = 1;
@@ -1851,6 +1863,13 @@ int main(int argc, char *argv[])
                 pcap_rec.incl_len = endian_swap_32(pcap_rec.incl_len);
                 pcap_rec.orig_len = endian_swap_32(pcap_rec.orig_len);
             }
+            
+            if( print_hist )
+            {
+                rcvtime.tv_sec = pcap_rec.ts_sec;
+                rcvtime.tv_usec = pcap_rec.ts_usec;
+            }
+
             if(pcap_sleep || bursty)
             {
                 memcpy(&lasttime, &curtime, sizeof(lasttime));
@@ -1861,19 +1880,11 @@ int main(int argc, char *argv[])
                 if(bursty)    emit_delta(&curtime, &lasttime, bursty);
             }
             bytes_read = read(sd, data, pcap_rec.incl_len);
+
         }
 
         if ( bytes_read > 0 )
         {
-            struct timeval rcvtime;
-
-            rcvtime.tv_sec = time(NULL); // we do this because on some 
-                                         // platforms, notably embedded, 
-                                         // gettimeofday can "forget" to 
-                                         // populate tv_sec.
-            rcvtime.tv_usec = 0;
-
-            gettimeofday(&rcvtime, NULL);
 
             if( heuristictime.tv_sec ||
                 heuristictime.tv_usec )
