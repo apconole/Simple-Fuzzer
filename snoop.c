@@ -233,6 +233,10 @@ uchar string_filter_not   = 0;
 
 typedef enum { eETH_ADDR, eIP_ADDR } EAddress;
 
+uint peak_rate = 0;
+uint min_rate = 0xffffffff;
+uint current_second_bytes = 0;
+
 struct histogram_row
 {
     uint  pkt_size;
@@ -1192,6 +1196,30 @@ int snoop_nano_sleep(const struct timespec *req, struct timespec *remain)
     return 0;
 }
 
+int timeval_compare(struct timeval *pFirst, struct timeval *pSecond)
+{
+    if( ( pFirst->tv_sec > pSecond->tv_sec ) ||
+        ( ( pFirst->tv_sec == pSecond->tv_sec ) &&
+          ( pFirst->tv_usec > pSecond->tv_usec ) ) )
+        return 1;
+
+    if( ( pFirst->tv_sec == pSecond->tv_sec ) &&
+        ( pFirst->tv_usec == pSecond->tv_usec ) )
+        return 0;
+
+    return -1;
+}
+
+long int timeval_seconds_delta( struct timeval *pFirst, struct timeval *pSecond )
+{
+    return pFirst->tv_sec - pSecond->tv_sec;
+}
+
+long int timeval_useconds_delta( struct timeval *pFirst, struct timeval *pSecond )
+{
+    return pFirst->tv_usec - pSecond->tv_usec;
+}
+
 void emit_delta(struct timeval *pPacketCurrent, struct timeval *pPacketLast,
                 uint32_t bursty)
 {
@@ -1256,6 +1284,7 @@ int main(int argc, char *argv[])
     char *pcap_fname = NULL;
     struct timeval lasttime = {0};
     struct timeval curtime = {0};
+    struct timeval heuristictime = {0,0};
     int promisc = 0;
     uchar notflag = 0, pcap_sleep = 0;
     struct sockaddr_in sa;
@@ -1836,6 +1865,43 @@ int main(int argc, char *argv[])
 
         if ( bytes_read > 0 )
         {
+            struct timeval rcvtime;
+
+            rcvtime.tv_sec = time(NULL); // we do this because on some 
+                                         // platforms, notably embedded, 
+                                         // gettimeofday can "forget" to 
+                                         // populate tv_sec.
+            rcvtime.tv_usec = 0;
+
+            gettimeofday(&rcvtime, NULL);
+
+            if( heuristictime.tv_sec ||
+                heuristictime.tv_usec )
+            {
+                long int seconds_delta = 
+                    timeval_seconds_delta( &rcvtime, &heuristictime );
+                if( seconds_delta >= 1 )
+                {
+                    // time to calculate;
+                    long int bytespersec = ( current_second_bytes / seconds_delta );
+                    if( bytespersec > peak_rate )
+                        peak_rate = bytespersec;
+                    if( bytespersec < min_rate )
+                        min_rate = bytespersec;
+
+                    current_second_bytes = 0;
+                    heuristictime.tv_sec = rcvtime.tv_sec;
+                    heuristictime.tv_usec = rcvtime.tv_usec;
+                }
+            }
+            else
+            {
+                heuristictime.tv_sec = rcvtime.tv_sec;
+                heuristictime.tv_usec = rcvtime.tv_usec;
+            }
+
+            current_second_bytes += bytes_read;
+
             res = DumpPacket(data, bytes_read, display);
             if(res == 1)
             {
@@ -1843,6 +1909,8 @@ int main(int argc, char *argv[])
 
                 if(print_hist)
                 {
+                    
+
                     for(sl = 0; sl < MAX_NUM_ROWS; ++sl)
                     {
                         if(bytes_read <= histogram[sl].pkt_size)
@@ -1858,11 +1926,7 @@ int main(int argc, char *argv[])
             if(pcap_dump_file && res == 1)
             {
                 pcaprec_hdr_t pcap_hdr;
-                struct timeval rcvtime;
 
-                rcvtime.tv_sec = time(NULL);
-                rcvtime.tv_usec = 0;
-                gettimeofday(&rcvtime, NULL);
 
                 pcap_hdr.ts_sec = rcvtime.tv_sec;
                 pcap_hdr.ts_usec = rcvtime.tv_usec;
@@ -1908,6 +1972,14 @@ int main(int argc, char *argv[])
 
     if(print_hist)
     {
+        if( current_second_bytes )
+        {
+            printf(
+        "Remaining data (discarded from calcs): %u bytes\n", current_second_bytes);
+        }
+
+        printf("Data Rates: min=%d Bps, peak=%d Bps\n", min_rate, peak_rate);
+        
         for(sl = 0; sl <= MAX_NUM_ROWS; ++sl)
         {
             if(histogram[sl].pkt_count)
