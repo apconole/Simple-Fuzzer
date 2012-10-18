@@ -37,6 +37,18 @@
 # include "windows.h"
 # include "winsock2.h"
 
+
+
+struct timezone {
+    int tz_minuteswest;     /* minutes west of Greenwich */
+    int tz_dsttime;         /* type of DST correction */
+};
+
+extern int gettimeofday(struct timeval *, struct timezone *);
+extern time_t time(time_t *);
+
+typedef unsigned int uint32_t;
+
 /* if we don't have mstcpip "special" codes */
 # ifndef SIO_RCVALL
 #  define SIO_RCVALL  _WSAIOW(IOC_VENDOR,1)
@@ -234,6 +246,8 @@ uchar string_filter_not   = 0;
 typedef enum { eETH_ADDR, eIP_ADDR } EAddress;
 
 uint peak_rate = 0;
+uint avg_rate = 0;
+uint avg_samples = 0;
 uint min_rate = 0xffffffff;
 uint current_second_bytes = 0;
 
@@ -1168,6 +1182,9 @@ void terminate_hnd(int sig)
 #endif
 {
     run = 0;
+#ifdef __WIN32__
+    return 1;
+#endif
 }
 
 #ifdef __WIN32__
@@ -1266,12 +1283,11 @@ int main(int argc, char *argv[])
 {
     FILE *pcap_dump_file = NULL;
     pcap_hdr_t pcap_header;
-    int sd=-1, od=-1, bytes_read;
-    int display = 1, out_phy = 0;
+    int sd=-1, bytes_read;
+    int display = 1;
     char res = 0;
     char *rdata;
     char *data;
-    char rt = 0;
     char infomercial[15]={0};
     char pcap_input = 0, bursty = 0;
     char pcap_byteswap  = 0;
@@ -1279,21 +1295,24 @@ int main(int argc, char *argv[])
     unsigned long int pkts_rx = 0;
     unsigned long int pkts_pass = 0;
     char *lastarg = NULL;
+#ifndef __WIN32__
+    int od = -1, out_phy = 0;
+    char rt = 0;
     char *iface = NULL;
     char *oface = NULL;
+    int promisc = 0;
+#endif
     char *pcap_fname = NULL;
     struct timeval lasttime = {0};
     struct timeval curtime = {0};
     struct timeval heuristictime = {0,0};
-    int promisc = 0;
     uchar notflag = 0, pcap_sleep = 0;
     struct sockaddr_in sa;
-    uint sl;
 
 #ifdef __WIN32__
-    struct in_addr inaddr;
+    int sl;
     struct hostent *h;
-    int ON = 1;
+    u_long ON = 1;
     WSADATA wsaData;
 
     WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -1303,6 +1322,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 #else
+    uint sl;
+
     signal(SIGABRT, &terminate_hnd);
     signal(SIGTERM, &terminate_hnd);
     signal(SIGINT, &terminate_hnd);
@@ -1664,8 +1685,14 @@ int main(int argc, char *argv[])
                   | O_NOCTTY
 #endif
             );
+
         if(sd < 1)
             PANIC("open");
+
+#ifdef __WIN32__
+        _setmode(sd, _O_BINARY);
+#endif
+
         if(read(sd, &in_pcap_header, sizeof(in_pcap_header)) < 0)
             PANIC("read");
 
@@ -1853,6 +1880,7 @@ int main(int argc, char *argv[])
             pcaprec_hdr_t pcap_rec;
             if(read(sd, &pcap_rec, sizeof(pcap_rec)) < 0)
             {
+                perror("read");
                 bytes_read = 0; run = 0;
                 continue;
             }
@@ -1899,6 +1927,9 @@ int main(int argc, char *argv[])
                         peak_rate = bytespersec;
                     if( bytespersec < min_rate )
                         min_rate = bytespersec;
+
+                    avg_rate += bytespersec;
+                    avg_samples++;
 
                     current_second_bytes = 0;
                     heuristictime.tv_sec = rcvtime.tv_sec;
@@ -1966,7 +1997,9 @@ int main(int argc, char *argv[])
 #endif
         }
         else if(bytes_read == -1)
+        {
             PANIC("Snooper read");
+        }
 
         if(bytes_read) ++pkts_rx;
         
@@ -1989,7 +2022,7 @@ int main(int argc, char *argv[])
         "Remaining data (discarded from calcs): %u bytes\n", current_second_bytes);
         }
 
-        printf("Data Rates: min=%d Bps, peak=%d Bps\n", min_rate, peak_rate);
+        printf("Data Rates: min=%d Bps, peak=%d Bps, avg=%f Bps\n", min_rate, peak_rate, (avg_samples) ? (float)avg_rate / (float)avg_samples : 0);
         
         for(sl = 0; sl <= MAX_NUM_ROWS; ++sl)
         {

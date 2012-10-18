@@ -131,6 +131,7 @@ static inline  void *memmem(const void *hs, size_t hsl, const void *nd, size_t n
 extern void *dlopen(char *, int);
 extern void *dlsym(void *, const char *);
 extern char *dlerror();
+
 #endif
 
 #endif
