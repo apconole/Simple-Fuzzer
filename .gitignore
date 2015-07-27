@@ -5,6 +5,7 @@
 *.exe
 *.deb
 snoop
+simple-fuzzer.spec
 sfo
 sfuzz
 Makefile
