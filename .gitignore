@@ -4,6 +4,7 @@
 *.so
 *.exe
 *.deb
+snoop
 sfo
 sfuzz
 Makefile
