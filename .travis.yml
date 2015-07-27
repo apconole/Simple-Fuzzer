@@ -1,0 +1,14 @@
+language: c
+
+before_install:
+   - sudo apt-get update -qq
+   - sudo apt-get install libssl-dev cppcheck
+   - sudo pip install cpp-coveralls
+
+compiler:
+   - gcc
+
+script: 
+   - ./configure --enable-snoop
+   - make
+   - sudo make install
