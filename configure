@@ -197,8 +197,8 @@ CC_LOCATION_VAL=`$DIRNAME $CC_LOCATION`
 CC_COMPILER_VAL=`$BASENAME $CC_LOCATION`
 AR_VAL=`$WHICH ${CROSS_COMPILE}ar`
 
-echo -n "Checking for libssl (libssl/ssl.h) ..."
-for i in  $LIBDIRS /lib  /usr/lib /usr/local/lib /opt/local/lib \
+echo -n "Checking for libssl (openssl/ssl.h) ..."
+for i in  $LIBDIRS /lib  /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /opt/local/lib \
 /*ssl /usr/*ssl /opt/*ssl /usr/local/*ssl /opt/local/*ssl \
 /*ssl/lib /usr/*ssl/lib /opt/*ssl/lib /usr/local/*ssl/lib /opt/local/*ssl/lib .
 do
