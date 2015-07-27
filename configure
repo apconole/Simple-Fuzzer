@@ -15,6 +15,7 @@ if [ "$1" = "-h" -o "$1" = "--help" ]; then
   echo "  --enable-plugin-samples    compile plugin samples as well"
   echo "  --disable-plugins          compile without plugin support"
   echo "  --force-symbols            compile sfuzz plugins with extra symbols"
+  echo "  --enable-profiling         compile sfuzz and plugins with profiling data"
   echo "  --help                     this message"
   exit 0
 fi
@@ -75,6 +76,7 @@ XSHARED_LIBS=""
 XSHARED_OPTS=""
 XSHARED_INC=""
 FORCE_SYMBOLS="N"
+PROFILING_DATA="N"
 HAS_INSTALL=`$WHICH install 2> /dev/null`
 
 if [ '!' "X" = "X$*" ]; then
@@ -134,6 +136,12 @@ if [ '!' "X" = "X$*" ]; then
         FORCE_TMP=`echo "$1"|$SED 's/.*--force-symbols//'`
         if [ -z $FORCE_TMP ]; then
             FORCE_SYMBOLS="Y"
+        fi
+    fi
+    if [ "XN" = "X$PROFILING_DATA" ]; then
+        FORCE_TMP=`echo "$1"|$SED 's/.*--enable-profiling//'`
+        if [ -z $FORCE_TMP ]; then
+            PROFILING_DATA="Y"
         fi
     fi
     shift
@@ -358,6 +366,11 @@ if [ "X$HAVE_LIBDL" != "X" ]; then
     if [ "$FORCE_SYMBOLS" = "Y" ]; then
         XSHARED_INC=" os-abs.o "
     fi
+fi
+
+if [ "XY" = "X$PROFILING_DATA" ]; then
+   XCFLAGS="$XCFLAGS -fprofile-arcs -ftest-coverage"
+   XLDFLAGS="$XLDFLAGS -fprofile-arcs -ftest-coverage"
 fi
 
 if [ "X${HAVE_MEMMEM}" != "X" ]; then
