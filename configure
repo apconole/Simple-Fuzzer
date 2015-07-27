@@ -453,8 +453,7 @@ SFUZZ_RELEASE=`echo $SFUZZ_VERSION | $CUT -d"." -f3`
 
 echo "Wrote $SFUZZ_MAINVERSION : $SFUZZ_RELEASE"
 
-$SED -ire "s@VERSION@$SFUZZ_MAINVERSION@g" ./simple-fuzzer.spec
-$SED -ire "s@RELEASE@$SFUZZ_RELEASE@g" ./simple-fuzzer.spec
+$SED -re "s@VERSION@$SFUZZ_MAINVERSION@g" < ./simple-fuzzer.spec.in | $SED -re "s@RELEASE@$SFUZZ_RELEASE@g" > ./simple-fuzzer.spec
 
 echo "Finished. Now run 'make'"
 exit 0
