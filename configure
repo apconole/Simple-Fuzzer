@@ -253,11 +253,11 @@ if [ "X" = "X$SSL_IPATH" ]; then
     CRYPTO_PATH=""
 fi
 if [ -n "$SSL_PATH" ]; then
-    echo "                       ... found"
+    echo "                      ... found"
     
 fi
 if [ "X" = "X$SSL_PATH" ]; then
-    echo "                       ... NOT found, support disabled"
+    echo "                      ... NOT found, support disabled"
     echo "*** for the sample ssl plugin get it from http://www.openssl.org ***"
     if [ "X" != "X$SSL_PLUGIN_SUPPORT" ]; then
         echo "WARN: Disabled ssl plugin building support."
@@ -287,15 +287,15 @@ EOF
 ${CROSS_COMPILE}${CC_CHECK} -o ${TESTC}/test ${TESTC}/dltest.c -ldl 2>/dev/null >/dev/null
 
 if [ $? -eq 0 ]; then
-    echo "                                    ... found"
+    echo "                               ... found"
     HAVE_LIBDL="YES"
 else
     HAVE_LIBDL=""
-    echo "                                    ... NOT found, support disabled"
+    echo "                               ... NOT found, support disabled"
 fi
 
 
-echo -n "Platform provides memmem..."
+echo -n "Platform provides memmem ..."
 $CAT > ${TESTC}/memmemtest.c <<EOF
 #define _GNU_SOURCE 1
 
@@ -320,10 +320,10 @@ EOF
 ${CROSS_COMPILE}${CC_CHECK} -o ${TESTC}/memmem ${TESTC}/memmemtest.c 2>/dev/null >/dev/null
 
 if [ $? -eq 0 ]; then
-    echo "                                    ... found"
+    echo "                                 ... found"
     HAVE_MEMMEM="YES"
 else
-    echo "                                    ... NOT found, using sfuzz's"
+    echo "                                 ... NOT found, using sfuzz's"
     HAVE_MEMMEM=""
 fi
 
