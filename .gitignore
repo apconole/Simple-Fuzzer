@@ -4,6 +4,8 @@
 *.so
 *.exe
 *.deb
+*.gcno
+*.gcda
 snoop
 simple-fuzzer.spec
 sfo
