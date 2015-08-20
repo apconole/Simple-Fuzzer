@@ -195,6 +195,11 @@ XRSTUOLVD
         switch(*line++)
         {
         case 'b':
+            if(lastarg == NULL)
+            {
+                fprintf(stderr, "error: must specify a starting test.\n");
+                exit(-1);
+            }
             opts->start_test = atoi(lastarg);
             break;
         case 'e':
@@ -224,14 +229,29 @@ XRSTUOLVD
             opts->forget_conn = 1;
             break;
         case 'S':
+            if(lastarg == NULL)
+            {
+                fprintf(stderr, "error: must specify a remote host.\n");
+                exit(-1);
+            }
             opts->host     = atoip(lastarg);
             strncpy(opts->host_spec, lastarg, MAX_HOSTSPEC_SIZE);
             opts->host_spec[MAX_HOSTSPEC_SIZE-1] = 0;
             break;
 	case 't':
+            if(lastarg == NULL)
+            {
+                fprintf(stderr, "error: must specify a wait time.\n");
+                exit(-1);
+            }
             opts->time_out = atoi(lastarg);
             break;
         case 'p':
+            if(lastarg == NULL)
+            {
+                fprintf(stderr, "error: must specify a port.\n");
+                exit(-1);
+            }
             opts->port    = atoi(lastarg);
             strncpy(opts->port_spec, lastarg, MAX_PORTSPEC_SIZE);
             opts->port_spec[MAX_PORTSPEC_SIZE-1] = 0;
@@ -246,6 +266,11 @@ XRSTUOLVD
             opts->out_flag = 1;
             break;
         case 'L':
+            if(lastarg == NULL)
+            {
+                fprintf(stderr, "error: must specify a log file.\n");
+                exit(-1);
+            }
             strncpy(opts->pLogFilename, lastarg, MAX_FILENAME_SIZE-1);
             opts->pLogFilename[MAX_FILENAME_SIZE-1] = 0;            
             break;
@@ -253,6 +278,11 @@ XRSTUOLVD
             opts->verbosity = VERBOSE;
             break;
         case 'f':
+            if(lastarg == NULL)
+            {
+                fprintf(stderr, "error: must specify a config file.\n");
+                exit(-1);
+            }
             strncpy(opts->pFilename, lastarg, MAX_FILENAME_SIZE-1);
             opts->pFilename[MAX_FILENAME_SIZE-1] = 0;
             break;
