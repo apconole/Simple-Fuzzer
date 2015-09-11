@@ -30,7 +30,7 @@ cases are barely competent programmers. giving them a bulky C program, based on
 SPIKE that might require heavy modification seemed like i would be setting 
 myself up for maintenance nightmares, and insufficient code coverage.
   but - SPIKE is very powerful, very flexible, and VERY well known. this is 
-true but has one caveat: all the power and flexibility and large penis of SPIKE
+true but has one caveat: all the power and flexibility and apple pie of SPIKE
 comes at the cost of a steep learning curve. it requires time to learn, and 
 if/when a bug might surface, would require time delving into internals which I
 don't want to be 'the guy' for at work.

@@ -47,7 +47,7 @@ clean:
 	@$(RM) -rf *.so.dSYM sfuzz-deb-temp
 
 distclean dist-clean: clean
-	@$(RM) -f Makefile Makefile.old
+	@$(RM) -f Makefile Makefile.old simple-fuzzer.spec
 	@echo Makefile / configuration removed.
 
 # the following is a semi-portable way of writing a debian dpkg file for
