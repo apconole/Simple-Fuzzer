@@ -30,7 +30,7 @@ install: all
 	@$(INSTALL) sfuzz $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfo   $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL_DIR) $(DESTDIR)$(SHARE_DIR)sfuzz-db
-	@$(INSTALL) $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
+	@$(INSTALL) -m 0644 $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) *.so $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@echo Installed.
 
