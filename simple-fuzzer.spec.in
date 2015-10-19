@@ -16,7 +16,7 @@ Simple-Fuzzer (sfuzz) is a simplistic fuzz test case generator. It is a generati
 
 %build
 %configure --force-symbols --enable-snoop
-make %{_smp_mflags}
+make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
