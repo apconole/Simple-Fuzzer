@@ -9,7 +9,8 @@ Source: http://aconole.brad-x.com/files/sfuzz-%{version}-dist/sfuzz-%{version}.%
 BuildRoot: %{_tmppath}/sfuzz-%{version}.%{release}-root
 
 %description
-Simple-Fuzzer (sfuzz) is a simplistic fuzz test case generator. It is a generation-based fuzzer. 
+Simple-Fuzzer (sfuzz) is a simplistic fuzz test case generator.
+It is a generation-based fuzzer, intended to aid in fault finding.
 
 %prep
 %setup -q -n sfuzz-%{version}.%{release}
