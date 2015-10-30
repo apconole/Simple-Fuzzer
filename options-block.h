@@ -196,7 +196,9 @@ static inline char is_unix_stream(option_block *opts) {
 }
 
 static inline void set_unix_stream(option_block *opts) {
+#ifndef __WIN32__
     opts->fuzz_flag |= FUZZ_UNIX;
+#endif
 }
 
 static inline char is_unix_dgram(option_block *opts) {
@@ -204,7 +206,9 @@ static inline char is_unix_dgram(option_block *opts) {
 }
 
 static inline void set_unix_dgram(option_block *opts) {
+#ifndef __WIN32__
     opts->fuzz_flag |= FUZZ_UNIX_DGRAM;
+#endif
 }
 
 static inline char is_unix(option_block *opts) {

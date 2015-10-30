@@ -114,7 +114,8 @@ void print_help()
     printf("\t-t\t Wait time for reading the socket\n");
     printf("\t-S\t Remote host\n");
     printf("\t-p\t Port\n");
-    printf("\t-T|-U|-d|-u|-O TCP|UDP|unix_dgram|unix_stream|Output mode\n");
+    printf("\t-T|-U|-O TCP|UDP|Output mode\n");
+    printf("\t-d|-u unix_dgram|unix_stream (unix-alike only)\n");
     printf("\t-R\t Refrain from closing connections (ie: \"leak\" them)\n");
     printf("\n");
     printf("\t-f\t Config File\n");

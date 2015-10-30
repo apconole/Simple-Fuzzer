@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2015, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,7 @@ typedef char * caddr_t;
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/un.h>
 
 #include <errno.h>
 #endif
@@ -581,6 +582,82 @@ int os_send_udp(option_block *opts, char *str, int len)
     close(sockfd);
 #endif
     return 0;
+}
+
+int os_send_unix_stream(option_block *opts, char *str, int len)
+{
+#ifdef __WIN32__
+    return -1;
+#endif
+
+    FILE *log = stdout;
+    struct sockaddr_un sa_unix;
+    int sockfd = -1;
+    
+    if(opts->fp_log)
+        log = opts->fp_log;
+
+    sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if( sockfd != -1)
+    {
+        sa_unix.sun_family = AF_UNIX;
+        strcpy(sa_unix.sun_path, opts->host_spec);
+        if(connect(sockfd, &sa_unix, sizeof sa_unix) < 0)
+        {
+            close(sockfd);
+            fprintf(log, "[%s] error: unable to connect to unix socket [%s]\n",
+                    get_time_as_log(), process_error());
+            return -1;
+        }
+
+        // connected - send
+        if( send(sockfd, str, len, 0) < 0 ){
+            // handle the failure case...
+        }
+
+        if(opts->verbosity != QUIET)
+            fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
+                    get_time_as_log());
+        
+        close(sockfd);
+        return 0;
+        
+    }
+    return -1;
+}
+
+int os_send_unix_dgram(option_block *opts, char *str, int len)
+{
+#ifdef __WIN32__
+    return -1;
+#endif
+
+    FILE *log = stdout;
+    struct sockaddr_un sa_unix;
+    int sockfd = -1;
+    
+    if(opts->fp_log)
+        log = opts->fp_log;
+
+    sockfd = socket(AF_UNIX, SOCK_DGRAM, 0);
+    if( sockfd != -1)
+    {
+        sa_unix.sun_family = AF_UNIX;
+        strcpy(sa_unix.sun_path, opts->host_spec);
+
+        if( sendto(sockfd, str, len, 0,
+                   &sa_unix, sizeof sa_unix) < 0 ){
+            // handle the failure case...
+        }
+
+        if(opts->verbosity != QUIET)
+            fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
+                    get_time_as_log());
+        
+        close(sockfd);
+        return 0;
+    }
+    return -1;
 }
 
 void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)

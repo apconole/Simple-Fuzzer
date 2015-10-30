@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2010, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2015, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,13 +62,24 @@ extern int  os_send_udp(option_block *opts, char *req, int len);
 /**
  * \brief An OS Abstraction for sending datagram data
  * 
+ * os_send_unix uses a SOCK_STREAM socket. 
+ * \param opts The options block which holds a valid dgram interface socket
+ * \param req A bunch of data to send
+ * \param len The length of the data
+ * \return 0 on success, <0 on failure.
+ */
+extern int  os_send_unix_stream(option_block *opts, char *req, int len);
+
+/**
+ * \brief An OS Abstraction for sending datagram data
+ * 
  * os_send_unix uses a SOCK_DGRAM socket. 
  * \param opts The options block which holds a valid dgram interface socket
  * \param req A bunch of data to send
  * \param len The length of the data
  * \return 0 on success, <0 on failure.
  */
-extern int  os_send_unix(option_block *opts, char *req, int len);
+extern int  os_send_unix_dgram(option_block *opts, char *req, int len);
 
 /**
  * \brief There is no cross-platform standard for string replacement. Here is
