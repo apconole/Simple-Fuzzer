@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2011, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2015, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +58,13 @@ typedef struct
     int    array_max_val;
 } array_t;
 
+#define FUZZ_NONE       (      0)
+#define FUZZ_OUT        (1 <<  1)
+#define FUZZ_TCP        (1 <<  2)
+#define FUZZ_UDP        (1 <<  3)
+#define FUZZ_UNIX       (1 <<  4)
+#define FUZZ_UNIX_DGRAM (1 <<  5)
+
 /**
  * \brief All of the options and states associated with a fuzzing effort.
  *
@@ -100,9 +107,7 @@ typedef struct
     int mseql;
 
     /*fuzz type*/
-    char tcp_flag;
-    char udp_flag;
-    char out_flag;
+    char fuzz_flag;
 
     /*reporting verbosity*/
     char verb;
@@ -169,6 +174,55 @@ typedef struct
     /* file descriptor for transmission */
     int link_oracle;
 } option_block;
+
+static inline char is_tcp(option_block *opts) {
+    return opts->fuzz_flag & FUZZ_TCP;
+}
+
+static inline void set_tcp(option_block *opts) {
+    opts->fuzz_flag |= FUZZ_TCP;
+}
+
+static inline char is_udp(option_block *opts) {
+    return opts->fuzz_flag & FUZZ_UDP;
+}
+
+static inline void set_udp(option_block *opts) {
+    opts->fuzz_flag |= FUZZ_UDP;
+}
+
+static inline char is_unix_stream(option_block *opts) {
+    return opts->fuzz_flag & FUZZ_UNIX;
+}
+
+static inline void set_unix_stream(option_block *opts) {
+    opts->fuzz_flag |= FUZZ_UNIX;
+}
+
+static inline char is_unix_dgram(option_block *opts) {
+    return opts->fuzz_flag & FUZZ_UNIX_DGRAM;
+}
+
+static inline void set_unix_dgram(option_block *opts) {
+    opts->fuzz_flag |= FUZZ_UNIX_DGRAM;
+}
+
+static inline char is_unix(option_block *opts) {
+    return is_unix_dgram(opts) || is_unix_stream(opts);
+}
+
+static inline char is_netmode(option_block *opts) {
+    return is_tcp(opts) || is_udp(opts);
+}
+
+static inline char is_output(option_block *opts) {
+    return opts->fuzz_flag & FUZZ_OUT;
+}
+
+static inline void set_output(option_block *opts) {
+    opts->fuzz_flag |= FUZZ_OUT;
+}
+
 
 #define MAX_FILENAME_SIZE  1024
 #define MAX_SUBCHAR_SIZE   1024

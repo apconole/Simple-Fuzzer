@@ -1,6 +1,6 @@
 /**
  * Simple Fuzz
- * Copyright (c) 2009-2011, Aaron Conole <apconole@yahoo.com>
+ * Copyright (c) 2009-2015, Aaron Conole <apconole@yahoo.com>
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -114,7 +114,7 @@ void print_help()
     printf("\t-t\t Wait time for reading the socket\n");
     printf("\t-S\t Remote host\n");
     printf("\t-p\t Port\n");
-    printf("\t-T|-U|-O TCP|UDP|Output mode\n");
+    printf("\t-T|-U|-d|-u|-O TCP|UDP|unix_dgram|unix_stream|Output mode\n");
     printf("\t-R\t Refrain from closing connections (ie: \"leak\" them)\n");
     printf("\n");
     printf("\t-f\t Config File\n");
@@ -143,9 +143,9 @@ void sanity(option_block *opts)
         exit(-1);
     }
     
-    if(!(opts->tcp_flag) && !(opts->udp_flag) && !(opts->out_flag))
+    if(!(opts->fuzz_flag))
     {
-        fprintf(stderr, "[%s] error: must specify an output type.\n",
+        fprintf(stderr, "[%s] error: must specify a fuzzy output type.\n",
                 get_time_as_log());
         print_help();
         exit(-1);
@@ -159,7 +159,7 @@ void sanity(option_block *opts)
         exit(-1);
     }
 
-    if(((opts->tcp_flag)||(opts->udp_flag)) && 
+    if((is_netmode(opts)) && 
        ((opts->host == 0) || ((opts->port == 0) || (opts->port < 1) ||
                               (opts->port > 65535)))
         )
@@ -257,13 +257,19 @@ XRSTUOLVD
             opts->port_spec[MAX_PORTSPEC_SIZE-1] = 0;
             break;
         case 'T':
-            opts->tcp_flag = 1;
+            set_tcp(opts);
             break;
         case 'U':
-            opts->udp_flag = 1;
+            set_udp(opts);
             break;
         case 'O':
-            opts->out_flag = 1;
+            set_output(opts);
+            break;
+        case 'u':
+            set_unix_stream(opts);
+            break;
+        case 'd':
+            set_unix_dgram(opts);
             break;
         case 'L':
             if(lastarg == NULL)
@@ -433,10 +439,10 @@ int main(int argc, char *argv[])
     if(options.verbosity != QUIET)
     {
         fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
-        if(options.tcp_flag)
+        if(is_tcp(&options))
         {
             fprintf(log, " tcp,");
-        } else if(options.udp_flag)
+        } else if(is_udp(&options))
         {
             fprintf(log, " udp,");
         }
@@ -573,7 +579,7 @@ int fuzz(option_block *opts, char *req, int len)
         }
     }
 
-    if(fuzz_this_time && opts->out_flag)
+    if(fuzz_this_time && is_output(opts))
     {
         if(opts->hexl_dump)
         {
@@ -612,14 +618,18 @@ int fuzz(option_block *opts, char *req, int len)
     }
     else 
 #endif
-
-    if(fuzz_this_time && opts->tcp_flag)
+        
+    if(fuzz_this_time && is_tcp(opts))
     {
       res = os_send_tcp(opts, req, len);
     }
-    else if(fuzz_this_time && opts->udp_flag)
+    else if(fuzz_this_time && is_udp(opts))
     {
       res = os_send_udp(opts, req, len);
+    }
+    else if(fuzz_this_time && is_unix(opts))
+    {
+        res = -1; // no unix support, at this time
     }
 
 

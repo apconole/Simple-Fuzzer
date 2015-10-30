@@ -50,7 +50,7 @@ extern int  os_send_tcp(option_block *opts, char *req, int len);
 /**
  * \brief An OS Abstraction for sending datagram data
  * 
- * os_send_tcp makes certain assumptions about the send/recv nature of the 
+ * os_send_udp makes certain assumptions about the send/recv nature of the 
  * underlying transport. 
  * \param opts The options block which holds a valid dgram interface socket
  * \param req A bunch of data to send
@@ -58,6 +58,17 @@ extern int  os_send_tcp(option_block *opts, char *req, int len);
  * \return 0 on success, <0 on failure.
  */
 extern int  os_send_udp(option_block *opts, char *req, int len);
+
+/**
+ * \brief An OS Abstraction for sending datagram data
+ * 
+ * os_send_unix uses a SOCK_DGRAM socket. 
+ * \param opts The options block which holds a valid dgram interface socket
+ * \param req A bunch of data to send
+ * \param len The length of the data
+ * \return 0 on success, <0 on failure.
+ */
+extern int  os_send_unix(option_block *opts, char *req, int len);
 
 /**
  * \brief There is no cross-platform standard for string replacement. Here is
