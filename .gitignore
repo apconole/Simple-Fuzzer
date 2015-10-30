@@ -13,3 +13,6 @@ sfuzz
 Makefile
 Makefile.old
 sfuzz-deb-temp/
+GPATH
+GRTAGS
+GTAGS
