@@ -725,11 +725,12 @@ int smemrepl(char *buf, size_t buflen, size_t maxlen, char *old, char *new, int 
     int   repls = 0;
 
     int   origl = buflen;
-    int   oldl  = strlen(old);
+    int   oldl;
 
     if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
         return -1;
-
+    oldl  = strlen(old);
+    
     while((f = __internal_memmem(str, (buf + buflen) - str, old, oldl)) 
           != NULL)
     {
