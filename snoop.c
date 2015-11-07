@@ -1790,7 +1790,8 @@ int main(int argc, char *argv[])
         struct ifreq interface_obj;
         int result;
         memset(&s1, 0, sizeof(struct sockaddr_ll));
-        strcpy((char *)interface_obj.ifr_name, iface);
+        strncpy((char *)interface_obj.ifr_name, iface, IFNAMSIZ);
+        interface_obj.ifr_name[IFNAMSIZ-1] = 0;
         
         result = ioctl(sd, SIOCGIFINDEX, &interface_obj);
         if(result >= 0)
