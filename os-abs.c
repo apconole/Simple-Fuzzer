@@ -556,7 +556,7 @@ int os_send_udp(option_block *opts, char *str, int len)
     {
         if(FD_ISSET(sockfd, &fds))
         {
-            char buf[8192] = {0};
+            char buf[8193] = {0};
             int r_len = 0;
             r_len = read(sockfd, &buf, 8192);
             if(opts->verbosity != QUIET)
