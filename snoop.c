@@ -1322,7 +1322,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 #else
-    uint sl;
+    socklen_t sl;
 
     signal(SIGABRT, &terminate_hnd);
     signal(SIGTERM, &terminate_hnd);
@@ -1748,11 +1748,12 @@ int main(int argc, char *argv[])
 # ifdef __linux__
     if(rt)
     {
+        int ss;
         struct sched_param sp;
         pid_t pid = getpid();
         sp.sched_priority = 77; /* - magic number - a high priority */
-        sl = sched_setscheduler(pid, SCHED_FIFO, &sp);
-        if(sl < 0)
+        ss = sched_setscheduler(pid, SCHED_FIFO, &sp);
+        if(ss < 0)
             perror("sched_setscheduler");
     }
 
