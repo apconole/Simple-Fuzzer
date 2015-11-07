@@ -208,9 +208,9 @@ int srv_plugin_send(option_block *opts, void *d, int i)
         return -1;
     }
 
+    acceptfd = accept(sockfd, NULL, 0);
     while(len)
     {
-        acceptfd = accept(sockfd, NULL, 0);
         ret = send(acceptfd, str + snt, len, 0);
     
         if(ret < 0)
