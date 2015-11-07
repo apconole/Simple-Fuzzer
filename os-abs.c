@@ -692,13 +692,17 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
     char *str = buf;
     int   repls = 0;
 
-    int   origl = strlen(buf);
-    int   oldl  = strlen(old);
-    int   newl  = strlen(new);
+    int   origl;
+    int   oldl;
+    int   newl;
 
     if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
         return -1;
 
+    newl = strlen(new);
+    oldl = strlen(old);
+    origl = strlen(buf);
+    
     while((f = strstr(str, old)) != NULL)
     {
         ++repls;
