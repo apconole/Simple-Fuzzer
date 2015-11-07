@@ -407,6 +407,7 @@ int os_send_tcp(option_block *opts, char *str, int len)
             char buf[8193] = {0};
             int r_len = 0;
             r_len = read(sockfd, &buf, 8192);
+            buf[8192] = 0;
             if(opts->verbosity != QUIET)
                 fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
                         get_time_as_log(),
@@ -565,6 +566,7 @@ int os_send_udp(option_block *opts, char *str, int len)
             char buf[8193] = {0};
             int r_len = 0;
             r_len = read(sockfd, &buf, 8192);
+            buf[8192] = 0;
             if(opts->verbosity != QUIET)
                 fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
                         get_time_as_log(),

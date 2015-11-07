@@ -247,6 +247,7 @@ int srv_plugin_send(option_block *opts, void *d, int i)
             char buf[8193] = {0};
             int r_len = 0;
             r_len = read(acceptfd, &buf, 8192);
+            buf[8192] = 0;
             if(opts->verbosity != QUIET)
                 fprintf(log, "[%s] read:\n%s\n===============================================================================\n", 
                         "00:00:00",
