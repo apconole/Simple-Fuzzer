@@ -218,7 +218,12 @@ int srv_plugin_send(option_block *opts, void *d, int i)
             fprintf(stderr,"[%s] error: tcp send() failed.\n", "00:00:00");
             fprintf(log,"[%s] error: tcp send() failed.\n", "00:00:00");
 #ifdef __WIN32__
+            closesocket(sockfd);
+            closesocket(acceptfd);
             WSACleanup();
+#else
+            close(sockfd);
+            close(acceptfd);
 #endif
             return -1;
         }
