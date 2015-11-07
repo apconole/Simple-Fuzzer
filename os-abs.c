@@ -97,6 +97,10 @@ unsigned int ascii_to_bin(unsigned char *str_bin)
     unsigned char firstNibble;
     unsigned char secondNibble;
 
+    if( !str || !out ) goto out_end;
+
+    *str = 0;
+    
     while(*str_bin != 0)
         if(*str_bin++ != ' ')
         {
@@ -147,6 +151,8 @@ unsigned int ascii_to_bin(unsigned char *str_bin)
   dump(out, outBufIdx);
 */
     memcpy(str_bin, out, outBufIdx);
+
+ out_end:
     free(out);
     free(str);
 
