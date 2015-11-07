@@ -762,7 +762,7 @@ int in_array_execute_fuzz(option_block *opts)
     char c,f,b;
 
     int tsze    = 0;
-    int reqsize = 0;
+    size_t reqsize = 0;
     int preqsize= 0;
     int i       = 0;
     int k       = 0;
@@ -798,7 +798,7 @@ int in_array_execute_fuzz(option_block *opts)
             if(opts->mseql && ((tsze + reqsize) > opts->mseql + 8192))
             {
                 /*ohnoes overflow*/
-                fprintf(stderr, "[%s] error: overflow[%d:%d].\n", 
+                fprintf(stderr, "[%s] error: overflow[%d:%zu].\n", 
 			get_time_as_log(), opts->mseql, 
 			(tsze + reqsize));
                 exit(-1);
