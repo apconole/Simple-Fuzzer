@@ -244,7 +244,7 @@ int srv_plugin_send(option_block *opts, void *d, int i)
     {
         if(FD_ISSET(acceptfd, &fds))
         {
-            char buf[8192] = {0};
+            char buf[8193] = {0};
             int r_len = 0;
             r_len = read(acceptfd, &buf, 8192);
             if(opts->verbosity != QUIET)
