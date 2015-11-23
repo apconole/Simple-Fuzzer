@@ -88,17 +88,10 @@ void sfuzz_setsearchpath(const char *path)
     for(cp = path, pathStr = searchPath, ii = 0, tp = strchr(path, ':');
         (NULL != tp) && (ii < pathLen); ++ii)
     {
-        if (tp == NULL) {
-            free(searchPath);
-            searchPath = 0;
-            searchPathCount = 0;
-        }
-        
         if(tp == cp) {
             *pathStr = strdup(".");
         }
-        else
-        {
+        else {
             const char *sp;
             char *dp;
             *pathStr = (char *)malloc(tp-cp+1);
@@ -107,7 +100,7 @@ void sfuzz_setsearchpath(const char *path)
                 free(searchPath);
                 searchPath = 0;
                 searchPathCount = 0;
-                return;    
+                return;
             }
             for(dp = *pathStr, sp = cp; sp < tp; *dp++ = *sp++);
             *dp = 0;
