@@ -1,8 +1,11 @@
 How to submit patches
 =====================
 
+Simple Fuzzer has a development email list hosted by google groups,
+and can be found at https://groups.google.com/forum/#!forum/sfuzz-devel
+
 Send patch changes as emails to the bytheb.org mailing list at
-mailman@bytheb.org; one patch per email, please.
+sfuzz-devel@googlegroups.com; one patch per email, please.
 
 If you are using git, then `git format-patch` does most of the work
 described below for you.
@@ -99,6 +102,27 @@ Simple Fuzzer please sign off your work.  The sign off certifies the following:
         personal information I submit with it, including my sign-off) is
         maintained indefinitely and may be redistributed consistent with
         this project or the open source license(s) involved.
+
+Patch Signing Tags
+------------------
+
+The *Signed-off-by* tag indicates that you were directly involved in the
+generation of this patch, either by producing the code, or by influencing it
+heavily. Signing off on a change indicates that you take direct responsibility
+for that change.
+
+The *Acked-by* tag indicates that you acknowledge the change. It indicates that
+you have read the change, understood it, and believe it to be acceptable for
+inclusion in the development tree. Acknowledgement usually implies that you
+have done a cursory build with the patch. The *Reviewed-by* tag means is the
+same as the *Acked-by* but does not imply you have built the change.
+
+The *Tested-by* tag indicates anyone who has applied the code change to their
+tree, compiled with the change, and executed the functionality being
+manipulated.
+
+The *Reported-by* tag indicates a user that was responsible for reporting a
+bug in the code.
 
 Comments
 --------
