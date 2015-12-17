@@ -45,7 +45,7 @@ typedef int  (*plugin_capex)();
 
 typedef int  (*plugin_config_line)(option_block *opts, char *l, int i);
 
-typedef int  (*plugin_transport)(option_block *opts, void *d, int len);
+typedef int  (*plugin_transport)(option_block *opts, void *d, size_t len);
 
 typedef int  (*plugin_payload_transform)(option_block *opts, void *i, int il, 
                                         void *o, int *ol);

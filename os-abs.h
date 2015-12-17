@@ -45,7 +45,7 @@
  * \param len The length of the data
  * \return 0 on success, <0 on failure.
  */
-extern int  os_send_tcp(option_block *opts, char *req, int len);
+extern int  os_send_tcp(option_block *opts, char *req, size_t len);
 
 /**
  * \brief An OS Abstraction for sending datagram data
@@ -57,7 +57,7 @@ extern int  os_send_tcp(option_block *opts, char *req, int len);
  * \param len The length of the data
  * \return 0 on success, <0 on failure.
  */
-extern int  os_send_udp(option_block *opts, char *req, int len);
+extern int  os_send_udp(option_block *opts, char *req, size_t len);
 
 /**
  * \brief An OS Abstraction for sending datagram data
@@ -68,7 +68,7 @@ extern int  os_send_udp(option_block *opts, char *req, int len);
  * \param len The length of the data
  * \return 0 on success, <0 on failure.
  */
-extern int  os_send_unix_stream(option_block *opts, char *req, int len);
+extern int  os_send_unix_stream(option_block *opts, char *req, size_t len);
 
 /**
  * \brief An OS Abstraction for sending datagram data
@@ -79,7 +79,7 @@ extern int  os_send_unix_stream(option_block *opts, char *req, int len);
  * \param len The length of the data
  * \return 0 on success, <0 on failure.
  */
-extern int  os_send_unix_dgram(option_block *opts, char *req, int len);
+extern int  os_send_unix_dgram(option_block *opts, char *req, size_t len);
 
 /**
  * \brief There is no cross-platform standard for string replacement. Here is

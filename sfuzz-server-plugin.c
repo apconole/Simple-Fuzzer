@@ -84,7 +84,7 @@ int srv_plugin_capex()
     return PLUGIN_PROVIDES_TRANSPORT_TYPE;
 }
 
-int srv_plugin_send(option_block *opts, void *d, int i)
+int srv_plugin_send(option_block *opts, void *d, size_t i)
 {
 #ifdef __WIN32__
     WSADATA wsaData;
@@ -293,7 +293,6 @@ int srv_plugin_send(option_block *opts, void *d, int i)
     if(opts->close_conn)
     {
         opts->sockfd = -1;
-//        opts->acceptfd = -1;
     }
     
     if((opts->close_conn) && (!opts->forget_conn))

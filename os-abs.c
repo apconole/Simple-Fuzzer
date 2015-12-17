@@ -276,7 +276,7 @@ int mssleep(unsigned long int sleepTimeInMS)
     return select(0, NULL, NULL, NULL, &tv);
 }
 
-int os_send_tcp(option_block *opts, char *str, int len)
+int os_send_tcp(option_block *opts, char *str, size_t len)
 {
 #ifdef __WIN32__
     WSADATA wsaData;
@@ -461,7 +461,7 @@ int os_send_tcp(option_block *opts, char *str, int len)
     return 0;
 }
 
-int os_send_udp(option_block *opts, char *str, int len)
+int os_send_udp(option_block *opts, char *str, size_t len)
 {
 #ifdef __WIN32__
     WSADATA wsaData;
@@ -592,7 +592,7 @@ int os_send_udp(option_block *opts, char *str, int len)
     return 0;
 }
 
-int os_send_unix_stream(option_block *opts, char *str, int len)
+int os_send_unix_stream(option_block *opts, char *str, size_t len)
 {
 #ifdef __WIN32__
     return -1;
@@ -634,7 +634,7 @@ int os_send_unix_stream(option_block *opts, char *str, int len)
     return -1;
 }
 
-int os_send_unix_dgram(option_block *opts, char *str, int len)
+int os_send_unix_dgram(option_block *opts, char *str, size_t len)
 {
 #ifdef __WIN32__
     return -1;
