@@ -1679,6 +1679,7 @@ int main(int argc, char *argv[])
     }
     else
     {
+        int read_len;
         pcap_hdr_t in_pcap_header;
         sd = open(pcap_fname, O_RDONLY
 #ifndef __WIN32__
@@ -1692,9 +1693,11 @@ int main(int argc, char *argv[])
 #ifdef __WIN32__
         _setmode(sd, _O_BINARY);
 #endif
-
-        if(read(sd, &in_pcap_header, sizeof(in_pcap_header)) < 0)
+        read_len = read(sd, &in_pcap_header, sizeof(in_pcap_header));
+        if((read_len < 0) || (read_len != sizeof(in_pcap_header)))
+        {
             PANIC("read");
+        }
 
         if(in_pcap_header.magic_number == 0xa1b2c3d4)
         {
@@ -1880,7 +1883,8 @@ int main(int argc, char *argv[])
         else
         {
             pcaprec_hdr_t pcap_rec;
-            if(read(sd, &pcap_rec, sizeof(pcap_rec)) < 0)
+            int read_len = read(sd, &pcap_rec, sizeof(pcap_rec));
+            if((read_len < 0) || (read_len != sizeof(pcap_rec)))
             {
                 perror("read");
                 bytes_read = 0; run = 0;
