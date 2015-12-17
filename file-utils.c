@@ -506,6 +506,9 @@ void add_str_array(char *sym_name, int sym_len, char *sym_val, int sym_val_len,
         pArray->value_length ++;
     }
 
+    if (!pArray->value_array)
+        file_error("OOM allocating value array", opts);
+
     memset(pArray->value_array[i].sym_val, 0, 8192);
     
     if(isbin)
