@@ -165,8 +165,8 @@ int srv_plugin_send(option_block *opts, void *d, int i)
                 return -1;
             }
 
-            setsockopt (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, 
-                        sizeof(optval));
+            (void)setsockopt (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, 
+                              sizeof(optval));
             
             if(bind(sockfd, 
                     p->ai_addr, p->ai_addrlen) < 0)
