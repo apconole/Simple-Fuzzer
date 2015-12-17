@@ -722,7 +722,11 @@ int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
     if(!cur_array)
     {
         i = in_array_execute_fuzz(opts);
-        fseek(opts->fp, offset, SEEK_SET);
+        if (fseek(opts->fp, offset, SEEK_SET) < 0)
+        {
+            perror("fseek");
+            exit(1);
+        }
         return i;
     }
     ++idx;
