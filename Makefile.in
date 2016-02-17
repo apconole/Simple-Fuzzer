@@ -19,6 +19,10 @@ sfo sfo.exe: $(SFO_OBJS)
 -include $(SF_OBJS:.o=.d)
 -include $(SNOOP_OBJS:.o=.d)
 
+%.1.gz: %.1
+	@echo "[GZIP] $@"
+	@$(GZIP) -c < $< > $@
+
 %.o: %.c
 	@echo "[CC] $@"
 	@$(CCPATH)/$(CC) $(CFLAGS) -MT '$@' -MT '$*.d' -MD -c $<
@@ -29,6 +33,8 @@ install: all
 	@$(INSTALL_DIR) $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfuzz $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfo   $(DESTDIR)$(BIN_DIR)
+	@$(INSTALL) sfuzz.1.gz $(DESTDIR)$(MAN_DIR)
+	@$(INSTALL) sfo.1.gz $(DESTDIR)$(MAN_DIR)
 	@$(INSTALL_DIR) $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) -m 0644 $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) *.so $(DESTDIR)$(SHARE_DIR)sfuzz-db
@@ -43,7 +49,7 @@ uninstall:
 	@echo "Uninstalled."
 
 clean:
-	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so *.d *.deb
+	@$(RM) -f core *~ *.o snoop snoop.exe sfuzz sfuzz.exe sfo sfo.exe *.so *.d *.deb sfo.1.gz sfuzz.1.gz
 	@$(RM) -rf *.so.dSYM sfuzz-deb-temp
 
 distclean dist-clean: clean

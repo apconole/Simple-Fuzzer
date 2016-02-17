@@ -1,0 +1,128 @@
+.TH sfuzz 1 "2016-02-17" "sfuzz"
+.SH NAME
+sfuzz \- Simple Fuzzer
+.SH SYNOPSIS
+\fBsfuzz\fR [\fB\-ORTUVXdelnqrsu\fR] [\fB\-D\fR \fIkey\fR=\fIval\fR]...
+.br
+            [\fB\-b\fR \fItestid\fR] [\fB\-t\fR \fItimeout\fR] [\fB\-L\fR \fIfilename\fR]
+.br
+            \fB\-f\fR \fIconfig\fR [\fB\-S\fR \fIhost\fR] [\fB\-p\fR \fIport\fR]
+.br
+\fBsfuzz \-h\fR
+.br
+\fBsfuzz \-V\fR
+.SH DESCRIPTION
+.PP
+\fBsfuzz\fR is a generic application input permutation generator. It works by
+reading the specified configuration file in combination with the command-line
+options to generate large permutations of patterned data feeding the program's
+input.
+\fBsfuzz\fR's behavior is deterministic, and config file driven, making it easy
+to reproduce bugs and record the steps to reproduce.
+.SH USAGE
+.PP
+\fBsfuzz\fR will parse the file specified, along with the arguments, and connect
+to a network port sending the data and listening for a response. The relevant
+behavior will be reported in the standard output as well as the standard error
+channel, and optionally a specified log file.
+.SH OPTIONS
+.TP
+\fB\-b\fR \fITest ID\fR
+Begin fuzzing at a particular permutation (test-case ID). \fBsfuzz\fR will skip
+tests until it gets the test specified.
+.TP
+\fB\-D\fR \fIkey\fR=\fIvalue\fR
+Define a key:value pair. This can be repeated any number of times.
+.TP
+\fB\-d\fR
+Use Unix Datagram sockets \fBNOTE:\fR Support for this is experimental.
+.TP
+\fB\-e\fR
+Stop fuzzing when an error is detected. Without this option, \fBsfuzz\fR will
+continue to try and execute test cases. This is useful when certain types of
+errors are triggered.
+.TP
+\fB\-f\fR \fIfilename\fR
+Configuration file, which contains the file format to use.
+.TP
+\fB\-h\fR
+Prints help and exits
+.TP
+\fB\-L\fR \fIfilename\fR
+Log to the specified file. If \fIfilename\fR doesn't exist, it will be created.
+Otherwise, it will be truncated.
+.TP
+\fB\-l\fR
+Only include 'literal' fuzz strings (no sequences).
+.TP
+\fB\-n\fR
+Create a new log file ending with \fB.id\fR where id is the test id executed.
+.TP
+\fB\-O\fR
+Log to standard output
+.TP
+\fB\-p\fR \fIport\fR
+Connect to the port specified at \fIport\fR
+.TP
+\fB\-q\fR
+Quiet mode (not much information printed to standard out)
+.TP
+\fB\-R\fR
+Leak connections
+.TP
+\fB\-r\fR
+Trim newlines when sending data
+.TP
+\fB\-S\fR \fIhostname\fR
+Hostname to which \fBsfuzz\fR will connect. This can be an IPv4 address,
+IPv6 address, or a hostname to be resolved via dns.
+.TP
+\fB\-s\fR
+Only include 'sequence' fuzz string (no literals).
+.TP
+\fB\-T\fR
+Use TCP sockets to connect
+.TP
+\fB\-t\fR \fItime in ms\fR
+Wait time between test cases, in milli-seconds
+.TP
+\fB\-U\fR
+Use UDP sockets to 'connect' (send data)
+.TP
+\fB\-u\fR
+Use Unix stream sockets to connect
+.TP
+\fB\-V\fR
+Print version and exit
+.TP
+\fB\-v\fR
+Set output to be VERBOSE
+.TP
+\fB\-X\fR
+Print responses as ascii-hex
+.SH DIAGNOSTICS
+.PP
+Exit status is zero on normal exit, and -1 if there was an error detected.
+.SH EXAMPLES
+.PP
+See the \fBREADME\fR file for examples
+.SH BUGS
+.PP
+\fBsfuzz\fR strives to be error free. If you think you've found a bug, please
+report it to \fBsfuzz-devel@googlegroups.com\fR.
+.SH HISTORY
+.PP
+\fBsfuzz\fR started in 2009 as a small ascii only fuzzer generator in the same
+style as \fBeasy-fuzz\fR. It has since acquired several useful functions,
+including block based fuzzing and some analysis routines.
+.SH AUTHOR
+.PP
+Copyright \(co 2009-2016 Aaron Conole <apconole@yahoo.com>.
+.PP
+\fBsfuzz\fR and this manual are free software. They come without any
+warranty, to the extent permitted by applicable law. You can redistribute
+them and/or modify them under the terms of the 3-Clause BSD license. See
+\fBLICENSING\fR for more details.
+.PP
+\fBsfuzz\fR's site can be found at
+\fBhttp://github.com/orgcandman/Simple-Fuzzer\fR

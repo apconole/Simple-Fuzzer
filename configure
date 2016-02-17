@@ -31,6 +31,7 @@ DIRNAME=`$WHICH dirname 2> /dev/null`
 BASENAME=`$WHICH basename 2> /dev/null`
 CP=`$WHICH cp 2> /dev/null`
 LS=`$WHICH ls 2> /dev/null`
+GZIP=`$WHICH gzip 2> /dev/null`
 GREP=`$WHICH grep 2> /dev/null`
 RM=`$WHICH rm 2> /dev/null`
 MKDIR=`$WHICH mkdir 2> /dev/null`
@@ -396,6 +397,7 @@ CCPATH=$CC_LOCATION_VAL
 CC=$CC_COMPILER_VAL
 AR=$AR_VAL
 FIND=$FIND
+GZIP=$GZIP
 TAR=$TAR
 MAINT=$MAINT
 ARCH=$ARCH
@@ -430,13 +432,14 @@ LIBS=$LIBS
 
 BIN_DIR=$PREFIX/bin/
 SHARE_DIR=$PREFIX/share/
+MAN_DIR=$SHARE_DIR
 SFUZZ_SAMPLE=sfuzz-sample/
 
 __MAKEFILE_EOF__
 
 # now to determine targets (ie: sfuzz is obvious, but snoop and plugins are
 # also required
-PROGS="sfuzz sfo"
+PROGS="sfuzz sfo sfuzz.1.gz sfo.1.gz"
 
 if [ $PLUGIN_SUPPORT = "enable" ]; then
     PROGS="$PROGS sfuzz-plugin-example.so sfuzz-server-plugin.so "
