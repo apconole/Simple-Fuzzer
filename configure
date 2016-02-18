@@ -432,7 +432,7 @@ LIBS=$LIBS
 
 BIN_DIR=$PREFIX/bin/
 SHARE_DIR=$PREFIX/share/
-MAN_DIR=$SHARE_DIR
+MAN_DIR=$PREFIX/share/man/man1/
 SFUZZ_SAMPLE=sfuzz-sample/
 
 __MAKEFILE_EOF__
