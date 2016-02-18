@@ -33,8 +33,8 @@ install: all
 	@$(INSTALL_DIR) $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfuzz $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfo   $(DESTDIR)$(BIN_DIR)
-	@$(INSTALL) sfuzz.1.gz $(DESTDIR)$(MAN_DIR)
-	@$(INSTALL) sfo.1.gz $(DESTDIR)$(MAN_DIR)
+	@$(INSTALL) -D sfuzz.1.gz $(DESTDIR)$(MAN_DIR)
+	@$(INSTALL) -D sfo.1.gz $(DESTDIR)$(MAN_DIR)
 	@$(INSTALL_DIR) $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) -m 0644 $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) *.so $(DESTDIR)$(SHARE_DIR)sfuzz-db
