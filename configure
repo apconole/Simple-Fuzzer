@@ -16,6 +16,7 @@ if [ "$1" = "-h" -o "$1" = "--help" ]; then
   echo "  --disable-plugins          compile without plugin support"
   echo "  --force-symbols            compile sfuzz plugins with extra symbols"
   echo "  --enable-profiling         compile sfuzz and plugins with profiling data"
+  echo "  --aux-search-path          Auxiliary search path for sfuzz plugins"
   echo "  --help                     this message"
   exit 0
 fi
@@ -45,10 +46,10 @@ MD5SUM=`$WHICH md5sum 2> /dev/null`
 
 GIT=`$WHICH git 2> /dev/null`
 
-if [ ! -e $GIT ]; then
-   MAINT=unknown
+if [ ! -e $GIT -o ! -e .git/ ]; then
+   MAINT="Aaron Conole <apconole@yahoo.com>"
 else
-   MAINT="`$GIT config user.name` <`$GIT config user.email`>"
+   MAINT="$($GIT config user.name) <$($GIT config user.email)>"
 fi
 
 ARCH=`$UNAME -m`
@@ -107,6 +108,12 @@ if [ '!' "X" = "X$*" ]; then
             XCFLAGS_EXTRA=$XCFLAGS_EXTRA_TMP
         fi
     fi
+    if [ "X" = "X$AUX_SEARCH_PATH" ]; then
+        XAUXSEARCH=`echo "$1"|$SED 's/.*--aux-search-path=//'`
+        if [ "$XAUXSEARCH" != "$1" ]; then
+            AUX_SEARCH_PATH="-DAUXSEARCHPATH=\\\":$XAUXSEARCH\\\""
+        fi
+    fi
     if [ "X" = "X$XLDFLAGS" ]; then
         LDFLAGS_EXTRA_TMP=`echo "$1"|$SED 's/.*--ldflags=//'`
         if [ "$LDFLAGS_EXTRA_TMP" != "$1" ]; then
@@ -163,7 +170,7 @@ fi
 
 CC_LOCATION=`$WHICH ${CROSS_COMPILE}${CC_CHECK} 2> /dev/null`
 
-XCFLAGS="$XCFLAGS -DPREFIX=\\\"$PREFIX\\\""
+XCFLAGS="$XCFLAGS -DPREFIX=\\\"$PREFIX\\\" $AUX_SEARCH_PATH"
 
 if [ "X" = "X$HAS_INSTALL" ]; then
     HAS_INSTALL="$CP"
@@ -469,7 +476,7 @@ SFUZZ_RELEASE=`echo $SFUZZ_VERSION | $CUT -d"." -f3`
 
 echo "Wrote $SFUZZ_MAINVERSION : $SFUZZ_RELEASE"
 
-$SED -re "s@VERSION@$SFUZZ_MAINVERSION@g" < ./simple-fuzzer.spec.in | $SED -re "s@RELEASE@$SFUZZ_RELEASE@g" > ./simple-fuzzer.spec
+$SED -re "s@VERSION@$SFUZZ_MAINVERSION\.$SFUZZ_RELEASE@g" < ./simple-fuzzer.spec.in | $SED -re "s@MAINVER@$SFUZZ_MAINVERSION@g" | $SED -re "s@RELEASE@$SFUZZ_RELEASE@g" > ./simple-fuzzer.spec
 
 echo "Finished. Now run 'make'"
 exit 0

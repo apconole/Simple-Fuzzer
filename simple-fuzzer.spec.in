@@ -5,32 +5,55 @@ Release: RELEASE
 License: BSD
 Group: Applications/System
 URL: http://aconole.brad-x.com/programs/sfuzz.html
-Source: http://aconole.brad-x.com/files/sfuzz-%{version}-dist/sfuzz-%{version}.%{release}.tar.bz2
-BuildRoot: %{_tmppath}/sfuzz-%{version}.%{release}-root
+Source: http://aaron.bytheb.org/files/sfuzz-MAINVER-dist/sfuzz-%{version}.tar.bz2
 
 %description
 Simple-Fuzzer (sfuzz) is a simplistic fuzz test case generator.
 It is a generation-based fuzzer, intended to aid in fault finding.
 
+%package devel
+Summary: Simple Fuzzer development files
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description devel
+This package contains the headers and other files needed for developing
+plugins for Simple Fuzzer
+
 %prep
-%setup -q -n sfuzz-%{version}.%{release}
+%setup -q -n sfuzz-%{version}
 
 %build
-%configure --force-symbols --enable-snoop
+%configure --force-symbols --aux-search-path=%{_libdir}/simple-fuzzer
 make %{?_smp_mflags}
 
 %install
-rm -rf %{buildroot}
 make DESTDIR=%{buildroot} install
+mkdir -p %{buildroot}%{_libdir}/simple-fuzzer/
+mv %{buildroot}%{_datadir}/sfuzz-db/*.so %{buildroot}%{_libdir}/simple-fuzzer/
 
 %clean
-rm -rf %{buildroot}
 
 %files
 %{_bindir}/*
-%{_datadir}/sfuzz-db
+%{_datadir}/man/man1/*
+%{_datadir}/sfuzz-db/basic.*
+%{_datadir}/sfuzz-db/*.list
+%{_datadir}/sfuzz-db/*.inc
+%{_datadir}/sfuzz-db/server.*
+%{_datadir}/sfuzz-db/*.test
+%{_datadir}/sfuzz-db/*.0day
+%{_datadir}/sfuzz-db/*.cfg
+%{_libdir}/simple-fuzzer/*
 
+%files devel
+%{_datadir}/sfuzz-db/*.c
+
+%license LICENSING
 
 %changelog
-* Sat Mar  3 2012 Aaron Conole   - 0.7.0
+* Tue Feb 23 2016 Aaron Conole <aconole@bytheb.org> - 0.7.1-1
+- Second RPM spec build
+- Cleanup the spec file, add manpages
+
+* Sat Mar  3 2012 Aaron Conole <aconole@bytheb.org> - 0.7.0-0
 - First RPM spec build

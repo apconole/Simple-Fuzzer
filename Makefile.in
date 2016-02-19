@@ -33,8 +33,9 @@ install: all
 	@$(INSTALL_DIR) $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfuzz $(DESTDIR)$(BIN_DIR)
 	@$(INSTALL) sfo   $(DESTDIR)$(BIN_DIR)
-	@$(INSTALL) -D sfuzz.1.gz $(DESTDIR)$(MAN_DIR)
-	@$(INSTALL) -D sfo.1.gz $(DESTDIR)$(MAN_DIR)
+	@$(INSTALL_DIR) $(DESTDIR)$(MAN_DIR)
+	@$(INSTALL) -m 0644 sfuzz.1.gz $(DESTDIR)$(MAN_DIR)
+	@$(INSTALL) -m 0644 sfo.1.gz $(DESTDIR)$(MAN_DIR)
 	@$(INSTALL_DIR) $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) -m 0644 $(SFUZZ_SAMPLE)* $(DESTDIR)$(SHARE_DIR)sfuzz-db
 	@$(INSTALL) *.so $(DESTDIR)$(SHARE_DIR)sfuzz-db
@@ -75,13 +76,14 @@ deb: all
 	@$(TAR) --owner=0 --group=0 --directory=sfuzz-deb-temp/control -czf sfuzz-deb-temp/control.tar.gz control md5sums
 	@cd sfuzz-deb-temp && $(AR) rcs ../simple-fuzzer.deb debian-binary control.tar.gz data.tar.gz
 
-release: distclean
+release: clean
 	@echo Making a release tree:
-	@$(RM) -rf /tmp/sfuzz-release
-	@$(MKDIR) /tmp/sfuzz-release
-	@$(CP) -dPar * /tmp/sfuzz-release
-	@$(RM) -rf /tmp/sfuzz-release/CVS
-	@$(RM) -rf /tmp/sfuzz-release/sfuzz-sample/CVS
-	@$(RM) -rf /tmp/sfuzz-release/.git
-	@echo /tmp/sfuzz-release is built.
+	@$(RM) -f Makefile Makefile.old
+	@$(RM) -rf /tmp/sfuzz-$(VERSION)
+	@$(MKDIR) -p /tmp/sfuzz-$(VERSION)
+	@$(CP) -dPar * /tmp/sfuzz-$(VERSION)
+	@$(RM) -rf /tmp/sfuzz-$(VERSION)/.git*
+	@$(TAR) --strip-components=1 --owner=0 --group=0 --directory=/tmp/ -cjf sfuzz-$(VERSION).tar.bz2 sfuzz-$(VERSION)
+	@$(RM) -rf /tmp/sfuzz-$(VERSION)
+	@echo sfuzz-$(VERSION).tar.bz2 is built.
 

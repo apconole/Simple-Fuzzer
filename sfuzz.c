@@ -383,6 +383,9 @@ int main(int argc, char *argv[])
     sfuzz_setsearchpath(
 #ifndef __WIN32__
         "./:"PREFIX"/share/sfuzz-db"
+# ifdef AUXSEARCHPATH
+        AUXSEARCHPATH
+# endif
 #else
         "./"
 #endif
