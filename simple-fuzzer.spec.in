@@ -1,5 +1,5 @@
 Summary: A simple fuzz test-case builder
-Name: simple-fuzzer
+Name: Simple-Fuzzer
 Version: VERSION
 Release: RELEASE
 License: BSD
