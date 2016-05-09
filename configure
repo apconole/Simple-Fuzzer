@@ -354,6 +354,7 @@ LIBS=""
 if [ "Darwin" = "$OS_SYSTEM" ]; then
     XCFLAGS="$XCFLAGS "
     SFO_PLATFORM=" sfuzz_oracle_null.o"
+    SNOOP_SUPPORT="disable"
 elif [ "Linux" = "$OS_SYSTEM" ]; then
     SFO_PLATFORM=" sfuzz_oracle_ptrace.o"
     XCFLAGS="$XCFLAGS -D_GNU_SOURCE"
@@ -471,12 +472,12 @@ $CAT ./Makefile.in >> Makefile
 
 echo "Writing spec file"
 
-SFUZZ_MAINVERSION=`echo $SFUZZ_VERSION | $SED -re 's/"//g' | $SED -re 's/^([0-9]+)\.([0-9]+)\.[0-9]+$/\1.\2/g'`
+SFUZZ_MAINVERSION=`echo $SFUZZ_VERSION | $SED -e 's/"//g' | $SED -e 's/^([0-9]+)\.([0-9]+)\.[0-9]+$/\1.\2/g'`
 SFUZZ_RELEASE=`echo $SFUZZ_VERSION | $CUT -d"." -f3`
 
 echo "Wrote $SFUZZ_MAINVERSION : $SFUZZ_RELEASE"
 
-$SED -re "s@VERSION@$SFUZZ_MAINVERSION\.$SFUZZ_RELEASE@g" < ./simple-fuzzer.spec.in | $SED -re "s@MAINVER@$SFUZZ_MAINVERSION@g" | $SED -re "s@RELEASE@$SFUZZ_RELEASE@g" > ./simple-fuzzer.spec
+$SED -e "s@VERSION@$SFUZZ_MAINVERSION\.$SFUZZ_RELEASE@g" < ./simple-fuzzer.spec.in | $SED -e "s@MAINVER@$SFUZZ_MAINVERSION@g" | $SED -e "s@RELEASE@$SFUZZ_RELEASE@g" > ./simple-fuzzer.spec
 
 echo "Finished. Now run 'make'"
 exit 0
