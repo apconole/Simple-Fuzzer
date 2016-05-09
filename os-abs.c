@@ -601,16 +601,17 @@ int os_send_unix_stream(option_block *opts, char *str, size_t len)
     FILE *log = stdout;
     struct sockaddr_un sa_unix;
     int sockfd = -1;
-    
+
     if(opts->fp_log)
         log = opts->fp_log;
 
     sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if( sockfd != -1)
+    if (sockfd != -1)
     {
         sa_unix.sun_family = AF_UNIX;
         strcpy(sa_unix.sun_path, opts->host_spec);
-        if(connect(sockfd, &sa_unix, sizeof sa_unix) < 0)
+        if(connect(sockfd, (const struct sockaddr *)&sa_unix,
+                   sizeof sa_unix) < 0)
         {
             close(sockfd);
             fprintf(log, "[%s] error: unable to connect to unix socket [%s]\n",
@@ -619,14 +620,14 @@ int os_send_unix_stream(option_block *opts, char *str, size_t len)
         }
 
         // connected - send
-        if( send(sockfd, str, len, 0) < 0 ){
+        if (send(sockfd, str, len, 0) < 0){
             // handle the failure case...
         }
 
-        if(opts->verbosity != QUIET)
+        if (opts->verbosity != QUIET)
             fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
                     get_time_as_log());
-        
+
         close(sockfd);
         return 0;
         
@@ -648,20 +649,20 @@ int os_send_unix_dgram(option_block *opts, char *str, size_t len)
         log = opts->fp_log;
 
     sockfd = socket(AF_UNIX, SOCK_DGRAM, 0);
-    if( sockfd != -1)
+    if (sockfd != -1)
     {
         sa_unix.sun_family = AF_UNIX;
         strcpy(sa_unix.sun_path, opts->host_spec);
 
-        if( sendto(sockfd, str, len, 0,
-                   &sa_unix, sizeof sa_unix) < 0 ){
+        if (sendto(sockfd, str, len, 0,
+                   (const struct sockaddr *)&sa_unix, sizeof sa_unix) < 0 ) {
             // handle the failure case...
         }
 
-        if(opts->verbosity != QUIET)
+        if (opts->verbosity != QUIET)
             fprintf(log, "[%s] info: tx fuzz - scanning for reply.\n",
                     get_time_as_log());
-        
+
         close(sockfd);
         return 0;
     }
@@ -672,13 +673,13 @@ void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl)
 {
     const char *start;
     const char *l_occurance = (const char *)hs+hsl-ndl;
-    
+
     if(ndl == 0)
         return (void *)hs;
-    
+
     if(hsl < ndl)
         return NULL;
- 
+
     for(start = (const char *)hs; start <= l_occurance; ++start)
         if((start[0] == ((const char *)nd)[0]) &&
            !memcmp((const void *)&start[1],
