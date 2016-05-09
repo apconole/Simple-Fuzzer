@@ -1,5 +1,9 @@
 language: c
 
+os:
+   - linux
+   - osx
+
 env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
@@ -7,6 +11,10 @@ env:
    - secure: "LjU7pMHXkNmLx7bRfjX3+VSpch5/c+6GkHuw+fCkhNrDSo3q/3+4IjNkHOSmIQ6ya3g0Vh1TZfsl4Lo72m0SwFcl1rgKdi6sO7w4xkwLYZCgsZ45dqt2UEkI7Kww+zmUmq/hpPWK/3NxoBhh9jHmTXtHkP9sFCSasZ29UdoBZx9J0CNv2L0k9GfdqTxKr5GifwNOca36RZAyPDDYN/w5cPkMeXRHZKbAOYluy1zVVuXP+zesgoGC48lGNKNyPXVfJ4IqXuofO1H2b41LIqF8YIYAGxDscKFqq/0aGvZGRRWOvSPl9STtd1NDTXeK3Nvu7TX95aa8chWp+CHr9+dxuSCr+3wEofVL7qm7PgO4QftLkIAVVRTGvOHWK+j3k58v77lIbs9fQo+yO9Au9MYv9FJOovN+oSsmmCY6Sr+Oxr8QXgwK4osvdpZ0J0S3lTJOuqKU7wcWAvRiBE4iur+N7uXscshOdY52JHb+xEHJSshvdaXEVX9SZwKiafSv/+sYb79lK3R69tW0hhTmfH8PhaL3v6EDWEASHPXl/OogLJHPUcXai8gmZyota+fHJ2PlzKZEHJuA8028nu7k2MdvtlSxI4i9Nn0S4rb/L1q5VfWItVeEYu9e2JH0nO7H39GBHw1or/daoXLvust7Btj6idd/zBR34p8lCt7tPZ9CQHA="
 
 addons:
+  apt:
+    packages:
+      - libssl-dev
+      - cppcheck
   coverity_scan:
     project:
       name: "orgcandman/Simple-Fuzzer"
@@ -17,9 +25,7 @@ addons:
     branch_pattern: master
 
 before_install:
-   - sudo apt-get update -qq
-   - sudo apt-get install libssl-dev cppcheck
-   - sudo pip install cpp-coveralls
+   - pip install --user cpp-coveralls
 
 compiler:
    - gcc
