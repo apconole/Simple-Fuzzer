@@ -848,20 +848,24 @@ int in_array_execute_fuzz(option_block *opts)
         {
             unsigned int ilen = reqsize;
             array_t *current_array = opts->arrays[tsze];
+            char sizeval[80] = {0};
+            char sizerepl[sizeof(current_array->array_name) + 2] = {0};
+            char ssizerepl[sizeof(current_array->array_name) + 1] = {0};
+
+            snprintf(sizerepl, sizeof(sizerepl), "%%%%%s",
+                     current_array->array_name);
+            snprintf(ssizerepl, sizeof(sizerepl), "%%%s",
+                     current_array->array_name);
 
             if(!current_array->value_array[current_array->value_ctr].bin)
             {
                 size_t bsizeval = strlen
                     (current_array->value_array
                      [current_array->value_ctr].sym_val);
-                char sizeval[80] = {0};
-                char sizerepl[80] = {0};
-                char ssizerepl[80] = {0};
+
                 snprintf(sizeval, 80, "%zu", bsizeval);
-                snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
-                snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
-                ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl, (char *)
-                                &bsizeval, sizeof bsizeval);
+                ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl,
+                                (char *) &bsizeval, sizeof bsizeval);
                 ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl, sizeval,
                                 strlen(sizeval));
                 ilen = smemrepl(req, ilen, opts->mseql + 16384, current_array->array_name,
@@ -874,14 +878,8 @@ int in_array_execute_fuzz(option_block *opts)
             {
                 char *blit = current_array->value_array[current_array->value_ctr].sym_val;
                 size_t blit_len = current_array->value_array[current_array->value_ctr].is_len;
-                char sizeval[80] = {0};
-                char sizerepl[80] = {0};
-                char ssizerepl[80] = {0};
-                
-                snprintf(sizeval, 80, "%zu", blit_len);
-                snprintf(ssizerepl, 80, "%%%s", current_array->array_name);
-                snprintf(sizerepl, 80, "%%%%%s", current_array->array_name);
 
+                snprintf(sizeval, 80, "%zu", blit_len);
                 ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl, (char *)
                                 &blit_len, sizeof blit_len);
 
@@ -898,54 +896,39 @@ int in_array_execute_fuzz(option_block *opts)
         /*loaded a request.*/
         p = memmem(req, reqsize, "FUZZ", 4);
 
-        if(!p)
-        {
-	  if(fuzz(opts, req, reqsize) < 0)
-          {
-	      goto done;
-          }
-          memcpy(preq, req, reqsize);
-          preqsize = reqsize;
-        }
-        else /* we have to FUZZ for reals*/
-        {
-            /*do the literals*/
-            if(opts->no_literal_fuzz == 0)
-            {
-                for(tsze = 0; tsze < opts->num_litr; ++tsze)
-                {
+        if (!p) {
+            if (fuzz(opts, req, reqsize) < 0) {
+                goto done;
+            }
+            memcpy(preq, req, reqsize);
+            preqsize = reqsize;
+        } else {
+            /* we have to FUZZ for real.  do the literals. */
+            if (opts->no_literal_fuzz == 0) {
+                for (tsze = 0; tsze < opts->num_litr; ++tsze) {
                     char litr_is_bin = 0;
                     i = 0;
-                    
+
                     /*first, do the literals, which are filled in as-is*/
                     strcpy(req2, req);
-                    c = *(
-                        (opts->litr[tsze]) + 
-                        strspn(opts->litr[tsze], " "));
+                    c = *((opts->litr[tsze]) + 
+                          strspn(opts->litr[tsze], " "));
 
-                    b = *(1+
-                        (opts->litr[tsze]) + 
-                        strspn(opts->litr[tsze], " "));
+                    b = *(1 + (opts->litr[tsze]) + 
+                          strspn(opts->litr[tsze], " "));
                     
-                    f = *(2 +
-                        (opts->litr[tsze])+
-                        strspn(opts->litr[tsze], " "));
+                    f = *(2 + (opts->litr[tsze])+
+                          strspn(opts->litr[tsze], " "));
 
-                    if((c == '0') ||
-                       (c == '\\'))
-                    {
-                        if((b == 'x') &&
-                           ((f >= '0') &&
-                            (f <= '9')))
-                           litr_is_bin = 1;
+                    if ((c == '0') || (c == '\\')) {
+                        if (b == 'x' && f >= '0' && f <= '9')
+                            litr_is_bin = 1;
                     }
 
-                    if(c == 'x')
-                        if((f >= '0') && (f <= '9'))
-                            litr_is_bin = 1;
+                    if (c == 'x' && ((f >= '0') && (f <= '9')))
+                        litr_is_bin = 1;
 
-                    if(!litr_is_bin)
-                    {
+                    if (!litr_is_bin) {
                         size_t bsizeval = strlen(opts->litr[tsze]);
                         char sizeval[80] = {0};
                         snprintf(sizeval, 80, "%zu", bsizeval);
@@ -955,9 +938,7 @@ int in_array_execute_fuzz(option_block *opts)
                                      strlen(sizeval));
                         i = smemrepl(req2, i, opts->mseql + 16384, "FUZZ", opts->litr[tsze],
                                      strlen(opts->litr[tsze]));
-                    }
-                    else
-                    {
+                    } else {
                         char *blit = malloc(8192);
                         int blit_len = 0;
                         char sizeval[80] = {0};
@@ -978,21 +959,19 @@ int in_array_execute_fuzz(option_block *opts)
                         free( blit );
                     }
                     
-                    if(opts->send_initial_nonfuzz_again)
+                    if (opts->send_initial_nonfuzz_again)
                         if(fuzz(opts, preq, preqsize) < 0)
                             goto done;
                     
-                    if(fuzz(opts, req2, i)<0)
+                    if (fuzz(opts, req2, i)<0)
                         goto done;
                 }
             }
-            
-            if(opts->no_sequence_fuzz == 0)
-            {
+
+            if(opts->no_sequence_fuzz == 0) {
                 /*do the sequences*/
                 char *sequence_hold = NULL;
-                for(tsze = 0; tsze < opts->num_seq; ++tsze)
-                {
+                for (tsze = 0; tsze < opts->num_seq; ++tsze) {
                     size_t bsizeval = 0;
                     char sizeval[80] = {0};
                     char seq_buf[5] = {0};
