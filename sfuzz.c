@@ -854,7 +854,7 @@ int in_array_execute_fuzz(option_block *opts)
 
             snprintf(sizerepl, sizeof(sizerepl), "%%%%%s",
                      current_array->array_name);
-            snprintf(ssizerepl, sizeof(sizerepl), "%%%s",
+            snprintf(ssizerepl, sizeof(ssizerepl), "%%%s",
                      current_array->array_name);
 
             if(!current_array->value_array[current_array->value_ctr].bin)
