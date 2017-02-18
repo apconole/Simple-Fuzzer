@@ -95,7 +95,7 @@ void print_help()
 {
     printf("\t\tSimple Fuzzer\nBy:\t Aaron Conole\n");
     print_version();
-    printf("url:\t http://aconole.brad-x.com/programs/sfuzz.html\n");
+    printf("url:\t http://aaron.bytheb.org/programs/sfuzz.html\n");
     printf("EMAIL:\t apconole@yahoo.com\n");
 #ifndef __WIN32__
     printf("Build-prefix: %s", PREFIX);

@@ -4,7 +4,7 @@ Version: VERSION
 Release: RELEASE
 License: BSD
 Group: Applications/System
-URL: http://aconole.brad-x.com/programs/sfuzz.html
+URL: http://aaron.bytheb.org/programs/sfuzz.html
 Source: http://aaron.bytheb.org/files/sfuzz-MAINVER-dist/sfuzz-%{version}.tar.bz2
 
 %description

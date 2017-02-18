@@ -46,10 +46,10 @@ MD5SUM=`$WHICH md5sum 2> /dev/null`
 
 GIT=`$WHICH git 2> /dev/null`
 
-if [ ! -e $GIT -o ! -e .git/ ]; then
-   MAINT="Aaron Conole <apconole@yahoo.com>"
-else
+if [ -e "$GIT" -a -e ".git/" ]; then
    MAINT="$($GIT config user.name) <$($GIT config user.email)>"
+else
+   MAINT="Aaron Conole <apconole@yahoo.com>"
 fi
 
 ARCH=`$UNAME -m`
