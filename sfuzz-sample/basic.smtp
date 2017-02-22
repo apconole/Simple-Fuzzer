@@ -71,3 +71,13 @@ MAIL FROM:<from-address>
 RCPT TO:<to-address>
 FUZZ
 --
+ETRN FUZZ
+--
+ETRN \@FUZZ
+--
+AUTH mechanism FUZZ
+--
+RSET FUZZ
+--
+VRFY FUZZ
+--
