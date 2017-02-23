@@ -150,23 +150,9 @@ int srv_plugin_send(option_block *opts, void *d, size_t i)
                 continue;
 
             opts->sockfd = sockfd;
-            
-            if(p == NULL)
-            {
-                fprintf(stderr,"[%s] error: unable to acquire socket.\n",
-                        "00:00:00");
-                
-                fprintf(log,"[%s] error: unable to acquire socket.\n",
-                        "00:00:00");
-                freeaddrinfo(servinfo);
-#ifdef __WIN32__
-                WSACleanup();
-#endif
-                return -1;
-            }
 
-            (void)setsockopt (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, 
-                              sizeof(optval));
+            (void)setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, 
+                             sizeof(optval));
             
             if(bind(sockfd, 
                     p->ai_addr, p->ai_addrlen) < 0)
