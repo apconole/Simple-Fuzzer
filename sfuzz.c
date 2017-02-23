@@ -138,35 +138,30 @@ void print_help()
  */
 void sanity(option_block *opts)
 {
-    if(opts == NULL)
-    {
+    if (opts == NULL) {
         fprintf(stderr, "[%s] fatal: option block null\n", get_time_as_log());
         exit(-1);
     }
-    
-    if(!(opts->fuzz_flag))
-    {
+
+    if (!(opts->fuzz_flag)) {
         fprintf(stderr, "[%s] error: must specify a fuzzy output type.\n",
                 get_time_as_log());
         print_help();
         exit(-1);
     }
 
-    if(opts->pFilename[0] == 0)
-    {
+    if (opts->pFilename[0] == 0) {
         fprintf(stderr, "[%s] error: must specify a config file.\n",
                 get_time_as_log());
         print_help();
         exit(-1);
     }
 
-    if((is_netmode(opts)) && 
-       ((opts->host == 0) || ((opts->port == 0) || (opts->port < 1) ||
-                              (opts->port > 65535)))
-        )
-    {
+    if ((is_netmode(opts)) && 
+        ((opts->host == 0) || ((opts->port == 0) || (opts->port < 1) ||
+                               (opts->port > 65535)))) {
         fprintf(stderr, 
-             "[%s] error: must specify a host and port when using netmode.\n",
+                "[%s] error: must specify host and port when using netmode.\n",
                 get_time_as_log());
         print_help();
         exit(-1);
@@ -186,18 +181,15 @@ void process_opt_str(char *line, char *lastarg, option_block *opts)
     int   sze;
     int end=0;
 
-    while(*line != 0)
-    {
+    while (*line != 0) {
 /*
 used:
 beslnqrtpvfh
 XRSTUOLVD
  */
-        switch(*line++)
-        {
+        switch (*line++) {
         case 'b':
-            if(lastarg == NULL)
-            {
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: must specify a starting test.\n");
                 exit(-1);
             }
@@ -230,8 +222,7 @@ XRSTUOLVD
             opts->forget_conn = 1;
             break;
         case 'S':
-            if(lastarg == NULL)
-            {
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: must specify a remote host.\n");
                 exit(-1);
             }
@@ -239,17 +230,15 @@ XRSTUOLVD
             strncpy(opts->host_spec, lastarg, MAX_HOSTSPEC_SIZE);
             opts->host_spec[MAX_HOSTSPEC_SIZE-1] = 0;
             break;
-	case 't':
-            if(lastarg == NULL)
-            {
+        case 't':
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: must specify a wait time.\n");
                 exit(-1);
             }
             opts->time_out = atoi(lastarg);
             break;
         case 'p':
-            if(lastarg == NULL)
-            {
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: must specify a port.\n");
                 exit(-1);
             }
@@ -273,8 +262,7 @@ XRSTUOLVD
             set_unix_dgram(opts);
             break;
         case 'L':
-            if(lastarg == NULL)
-            {
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: must specify a log file.\n");
                 exit(-1);
             }
@@ -285,8 +273,7 @@ XRSTUOLVD
             opts->verbosity = VERBOSE;
             break;
         case 'f':
-            if(lastarg == NULL)
-            {
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: must specify a config file.\n");
                 exit(-1);
             }
@@ -300,33 +287,31 @@ XRSTUOLVD
             print_version(); exit(0);
             break;
         case 'D':
-            if((*line != '\0') && (lastarg == NULL))
-            {
+            if ((*line != '\0') && (lastarg == NULL)) {
                 lastarg = line;
                 end = 1;
             }
 
-            if(lastarg == NULL)
-            {
+            if (lastarg == NULL) {
                 fprintf(stderr, "error: define requires an argument.\n");
                 exit(-1);
             }
 
             delim = strstr(lastarg, "=");
-            if(delim == NULL)
-            {
+            if (delim == NULL) {
                 fprintf(stderr, "error: delimiter not found for symbol.\n");
                 exit(-1);
             }
+
             sze = strlen(delim+1);
-            if(sze == 0)
-            {
+            if (sze == 0) {
                 fprintf(stderr, "error: symbol's value is null.\n");
                 exit(-1);
             }
 
             add_symbol(lastarg, (delim - lastarg), delim+1, sze, opts, 0);
-            if(end) return;
+            if (end)
+                return;
             break;
         default:
             printf("unknown option: %c\n", *line); exit(0);
@@ -341,20 +326,17 @@ void process_opts(int argc, char *argv[], option_block *opts)
 {
     char *lastarg = 0;
 
-    if(opts->state != CMD_LINE_OPTS)
-    {
-        fprintf(stderr, "[%s] fatal: attempt to invoke process_opts in improper state. ARE YOU HACKING ME?!\n",
+    if (opts->state != CMD_LINE_OPTS) {
+        fprintf(stderr,
+                "[%s] fatal: attempt to invoke process_opts in improper state.!\n",
                 get_time_as_log());
         exit(-1);
     }
 
-    if(argc > 1)
-    {
+    if (argc > 1) {
         --argc;
-        while(argc > 0)
-        {
-            switch(argv[argc][0])
-            {
+        while (argc > 0) {
+            switch (argv[argc][0]) {
             case '-':
                 process_opt_str((argv[argc])+1, lastarg, opts);
                 break;
@@ -425,68 +407,60 @@ int main(int argc, char *argv[])
         }
 
         log = fopen(options.pLogFilename, "w");
-        if(log != NULL)
-        {
+        if (log != NULL) {
             options.fp_log = log;
-        }else
-        {
-            fprintf(stderr, "[%s] error: using stdout - unable to open log.\n",
+        } else {
+            fprintf(stderr,
+                    "[%s] error: using stdout - unable to open log.\n",
                     get_time_as_log());
             log = stdout;
         }
-        
     }
 
     if(options.verbosity == VERBOSE)
         dump_options(&options);
     
-    if(options.verbosity != QUIET)
-    {
+    if (options.verbosity != QUIET) {
         fprintf(log, "[%s] info: beginning fuzz - method:", get_time_as_log());
-        if(is_tcp(&options))
-        {
+        if (is_tcp(&options)) {
             fprintf(log, " tcp,");
-        } else if(is_udp(&options))
-        {
+        } else if (is_udp(&options)) {
             fprintf(log, " udp,");
-        }
-        else
-        {
+        } else {
             fprintf(log, " io,");
         }
-        
+
         fprintf(log, " config from: [%s], out: [%s:%d]\n",
                 options.pFilename, options.host_spec, options.port);
     }
-    
+
     options.state     = FUZZ;
     execute_fuzz(&options);
 
-    if(options.verbosity != QUIET)
+    if (options.verbosity != QUIET)
         fprintf(log, "[%s] completed fuzzing.\n", get_time_as_log());
     
-    free( options.pFilename    );
-    free( options.pLogFilename );
-    free( options.host_spec    );
+    free(options.pFilename);
+    free(options.pLogFilename);
+    free(options.host_spec);
 
-    for(i = 0; i < options.num_litr; ++i)
-    {
+    for (i = 0; i < options.num_litr; ++i) {
         free(options.litr[i]);
     }
     free(options.litr);
     free(options.litr_lens);
 
-    for(i = 0; i < options.num_seq; ++i)
-    {
+    for (i = 0; i < options.num_seq; ++i) {
         free(options.seq[i]);
     }
+
     free(options.seq);
     free(options.seq_lens);
 
     /*this might be the better way of doing things =)*/
     if(options.sym_count)
         free(options.syms_array);
-    
+
     return 0;
 }
 
@@ -512,20 +486,19 @@ int fuzz(option_block *opts, char *req, int len)
     int r2_len,p1_len;
     sym_t *pSym;
 
-    int fuzz_this_time = (opts->start_test <= ++fuzznum) ? 
-        1 : 0;
+    int fuzz_this_time = (opts->start_test <= ++fuzznum) ? 1 : 0;
 
-    if(opts->fp_log)
+    if (opts->fp_log)
         log = opts->fp_log;
 
-    if( fuzz_this_time && opts->verbosity != QUIET )
-        fprintf(log, "[%s] attempting fuzz - %d (len: %d).\n", get_time_as_log(),
+    if (fuzz_this_time && opts->verbosity != QUIET)
+        fprintf(log,
+                "[%s] attempting fuzz - %d (len: %d).\n", get_time_as_log(),
                 fuzznum, len);
 #ifndef NOPLUGIN
     if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
-        PLUGIN_PROVIDES_PAYLOAD_PARSE))
-    {
+        PLUGIN_PROVIDES_PAYLOAD_PARSE)) {
         tmp2 = req;
         p1_len = len * 2;
         p1 = malloc(p1_len);
@@ -534,31 +507,27 @@ int fuzz(option_block *opts, char *req, int len)
         len = p1_len;
     }
 #endif
-    if(fuzz_this_time && ((opts->sym_count) || (opts->s_syms_count)))
-    {
+    if (fuzz_this_time && ((opts->sym_count) || (opts->s_syms_count))) {
         /*xxx : enhancement - loop backwards allowing people to define
                 a string (aaa for example) and use that string within
                 other defines appearing later.
                 THIS creates a problem - our length field substitution
                 depends on having lengths before non-lengths. The answer
                 of course, is to just have 2 loops, apply the lenghts first*/
-        for(i = 0; i < opts->s_syms_count ; ++i)
-        {
+        for (i = 0; i < opts->s_syms_count ; ++i) {
             pSym = &(opts->s_syms[ opts->s_syms_count - (i+1) ]);
             len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
-                               pSym->s_len);
+                           pSym->s_len);
         }
-        
-        for(i = 0; i < opts->sym_count; ++i)
-        {
+
+        for (i = 0; i < opts->sym_count; ++i) {
             pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(pSym->is_len)
                 len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
                                strlen(pSym->sym_val));
         }
-        
-        for(i = 0; i < opts->sym_count; ++i)
-        {
+
+        for (i = 0; i < opts->sym_count; ++i) {
             pSym = &(opts->syms_array[ opts->sym_count - (i+1) ]);
             if(!pSym->is_len)
                 len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
@@ -567,45 +536,37 @@ int fuzz(option_block *opts, char *req, int len)
 
     }
 
-    if(opts->b_sym_count) /* we let this one through in skip cases
-                             because we need the increments to happen. */
-    {
-        for(i = 0; i < opts->b_sym_count; ++i)
-        {
+    /* we let this one through in skip cases because we need the
+       increments to happen. */
+    if (opts->b_sym_count) {
+        for (i = 0; i < opts->b_sym_count; ++i) {
             pSym = &(opts->b_syms_array[i]);
             len = smemrepl(req, len, len, pSym->sym_name, pSym->sym_val,
                            pSym->is_len);
-	    if(pSym->increment)
-            {
+            if (pSym->increment) {
                 int *increm = (int*)pSym->sym_val;
                 *increm = (*increm)+1;
             }
         }
     }
 
-    if(fuzz_this_time && is_output(opts))
-    {
-        if(opts->hexl_dump)
-        {
+    if (fuzz_this_time && is_output(opts)) {
+        if (opts->hexl_dump) {
             dump(req, len, log);
-        }
-        else
-        {
+        } else {
             fwrite(req, len - 1, 1, log);
             fwrite("\n", 1, 1, log);
         }
     }
 
-    if(fuzz_this_time && opts->link_oracle != -1)
-    {
+    if (fuzz_this_time && opts->link_oracle != -1) {
         oracle_pre_fuzz(opts, req, len);
     }
-    
+
 #ifndef NOPLUGIN
     if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
-        PLUGIN_PROVIDES_FUZZ_MODIFICATION))
-    {
+        PLUGIN_PROVIDES_FUZZ_MODIFICATION)) {
         r2 = malloc(len * 2);
         r2_len = len * 2;
         g_plugin->fuzz_trans(opts, req, len, r2, &r2_len);
@@ -614,62 +575,51 @@ int fuzz(option_block *opts, char *req, int len)
         len = r2_len;
     }
 
+    /* NOTE: the critical *else* after this to make the following block
+       behave correctly. */
     if(fuzz_this_time && g_plugin != NULL && 
        ((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) == 
-        PLUGIN_PROVIDES_TRANSPORT_TYPE))
-    {
+        PLUGIN_PROVIDES_TRANSPORT_TYPE)) {
       res = g_plugin->trans(opts, req, len);
-    }
-    else 
+    } else
 #endif
-        
-    if(fuzz_this_time && is_tcp(opts))
-    {
+
+    if (fuzz_this_time && is_tcp(opts)) {
       res = os_send_tcp(opts, req, len);
-    }
-    else if(fuzz_this_time && is_udp(opts))
-    {
+    } else if (fuzz_this_time && is_udp(opts)) {
       res = os_send_udp(opts, req, len);
-    }
-    else if(fuzz_this_time && is_unix(opts))
-    {
+    } else if(fuzz_this_time && is_unix(opts)) {
         res = -1; // no unix support, at this time
     }
 
-
-    if(fuzz_this_time && opts->link_oracle != -1)
-    {
+    if (fuzz_this_time && opts->link_oracle != -1) {
         oracle_post_fuzz(opts, req, len);
     }
 
 #ifndef NOPLUGIN
 
-    if(fuzz_this_time && (g_plugin != NULL) &&
-       ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
-	PLUGIN_PROVIDES_POST_FUZZ))
-      {
-	g_plugin->post_fuzz(opts, req, len);
-      }
+    if (fuzz_this_time && (g_plugin != NULL) &&
+        ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+         PLUGIN_PROVIDES_POST_FUZZ)) {
+        g_plugin->post_fuzz(opts, req, len);
+    }
     
-    if(fuzz_this_time && g_plugin != NULL && 
-       ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
-        PLUGIN_PROVIDES_FUZZ_MODIFICATION))
-    {
+    if (fuzz_this_time && g_plugin != NULL && 
+        ((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
+         PLUGIN_PROVIDES_FUZZ_MODIFICATION)) {
         free(req);
         req = tmp;
     }
 
-    if(fuzz_this_time && g_plugin != NULL && 
-       ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
-        PLUGIN_PROVIDES_PAYLOAD_PARSE))
-    {
+    if (fuzz_this_time && g_plugin != NULL && 
+        ((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
+         PLUGIN_PROVIDES_PAYLOAD_PARSE)) {
         free(req);
         req = tmp2;
     }
 #endif
 
-    if(fuzz_this_time && (opts->new_logfile) && (opts->pLogFilename))
-    {
+    if (fuzz_this_time && (opts->new_logfile) && (opts->pLogFilename)) {
         char *z_set;
         char z_buf[80] = {0};
         fclose(opts->fp_log);
@@ -681,11 +631,10 @@ int fuzz(option_block *opts, char *req, int len)
         opts->fp_log = fopen(opts->pLogFilename, "w");
     }
 
-    if(res < 0 && opts->stop_on_fail)
+    if (res < 0 && opts->stop_on_fail)
       return -1;
 
     return 0;
-      
 }
 
 int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx);
@@ -699,12 +648,9 @@ int in_array_execute_fuzz(option_block *opts);
  */
 int execute_fuzz(option_block *opts)
 {
-    if(!opts->num_arrays)
-    {
+    if (!opts->num_arrays) {
         return array_execute_fuzz(opts, NULL, 0);
-    }
-    else
-    {
+    } else {
         return array_execute_fuzz(opts, opts->arrays[0], 0);
     }
 }
@@ -722,11 +668,9 @@ int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
 {
     int i;
     long offset = ftell(opts->fp);
-    if(!cur_array)
-    {
+    if (!cur_array) {
         i = in_array_execute_fuzz(opts);
-        if (fseek(opts->fp, offset, SEEK_SET) < 0)
-        {
+        if (fseek(opts->fp, offset, SEEK_SET) < 0) {
             perror("fseek");
             exit(1);
         }
@@ -735,16 +679,14 @@ int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
     ++idx;
 
     cur_array->value_ctr = 0; /* reset after we're done */
-    
-    for(i = 0; i < cur_array->array_max_val; ++i)
-    {
+
+    for (i = 0; i < cur_array->array_max_val; ++i) {
         cur_array->value_ctr = i;
-        if(idx < opts->num_arrays) 
+        if(idx < opts->num_arrays)
             array_execute_fuzz(opts, opts->arrays[idx], idx);
         else
             array_execute_fuzz(opts, NULL, 0);
-        if (fseek(opts->fp, offset, SEEK_SET) < 0)
-        {
+        if (fseek(opts->fp, offset, SEEK_SET) < 0) {
             perror("fseek");
             exit(-1);
         }
@@ -779,8 +721,7 @@ int in_array_execute_fuzz(option_block *opts)
     memset(req2, 0, opts->mseql + 16384);
     memset(preq, 0, opts->mseql + 16384);
 
-    if(opts->state != FUZZ)
-    {
+    if (opts->state != FUZZ) {
         fprintf(stderr, "[%s] fatal: corrupted state for execute_fuzz()\n",
                 get_time_as_log());
         exit(-1);
@@ -789,33 +730,28 @@ int in_array_execute_fuzz(option_block *opts)
     /*setup the socket fd*/
     opts->sockfd = -1;
 
-    while(!feof(opts->fp))
-    {
+    while (!feof(opts->fp)) {
         tsze    = 0;
         reqsize = 0;
         line[0] = 0;
-        while(strcmp(line, "--") && strcmp(line, "c-"))
-        {
+        while (strcmp(line, "--") && strcmp(line, "c-")) {
             tsze = readLine(opts, line, 8192, 1);
-            if(!strcmp(line, "--") || !strcmp(line, "c-") || tsze == 0)
-            {
+            if (!strcmp(line, "--") || !strcmp(line, "c-") || tsze == 0) {
                 break;
             }
-            
-            if(opts->mseql && ((tsze + reqsize) > opts->mseql + 8192))
-            {
+
+            if (opts->mseql && ((tsze + reqsize) > opts->mseql + 8192)) {
                 /*ohnoes overflow*/
                 fprintf(stderr, "[%s] error: overflow[%d:%zu].\n", 
-			get_time_as_log(), opts->mseql, 
-			(tsze + reqsize));
+                        get_time_as_log(), opts->mseql, 
+                        (tsze + reqsize));
                 exit(-1);
             }
-            
+
             memcpy(req+reqsize, line, tsze);
             reqsize += tsze-1;
 
-            if(opts->line_terminator_size)
-            {
+            if (opts->line_terminator_size) {
                 memcpy(req+reqsize, opts->line_term, 
                        opts->line_terminator_size);
             }
@@ -825,8 +761,9 @@ int in_array_execute_fuzz(option_block *opts)
             *(req+reqsize) = 0;
         }
 
-        if(feof(opts->fp)) break;
-        
+        if(feof(opts->fp))
+            break;
+
         if(!strcasecmp(line, "c-"))
             opts->close_conn = 0;
         else
@@ -838,14 +775,12 @@ int in_array_execute_fuzz(option_block *opts)
         if(opts->trim_nl)
             req[reqsize-1] = 0;
 
-        if(opts->seqstep <= 0)
-        {
+        if (opts->seqstep <= 0) {
             opts->seqstep = opts->mseql;
         }
 
         /* first, resolve all array types once */
-        for(tsze = opts->num_arrays - 1; tsze >= 0; --tsze)
-        {
+        for (tsze = opts->num_arrays - 1; tsze >= 0; --tsze) {
             unsigned int ilen = reqsize;
             array_t *current_array = opts->arrays[tsze];
             char sizeval[80] = {0};
@@ -857,37 +792,34 @@ int in_array_execute_fuzz(option_block *opts)
             snprintf(ssizerepl, sizeof(ssizerepl), "%%%s",
                      current_array->array_name);
 
-            if(!current_array->value_array[current_array->value_ctr].bin)
-            {
-                size_t bsizeval = strlen
-                    (current_array->value_array
-                     [current_array->value_ctr].sym_val);
+            if (!current_array->value_array[current_array->value_ctr].bin) {
+                size_t bsizeval = strlen(current_array->value_array
+                                         [current_array->value_ctr].sym_val);
 
                 snprintf(sizeval, 80, "%zu", bsizeval);
                 ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl,
                                 (char *) &bsizeval, sizeof bsizeval);
-                ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl, sizeval,
-                                strlen(sizeval));
-                ilen = smemrepl(req, ilen, opts->mseql + 16384, current_array->array_name,
+                ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl,
+                                sizeval, strlen(sizeval));
+                ilen = smemrepl(req, ilen, opts->mseql + 16384,
+                                current_array->array_name,
                                 current_array->
                                 value_array[current_array->value_ctr].sym_val,
                                 current_array->
                                 value_array[current_array->value_ctr].is_len);
-            }
-            else
-            {
+            } else {
                 char *blit = current_array->value_array[current_array->value_ctr].sym_val;
                 size_t blit_len = current_array->value_array[current_array->value_ctr].is_len;
 
                 snprintf(sizeval, 80, "%zu", blit_len);
-                ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl, (char *)
-                                &blit_len, sizeof blit_len);
+                ilen = smemrepl(req, reqsize, opts->mseql + 16384, sizerepl,
+                                (char *)&blit_len, sizeof blit_len);
 
-                ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl, sizeval,
-                                strlen(sizeval));
+                ilen = smemrepl(req, ilen, opts->mseql + 16384, ssizerepl,
+                                sizeval, strlen(sizeval));
 
-                ilen = smemrepl(req, ilen, opts->mseql + 16384, current_array->array_name,
-                                blit, blit_len);
+                ilen = smemrepl(req, ilen, opts->mseql + 16384,
+                                current_array->array_name, blit, blit_len);
 
             }
             reqsize = ilen;
@@ -958,11 +890,11 @@ int in_array_execute_fuzz(option_block *opts)
                         i = smemrepl(req2, i, opts->mseql + 16384, "FUZZ", blit, blit_len );
                         free( blit );
                     }
-                    
+
                     if (opts->send_initial_nonfuzz_again)
                         if(fuzz(opts, preq, preqsize) < 0)
                             goto done;
-                    
+
                     if (fuzz(opts, req2, i)<0)
                         goto done;
                 }
@@ -979,26 +911,25 @@ int in_array_execute_fuzz(option_block *opts)
                     /*by filling to maxseqlen, in increments of seqstep*/
 
                     // SUPPORT FOR MULTIPLE INSTANCES OF FUZZ!!
-                    
-                    for(k = opts->seqstep; k <= opts->mseql; k+= opts->seqstep)
-                    {
+
+                    for (k = opts->seqstep; k <= opts->mseql;
+                         k+= opts->seqstep) {
                         memset(req2, 0,   opts->mseql + 16384 );
                         memcpy(req2, req, strlen(req));
-                        
+
                         seq4b = 0;
 
-                        if(sequence_hold) free(sequence_hold);
+                        if (sequence_hold)
+                            free(sequence_hold);
                         sequence_hold = malloc(k+4);
-                        if(!sequence_hold)
-                        {
+                        if (!sequence_hold) {
                             fprintf(stderr, "error: sequence too large? OOM\n");
                             goto done;
                         }
 
                         memset(sequence_hold, 0, k+1);
 
-                        for(i=0;i < k; ++i)
-                        {
+                        for (i=0;i < k; ++i) {
                             sequence_hold[i] =
                                 *(opts->seq[tsze] + (i % opts->seq_lens[tsze]));
                         }
@@ -1019,23 +950,22 @@ int in_array_execute_fuzz(option_block *opts)
 
                         seq4b++;
                         
-                        if(strstr(req2, "__SEQUENCE_NUM_ASCII__"))
-                        {
+                        if (strstr(req2, "__SEQUENCE_NUM_ASCII__")) {
                             snprintf(seq_buf, 5, "%04d", seq4b);
-                            i =
-                                strrepl(req2, i, "__SEQUENCE_NUM_ASCII__",
+                            i = strrepl(req2, i, "__SEQUENCE_NUM_ASCII__",
                                         seq_buf);
                         }
-                        
-                        if(opts->send_initial_nonfuzz_again)
-                            if(fuzz(opts, preq, preqsize) < 0)
+
+                        if (opts->send_initial_nonfuzz_again)
+                            if (fuzz(opts, preq, preqsize) < 0)
                                 goto done;
-                        
-                        if(fuzz(opts, req2, i)<0)
+
+                        if (fuzz(opts, req2, i)<0)
                             goto done;
                     }
                 }
-                if( sequence_hold ) free( sequence_hold );
+                if (sequence_hold)
+                    free( sequence_hold );
             }
         }
     }
