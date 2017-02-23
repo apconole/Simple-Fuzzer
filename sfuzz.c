@@ -668,6 +668,11 @@ int array_execute_fuzz(option_block *opts, array_t *cur_array, int idx)
 {
     int i;
     long offset = ftell(opts->fp);
+    if (offset < 0) {
+        perror("ftell");
+        exit(1);
+    }
+
     if (!cur_array) {
         i = in_array_execute_fuzz(opts);
         if (fseek(opts->fp, offset, SEEK_SET) < 0) {
