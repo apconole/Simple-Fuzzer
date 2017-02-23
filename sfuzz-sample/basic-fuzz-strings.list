@@ -611,4 +611,12 @@ literal=The quick brown fox... [Beeeep]
 literal=Powerلُلُصّبُلُلصّبُررً ॣ ॣh ॣ ॣ冗
 literal=🏳0🌈️
 
+literal=["foo"]#bar
+literal={"foo"
+literal=["foo"
+literal="FooOne": { "Bar": "no-crash", "Baz": "crash"}}
+literal=["\xFF"]
+literal=[""]
+literal=["�"]
+
 endcfg
