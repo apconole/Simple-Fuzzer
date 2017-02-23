@@ -43,6 +43,11 @@
 #include "options-block.h"
 #include "os-abs.h"
 
+#define min(a,b)                                \
+    ({ __typeof__ (a) _a = (a);                 \
+        __typeof__ (b) _b = (b);                \
+        _a < _b ? _a : _b; })
+
 void read_config(option_block *opts);
 
 static char **searchPath;
@@ -770,11 +775,11 @@ void add_subst_symbol(char *sym_name, int sym_len, char *sym_val,
         memset(pSym->sym_name, 0, 8192);
         memset(pSym->sym_val, 0, 8192);
         memcpy(pSym->sym_name, sym_name, sym_len);
-        memcpy(pSym->sym_val, subst_def, strlen(subst_def));
+        memcpy(pSym->sym_val, subst_def, min(strlen(subst_def), 8192));
 
         pSym->is_len = subst_length;
         pSym->offset = subst_offset;
-        pSym->s_len =  strlen(subst_def);
+        pSym->s_len =  min(strlen(subst_def), 8192);
 
         /*added "substitution" symbol*/
         
