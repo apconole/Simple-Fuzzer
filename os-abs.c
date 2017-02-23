@@ -609,7 +609,8 @@ int os_send_unix_stream(option_block *opts, char *str, size_t len)
     if (sockfd != -1)
     {
         sa_unix.sun_family = AF_UNIX;
-        strcpy(sa_unix.sun_path, opts->host_spec);
+        snprintf(sa_unix.sun_path, sizeof(sa_unix.sun_path), "%s",
+                 opts->host_spec);
         if(connect(sockfd, (const struct sockaddr *)&sa_unix,
                    sizeof sa_unix) < 0)
         {
@@ -652,7 +653,8 @@ int os_send_unix_dgram(option_block *opts, char *str, size_t len)
     if (sockfd != -1)
     {
         sa_unix.sun_family = AF_UNIX;
-        strcpy(sa_unix.sun_path, opts->host_spec);
+        snprintf(sa_unix.sun_path, sizeof(sa_unix.sun_path), "%s",
+                 opts->host_spec);
 
         if (sendto(sockfd, str, len, 0,
                    (const struct sockaddr *)&sa_unix, sizeof sa_unix) < 0 ) {
