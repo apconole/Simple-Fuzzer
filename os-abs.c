@@ -734,8 +734,10 @@ int smemrepl(char *buf, size_t buflen, size_t maxlen, char *old, char *new, int 
     int   origl = buflen;
     int   oldl;
 
-    if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0))
-        return -1;
+    if((buf == NULL) || (old == NULL) || (new == NULL) || (buflen == 0)) {
+        fprintf(stderr, "FATAL: invalid arguments passed, cowardly aborting\n");
+        exit(1);
+    }
     oldl  = strlen(old);
     
     while((f = __internal_memmem(str, (buf + buflen) - str, old, oldl)) 
