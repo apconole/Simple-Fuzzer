@@ -217,68 +217,56 @@ FILE *sfuzz_fopen(const char *filename, const char *perms)
 
 FILE *sfuzz_dlopen(const char *filename, int flag)
 {
-    void *fp;
     const char *fileStr;
-    char **pathStr;
-    int ii;
-    char *cp;
     char nameBuff[4096];
+    char **pathStr;
+    void *fp;
+    char *cp;
+    int ii;
 
-    if(strlen(filename) >= sizeof(nameBuff))
-    {
+    if (strlen(filename) >= sizeof(nameBuff)) {
         return NULL;
     }
 
     strcpy(nameBuff, filename);
-    
-    for(cp = nameBuff; *cp; ++cp)
-    {
+
+    for (cp = nameBuff; *cp; ++cp) {
         if('\\' == *cp) *cp = '/';
     }
 
     fp = dlopen(nameBuff, flag);
-    if(fp != NULL)
-    {
+    if(fp != NULL) {
         return fp;
     }
 
-    for(pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr)
-    {
-        for(fileStr = filename; fileStr && *fileStr; 
-            fileStr = strpbrk(fileStr+1, "/\\")) 
-        {
-            if((strlen(*pathStr) >= 4096) ||
-               (strlen(*pathStr) + strlen(fileStr) + 2 >= 4096))
-            {
+    for (pathStr = searchPath, ii=0; ii < searchPathCount; ++ii, ++pathStr) {
+        for (fileStr = filename; fileStr && *fileStr; 
+             fileStr = strpbrk(fileStr+1, "/\\")) {
+
+            if ((strlen(*pathStr) >= 4096) ||
+                (strlen(*pathStr) + strlen(fileStr) + 2 >= 4096)) {
                 return NULL;
             }
+
             memset(nameBuff, 0, sizeof(nameBuff));
             strcpy(nameBuff, *pathStr);
-            if(*(nameBuff + strlen(nameBuff) - 1) != '/')
-            {
+            if (*(nameBuff + strlen(nameBuff) - 1) != '/') {
                 *(nameBuff + strlen(nameBuff)) = '/';
                 *(nameBuff + strlen(nameBuff)+1) = '\0';
             }
 
             strcat(nameBuff, fileStr);
-            for(cp = nameBuff; *cp; ++cp)
-            {
-                if('\\' == *cp) *cp = '/';
+            for (cp = nameBuff; *cp; ++cp) {
+                if ('\\' == *cp) *cp = '/';
             }
             fp = dlopen(nameBuff, flag);
-            if(fp != NULL){
+            if (fp != NULL) {
                 return fp;
-            } else
-            {
-        if(strstr(dlerror(), "undefined "))
-        {
-            fprintf
-                (stderr,
- "ERROR: The plugin you're attempting to load has some undefined symbols\n");
-            fprintf(stderr,
- "Likely, you'll need to reconfigure sfuzz with the --force-symbols option\n");
-        }
-
+            } else {
+                if (strstr(dlerror(), "undefined ")) {
+                    fprintf(stderr, "ERROR: The plugin you're attempting to load has some undefined symbols\n");
+                    fprintf(stderr, "Likely, you'll need to reconfigure sfuzz with the --force-symbols option\n");
+                }
             }
         }
     }
@@ -305,110 +293,88 @@ typedef void (*plugin_init)(plugin_provisor *);
 
 void plugin_sanity(option_block *opts)
 {
-    if(g_plugin == NULL)
+    if (g_plugin == NULL)
         return;
 
-    if(g_plugin->capex == NULL)
-    {
+    if (g_plugin->capex == NULL) {
         file_error("plugin doesn't provide a capex.", opts);
         free(g_plugin);
         g_plugin = NULL;
         return;        
     }
 
-    if(((g_plugin->capex() & PLUGIN_PROVIDES_LINE_OPTS) ==
-        PLUGIN_PROVIDES_LINE_OPTS) && 
-       (g_plugin->config == NULL))
-    {
-        file_error(
-          "plugin claims to provide config parsing but doesn't implement it!",
-          opts);
+    if (((g_plugin->capex() & PLUGIN_PROVIDES_LINE_OPTS) ==
+         PLUGIN_PROVIDES_LINE_OPTS) && (g_plugin->config == NULL)) {
+        file_error("plugin claims to provide config parsing but doesn't implement it!",
+                   opts);
         free(g_plugin);
         g_plugin = NULL;
         return;
     }
 
-    if(((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
-        PLUGIN_PROVIDES_PAYLOAD_PARSE) && 
-       (g_plugin->payload_trans == NULL))
-    {
-        file_error(
-         "plugin claims to provide payload parsing but doesn't implement it!",
-         opts);
+    if (((g_plugin->capex() & PLUGIN_PROVIDES_PAYLOAD_PARSE) ==
+         PLUGIN_PROVIDES_PAYLOAD_PARSE) && (g_plugin->payload_trans == NULL)) {
+        file_error("plugin claims to provide payload parsing but doesn't implement it!",
+                   opts);
         free(g_plugin);
         g_plugin = NULL;
         return;
     }
 
-    if(((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) ==
-        PLUGIN_PROVIDES_TRANSPORT_TYPE) && 
-       (g_plugin->trans == NULL))
-    {
-        file_error(
-          "plugin claims to provide transportation but doesn't implement it!",
-          opts);
-        free(g_plugin);
-        g_plugin = NULL;
-        return;
-    }
-    
-    if(((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
-        PLUGIN_PROVIDES_FUZZ_MODIFICATION) && 
-       (g_plugin->fuzz_trans == NULL))
-    {
-        file_error(
-          "plugin claims to provide fuzz transform but doesn't implement it!",
-          opts);
+    if (((g_plugin->capex() & PLUGIN_PROVIDES_TRANSPORT_TYPE) ==
+         PLUGIN_PROVIDES_TRANSPORT_TYPE) && (g_plugin->trans == NULL)) {
+        file_error("plugin claims to provide transportation but doesn't implement it!",
+                   opts);
         free(g_plugin);
         g_plugin = NULL;
         return;
     }
 
-    if(((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
-        PLUGIN_PROVIDES_POST_FUZZ) && 
-       (g_plugin->post_fuzz == NULL))
-    {
-        file_error(
-            "plugin claims to provide postfuzz but doesn't implement it!",
-            opts);
+    if (((g_plugin->capex() & PLUGIN_PROVIDES_FUZZ_MODIFICATION) ==
+        PLUGIN_PROVIDES_FUZZ_MODIFICATION) && (g_plugin->fuzz_trans == NULL)) {
+        file_error("plugin claims to provide fuzz transform but doesn't implement it!",
+                   opts);
         free(g_plugin);
         g_plugin = NULL;
         return;
     }
 
-    
+    if (((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
+         PLUGIN_PROVIDES_POST_FUZZ) && (g_plugin->post_fuzz == NULL)) {
+        file_error("plugin claims to provide postfuzz but doesn't implement it!",
+                   opts);
+        free(g_plugin);
+        g_plugin = NULL;
+        return;
+    }
 }
 
 void plugin_load(char *filename, option_block *opts)
 {
-    plugin_init ir;
-    char fileline[8192] = {0};
     int  length         = strcspn(filename+1, " \n\r");
-    
-    if( length > 8191 )
-    {
+    char fileline[8192] = {0};
+    plugin_init ir;
+
+    if (length > 8191) {
         file_error("filename for plugin is too large!", opts);
         return;
     }
-    
+
     strncpy(fileline, filename+1, length);
 
-    if( plugin_handle != NULL )
-    {
+    if (plugin_handle != NULL) {
         file_error("limit 1 plugin per script!", opts);
         return;
     }
-    
+
     plugin_handle = sfuzz_dlopen(fileline, RTLD_NOW);
-    if(plugin_handle == NULL)
-    {
+    if (plugin_handle == NULL) {
         file_error("Unable to open plugin (check the search path?).", opts);
         return;
     }
-    
+
     ir = (plugin_init)dlsym(plugin_handle, "plugin_init");
-    if(ir == NULL)
-    {
+    if (ir == NULL) {
         fprintf(stderr, "--- plugin loading: [%s][%s] ---\n", fileline,
                 dlerror());
         file_error("unable to locate entrypoint in plugin", opts);
@@ -416,19 +382,17 @@ void plugin_load(char *filename, option_block *opts)
     }
 
     g_plugin = (plugin_provisor*)malloc(sizeof(plugin_provisor));
-    
-    if(g_plugin == NULL)
-    {
+
+    if (g_plugin == NULL) {
         file_error("unable to allocate plugin descriptor", opts);
         return;
     }
 
     memset(g_plugin, 0, sizeof(plugin_provisor));
-    
+
     ir(g_plugin);
 
-    if(g_plugin->name == NULL || g_plugin->version == NULL)
-    {
+    if (g_plugin->name == NULL || g_plugin->version == NULL) {
         file_error("plugin is invalid!", opts);
         return;
     }
@@ -814,21 +778,20 @@ int processFileLine(option_block *opts, char *line, int line_len)
 
     /*not a comment, regular state*/
 
+    if (!strncasecmp("plugin", line, 6)) {
 #ifndef NOPLUGIN
-    if(!strncasecmp("plugin", line, 6))
-    {
         delim = strstr(line, " ");
-        if(delim == NULL)
-        {
+        if (delim == NULL) {
             file_error("plugin line with no file specified. abort!", opts);
         }
         plugin_load(delim, opts);
         return 0;
-    }
+#else
+        file_error("plugin line: sfuzz without plugin support", opts);
 #endif
+    }
 
-    if(!strncasecmp("literal", line, 7))
-    {
+    if (!strncasecmp("literal", line, 7)) {
         delim = strstr(line, "=");
         if(delim == NULL)
         {
