@@ -33,6 +33,7 @@
 #include "options-block.h"
 #include "os-abs.h"
 #include "sfuzz-plugin.h"
+#include "sfuzz-plugin-internal.h"
 
 #ifdef __WIN32__
 #include <windows.h>
@@ -222,48 +223,6 @@ int atoip(const char *pIpStr)
     WSACleanup();
 #endif    
     return t;
-}
-
-char *process_error()
-{
-#ifndef __WIN32__
-    switch(errno)
-    {
-/*
-    case EACCESS:
-        return "EACCESS";
-*/
-    case EPERM:
-        return "EPERM";
-    case EADDRINUSE:
-        return "EADDRINUSE";
-    case EAFNOSUPPORT:
-        return "EAFNOSUPPORT";
-    case EAGAIN:
-        return "EAGAIN";
-    case EALREADY:
-        return "EALREADY";
-    case EBADF:
-        return "EBADF";
-    case ECONNREFUSED:
-        return "ECONNREFUSED";
-    case EINPROGRESS:
-        return "EINPROGRESS";
-    case EINTR:
-        return "EINTR";
-    case EISCONN:
-        return "EISCONN";
-    case ENETUNREACH:
-        return "ENETUNREACH";
-    case ENOTSOCK:
-        return "ENOTSOCK";
-    case ETIMEDOUT:
-        return "ETIMEDOUT";
-    default:
-        perror("connect()");
-    }
-#endif
-    return "unknown";
 }
 
 int mssleep(unsigned long int sleepTimeInMS)

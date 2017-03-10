@@ -38,8 +38,16 @@
 
 #include <errno.h>
 
+#define SFUZZ_UTIL_COMPILE 1
+
+/**
+ * \brief Display the sfuzz search paths (for debug only)
+ */
+void dump_paths();
+
 #include "sfuzz.h"
 #include "sfuzz-plugin.h"
+#include "sfuzz-plugin-internal.h"
 #include "options-block.h"
 #include "os-abs.h"
 
@@ -263,8 +271,10 @@ FILE *sfuzz_dlopen(const char *filename, int flag)
             if (fp != NULL) {
                 return fp;
             } else {
-                if (strstr(dlerror(), "undefined ")) {
-                    fprintf(stderr, "ERROR: The plugin you're attempting to load has some undefined symbols\n");
+                char *p = strdup(dlerror());
+                if (p && strstr(p, "undefined ")) {
+                    fprintf(stderr, "Loading: [%s]: %s\n", nameBuff, p);
+                    fprintf(stderr, "The plugin you're attempting to load has some undefined symbols\n");
                     fprintf(stderr, "Likely, you'll need to reconfigure sfuzz with the --force-symbols option\n");
                 }
             }
@@ -274,8 +284,7 @@ FILE *sfuzz_dlopen(const char *filename, int flag)
     return NULL;
 }
 
-void dump_paths()
-{
+void dump_paths() {
     int ii;
     char **pathStr;
 
@@ -287,7 +296,6 @@ void dump_paths()
 }
 
 #ifndef NOPLUGIN
-void *plugin_handle = NULL;
 
 typedef void (*plugin_init)(plugin_provisor *);
 
@@ -353,6 +361,7 @@ void plugin_load(char *filename, option_block *opts)
 {
     int  length         = strcspn(filename+1, " \n\r");
     char fileline[8192] = {0};
+    void *local_plugin_handle;
     plugin_init ir;
 
     if (length > 8191) {
@@ -362,22 +371,22 @@ void plugin_load(char *filename, option_block *opts)
 
     strncpy(fileline, filename+1, length);
 
-    if (plugin_handle != NULL) {
-        file_error("limit 1 plugin per script!", opts);
-        return;
-    }
-
-    plugin_handle = sfuzz_dlopen(fileline, RTLD_NOW);
-    if (plugin_handle == NULL) {
+    local_plugin_handle = sfuzz_dlopen(fileline, RTLD_NOW);
+    if (local_plugin_handle == NULL) {
         file_error("Unable to open plugin (check the search path?).", opts);
         return;
     }
 
-    ir = (plugin_init)dlsym(plugin_handle, "plugin_init");
+    ir = (plugin_init)dlsym(local_plugin_handle, "plugin_init");
     if (ir == NULL) {
         fprintf(stderr, "--- plugin loading: [%s][%s] ---\n", fileline,
                 dlerror());
         file_error("unable to locate entrypoint in plugin", opts);
+        return;
+    }
+
+    if (g_plugin != NULL) {
+        file_error("limit 1 plugin per script!", opts);
         return;
     }
 

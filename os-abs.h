@@ -131,14 +131,6 @@ extern int  atoip(const char *pIpStr);
  */
 extern void dump(void *b, int len, FILE *out);
 
-/**
- * \brief Sleeps for at least a specified number of milliseconds.
- */
-extern int  mssleep(unsigned long int);
-
-extern char *process_error();
-
-
 #ifndef HAVE_MEMMEM
 extern void *__internal_memmem(const void *hs, size_t hsl, const void *nd, size_t ndl);
 

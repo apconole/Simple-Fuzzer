@@ -37,6 +37,8 @@
 #include "version.h"
 #include "options-block.h"
 #include "sfuzz-plugin.h"
+#include "sfuzz-plugin-internal.h"
+
 
 #ifdef __WIN32__
 #include "windows.h"

@@ -32,6 +32,8 @@
 #define __SFUZZ_PLUGIN_DEFS_H__
 
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 #include "options-block.h"
 
@@ -84,22 +86,8 @@ typedef struct _pprovisor
 
 } plugin_provisor;
 
-/* only one "plugin" will be loaded at a time. */
-extern plugin_provisor *g_plugin;
-
-#ifdef __WIN32__
-#ifdef __PLUGIN_BUILD__
-plugin_provisor *g_plugin; /* needed for win32 issue */
-#endif
-#endif
-
 #include <sys/types.h>
 #include <unistd.h>
-
-/**
- * \brief Display the sfuzz search paths (for debug only)
- */
-extern void dump_paths();
 
 /**
  * \brief The basic sfuzz error message when parsing a config file.
@@ -111,8 +99,19 @@ static inline void file_error(char *msg, option_block *opts)
 {
     fprintf(stderr, "[%s] error with file <%s:%d> : %s\n",
             "---", opts->pFilename, opts->lno, msg);
+#ifdef SFUZZ_UTIL_COMPILE
     dump_paths();
+#endif
     exit(-1);
 }
 
+static inline char *process_error()
+{
+    return
+#ifndef WIN32
+    strerror(errno);
+#else
+    "unknown";
+#endif
+}
 #endif

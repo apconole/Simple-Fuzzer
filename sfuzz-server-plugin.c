@@ -64,8 +64,16 @@ typedef char * caddr_t;
 #include <unistd.h>
 #include "sfuzz-plugin.h"
 
-extern int mssleep(unsigned long int);
-extern char *process_error();
+static inline int mssleep(unsigned long int sleepTimeInMS)
+{
+    struct timeval tv;
+
+    tv.tv_sec = sleepTimeInMS / 1000;
+    tv.tv_usec = (sleepTimeInMS % 1000) * 1000;
+
+    return select(0, NULL, NULL, NULL, &tv);
+}
+
 
 char *srv_plugin_name()
 {
@@ -263,16 +271,6 @@ int srv_plugin_send(option_block *opts, void *d, size_t i)
                     pSym->increment = 1;
                 }
             }
-#ifndef NOPLUGIN
-            if((g_plugin != NULL) &&
-               ((g_plugin->capex() & PLUGIN_PROVIDES_POST_FUZZ) ==
-                PLUGIN_PROVIDES_POST_FUZZ))
-            {
-                g_plugin->post_fuzz(opts, buf, r_len);
-            }
-#endif
-
-            
         }
     }
     
