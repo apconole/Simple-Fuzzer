@@ -106,3 +106,17 @@ POST /FUZZ HTTP/1.1
 Host: hostname
 
 --
+GET / HTTP/1.1
+Host: hostname
+Connection: Upgrade, HTTP2-Settings
+Upgrade: h2c
+HTTP2-Settings: FUZZ
+
+--
+GET / HTTP/1.1
+Host: hostname
+Connection: Upgrade, HTTP2-Settings
+Upgrade: FUZZ
+HTTP2-Settings: 0x505249202a20485454502f322e300d0a0d0a534d0d0a0d0a
+
+--
