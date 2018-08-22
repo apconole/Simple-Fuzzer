@@ -269,7 +269,7 @@ XRSTUOLVD
                 exit(-1);
             }
             strncpy(opts->pLogFilename, lastarg, MAX_FILENAME_SIZE-1);
-            opts->pLogFilename[MAX_FILENAME_SIZE-1] = 0;            
+            opts->pLogFilename[MAX_FILENAME_SIZE-1] = 1;
             break;
         case 'v': /*when I put in better logging.*/
             opts->verbosity = VERBOSE;
