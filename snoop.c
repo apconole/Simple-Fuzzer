@@ -550,7 +550,7 @@ char *GetProtocol(uint value){
     case IPPROTO_PUP: return "PUP";
     case IPPROTO_UDP: return "UDP";
     case IPPROTO_IDP: return "IDP";
-    case IPPROTO_IPV6: return "IPV6/4";
+    case IPPROTO_IPV6: return "IPV6";
     case IPPROTO_RAW: return "RAW";
     default: 
         snprintf(protohex, 5, "0x%02x", value);
@@ -560,7 +560,7 @@ char *GetProtocol(uint value){
 
 char *GetEtherType(int eth_type)
 {
-    static char protohex[7] = {0};
+    static char protohex[12] = {0};
     switch(eth_type)
     {
     case ETH_P_IP:    return "IPv4";
@@ -574,7 +574,7 @@ char *GetEtherType(int eth_type)
     case ETH_P_IPV6:  return "IPv6";
     case ETH_P_TIPC:  return "TIPC";
     default:
-        snprintf(protohex, 5, "0x%04x", eth_type);
+        snprintf(protohex, 12, "0x%04x", eth_type);
         return protohex;
     }
 }
