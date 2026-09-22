@@ -654,7 +654,6 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
 {
     char *f;
     char *str = buf;
-    int   repls = 0;
 
     int   origl;
     int   oldl;
@@ -669,8 +668,6 @@ int strrepl(char *buf, size_t buflen, char *old, char *new)
     
     while((f = strstr(str, old)) != NULL)
     {
-        ++repls;
-
         origl -= oldl;
 
         if(origl < 0)
@@ -690,7 +687,6 @@ int smemrepl(char *buf, size_t buflen, size_t maxlen, char *old, char *new, int 
 {
     char *f;
     char *str = buf;
-    int   repls = 0;
 
     int   origl = buflen;
     int   oldl;
@@ -704,8 +700,6 @@ int smemrepl(char *buf, size_t buflen, size_t maxlen, char *old, char *new, int 
     while((f = __internal_memmem(str, (buf + buflen) - str, old, oldl)) 
           != NULL)
     {
-        ++repls;
-
         if( ( (f+newl) < buf) || ( (f+newl) > (buf + maxlen) ) )
             return origl;
         else if ( (((f+oldl) < buf)) || ( (f+oldl) > (buf+maxlen)) )
